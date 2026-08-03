@@ -1,6 +1,6 @@
 ---
 name: uniac-manifest
-description: Author uniac.yaml — the complete manifest schema for Uniac projects: resources, type service, type deployment, public_ports and their tri-state semantics, the ${{service.VAR}} reference grammar, and every rule the CLI enforces at plan time. Load whenever a task reads, writes, reviews, or debugs a uniac.yaml.
+description: Author uniac.yaml — the complete manifest schema for Uniac projects: resources, type service, type stateful, type deployment, public_ports and their tri-state semantics, the ${{service.VAR}} reference grammar, and every rule the CLI enforces at plan time. Load whenever a task reads, writes, reviews, or debugs a uniac.yaml.
 ---
 
 # Authoring `uniac.yaml`
@@ -68,6 +68,22 @@ never declared to Uniac at all.
 
 **Env key grammar** is `^[A-Za-z_][A-Za-z0-9_]*$`. The key `host` is reserved —
 it is the builtin `${{self.host}}`, and declaring it is a config error.
+
+## `type: stateful`
+
+A service the platform runs as **exactly one instance** — the single-writer
+condition durable storage needs. It takes the same fields as `type: service`
+and is instantiated the same way; the kind is the only difference.
+
+```yaml
+db:
+  type: stateful
+  image: postgres:17-alpine
+```
+
+- `uniac plan` marks the instance on its row: `database (stateful)  postgres:17-alpine`.
+- In the deployable, the service entry carries `"kind": "stateful"`; a
+  stateless service omits the field entirely.
 
 ## References — `${{service.VAR}}`
 
@@ -167,7 +183,7 @@ Every message below is produced offline, before anything is sent anywhere.
 | Condition | Error |
 |---|---|
 | Unknown field anywhere | `field ports not found in type registry.serviceSchema` |
-| Unknown resource `type` | `unknown type "widget" (supported: service, deployment)` |
+| Unknown resource `type` | `unknown type "widget" (supported: service, stateful, deployment)` |
 | `runtime` other than `yaml` | `runtime "python" is not supported (only "yaml")` |
 | Service with no `image` | `service "a" declares no image` |
 | Reserved env key | `env key "host" is reserved for ${{self.host}}` |
@@ -179,10 +195,10 @@ Every message below is produced offline, before anything is sent anywhere.
 | Bare integer in `public_ports` | `cannot unmarshal !!int 8080 into registry.publicPortSchema` |
 | Instance drawing from a missing definition | `instance "a": no service "nope"` |
 | Deployment instantiating nothing | `resource "d" must instantiate at least one service` |
-| Targeting a service | `resource "api" is a service — services are reusable definitions, not directly deployable` |
+| Targeting a service | `resource "api" is a service — services are reusable definitions, not directly deployable; instantiate it in a deployment: …` (a snippet showing the fix follows) |
 | `default` naming a service | `default "a" is a service — only deployments are deployable targets` |
 | Instance name outside the grammar | `service instance name "Bad-Name-" must match ^[a-z0-9]+(?:(?:__?\|-+)[a-z0-9]+)*$` |
-| Manifest with no deployment | `uniac.yaml declares no deployment — services are reusable definitions` |
+| Manifest with no deployment | `uniac.yaml declares no deployment — services are reusable definitions; add one: …` (a snippet showing the fix follows) |
 | Several deployments, no `default` | `uniac.yaml has multiple deployments and no 'default'; name one (have: d1, d2)` |
 
 What is **not** checked locally: any reference to a name outside the deployed
@@ -208,6 +224,9 @@ the canonical, target-free artifact the platform consumes:
   ]
 }
 ```
+
+A `type: stateful` service's entry additionally carries `"kind": "stateful"`;
+stateless entries omit the field.
 
 Its `digest` is the release identity, and it is content-addressed: the services
 are name-sorted, claim lists are canonicalized by `(port, type)`, and env keys

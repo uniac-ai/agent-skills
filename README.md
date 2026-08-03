@@ -7,13 +7,13 @@ The audience is a **consumer of Uniac** — an agent (or the engineer directing 
 | Skill | Covers |
 |---|---|
 | `uniac-app` | Entry point. What Uniac is, the mental model (services are reusable definitions; deployments instantiate them), the project loop, what the platform owns. Load on any Uniac signal. |
-| `uniac-manifest` | The full `uniac.yaml` schema: resources, `type: service`, `type: deployment`, `public_ports` and their tri-state semantics, the `${{service.VAR}}` reference grammar, and every rule that fails at plan time. |
-| `uniac-cli` | The CLI as an operational surface: the command set, the one `uniac/v1` state document per run, typed error codes and exit statuses, headless environment variables. |
+| `uniac-manifest` | The full `uniac.yaml` schema: resources, `type: service`, `type: stateful`, `type: deployment`, `public_ports` and their tri-state semantics, the `${{service.VAR}}` reference grammar, and every rule that fails at plan time. |
+| `uniac-cli` | The CLI as an operational surface: the command set, the final text frame `deploy` and `status` leave on stdout, typed error codes and exit statuses, headless environment variables. |
 | `uniac-multi-service` | Composing several services into one system: cross-service wiring, public exposure, deploy ordering, and what the platform does not provide. |
 
-Uniac's CLI is designed agent-first — one machine-readable state document per run, a closed set of typed error codes, and an offline `uniac plan` that verifies a manifest without credentials. These skills are written to that surface.
+Uniac's CLI is designed agent-first — one final state frame per run whose captured stdout matches what a human's terminal is left holding, a closed set of typed error codes, and an offline `uniac plan` that verifies a manifest without credentials. These skills are written to that surface.
 
-Every claim was verified against the `uniac` CLI at v0.3.6 and its shipped contracts, not from memory.
+Every claim was verified against the `uniac` CLI at v0.3.8 and its shipped contracts, not from memory.
 
 ## Install
 

@@ -19,7 +19,9 @@ to Uniac's own source, and they cover the current CLI surface only.
 
 **Service** — a reusable *definition* of one workload's shape: which image,
 which environment variables, which start command. A service is never directly
-deployable. Targeting one is an error.
+deployable. Targeting one is an error. A definition is `type: service`, or
+`type: stateful` for a workload the platform runs as exactly one instance —
+the single-writer condition a database needs.
 
 **Deployment** — an *instantiation*: a map of instance names to the definitions
 they draw from, plus the public exposure claimed for each instance. Resolving a
@@ -102,17 +104,17 @@ never by probing a port.
   one service parses and plans, but `uniac deploy` rejects it. A multi-service
   system is therefore several deployments in one manifest, deployed one at a
   time, wired by cross-deployment references — see `[[uniac-multi-service]]`.
-- **Uniac is pre-1.0.** Trust the manifest schema, the `uniac/v1` output
-  document, and the exit-code set; treat anything else as liable to move, and
+- **Uniac is pre-1.0.** Trust the manifest schema, the final-frame output
+  contract, and the exit-code set; treat anything else as liable to move, and
   re-read `uniac <cmd> -h` rather than assuming a flag.
 
 ## Where to go next
 
 - `[[uniac-manifest]]` — the full `uniac.yaml` schema, the `${{...}}` reference
   grammar, and every rule that fails at plan time.
-- `[[uniac-cli]]` — the command surface and the machine-readable output
-  contract: one `uniac/v1` state document per run, typed error codes, exit
-  statuses. Read it before parsing any CLI output.
+- `[[uniac-cli]]` — the command surface and the output contract: the one
+  final text frame `deploy` and `status` leave on stdout, typed error codes,
+  exit statuses. Read it before parsing any CLI output.
 - `[[uniac-multi-service]]` — composing several services into one system:
   cross-service wiring, public exposure, deploy ordering, and what the platform
   does not provide.
