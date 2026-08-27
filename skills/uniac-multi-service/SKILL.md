@@ -25,7 +25,12 @@ resources:
     image: postgres:16
     env:
       POSTGRES_PASSWORD: "change-me"
+      PGDATA: "/var/lib/postgresql/data/pgdata"   # below the mount: a fresh volume is not empty
       DATABASE_URL: "postgres://postgres:${{self.POSTGRES_PASSWORD}}@${{self.host}}:5432/app"
+    volumes:
+      - name: data
+        size_gb: 10
+        mount_path: /var/lib/postgresql/data
 
   api:
     type: service
@@ -59,9 +64,12 @@ architecture diagram.
 
 Declare a single-writer service — a database, anything owning durable storage —
 as `type: stateful`: the platform runs it as exactly one instance (schema in
-`[[uniac-manifest]]`). There is no group construct; a three-node database is
-three stateful services you name and wire individually, each with its own
-address.
+`[[uniac-manifest]]`). That is also the only kind that may declare a
+`volumes:` block, and the volume it declares is scoped by the *instance*
+name: the instance `database` above holds the volume `database.data`. Two
+instantiations of one definition therefore hold two distinct volumes. There
+is no group construct; a three-node database is three stateful services you
+name and wire individually, each with its own address.
 
 ## Wiring
 
@@ -106,9 +114,11 @@ port for the consumer to reassemble.
 Claim public exposure on the **instance**, in the deployment — the same
 definition can face the public in one deployment and stay internal in another.
 
-- **Expose the edge, nothing else.** A service with no `public_ports` is
-  reachable only from the project's other services. That is the correct default
-  for databases, caches, workers, and internal APIs.
+- **Expose the edge, nothing else.** A service holding no public claim is
+  reachable only from the project's other services — the correct default for
+  databases, caches, workers, and internal APIs. Retracting exposure a
+  service already holds is a different edit — deleting the block is not it;
+  see the tri-state below.
 - **`http`** gives a hostname on the shared edge, terminated by the platform and
   routed to your listen port. Use it for anything speaking HTTP.
 - **`tcp`** allocates a public `host:port` and forwards raw TCP to your listen
@@ -116,11 +126,12 @@ definition can face the public in one deployment and stay internal in another.
   the platform's to choose, so read it back from the service's `endpoint` row
   in `uniac status`.
 
-**Respect the tri-state on redeploys.** Omitting `public_ports` inherits the
-serving deployment's claims, which is what makes a code-only rollout safe.
-Writing `[]` actively retracts all exposure. Writing a claim set restates it in
-full — so dropping one entry from a two-entry list removes that exposure. Never
-"clean up" a `public_ports` block you did not intend to change.
+**Respect the tri-state on redeploys.** Whether a `public_ports` block is
+omitted, empty, or spelled out is itself the instruction a redeploy carries,
+and the three are not interchangeable — exact semantics in
+`[[uniac-manifest]]`. So never "clean up" a `public_ports` block you did not
+intend to change: editing one is an exposure change, and the safest rollout of
+new code leaves it alone.
 
 ## What the platform provides
 
@@ -131,6 +142,9 @@ full — so dropping one entry from a two-entry list removes that exposure. Neve
   provider's values change.
 - Public routing for each claim: an HTTP hostname, or an allocated TCP
   `host:port`.
+- Provisioning, attaching, and holding the durable volume a `type: stateful`
+  service declares; the volume is a project-scoped entity that outlives any
+  single deploy.
 - Liveness observed on the container process, and a per-service account —
   version, status, replicas, endpoints, holds — readable via `uniac status`.
 
@@ -145,21 +159,22 @@ so an invented field fails the plan rather than being ignored.
 - **No dependency ordering.** There is no `depends_on`. A consumer must tolerate
   a provider that is not up yet — the deploy order is yours to sequence, and
   propagation may restart it later regardless.
-- **No build from source.** Services name prebuilt OCI images. Build and publish
-  in your own pipeline, then reference an immutable tag or digest.
 - **No secrets management.** `env` values are plaintext in the manifest.
   Reference a provider service's variable rather than repeating a credential,
   and keep genuinely sensitive material out of a committed manifest.
-- **No volumes, replica counts, resource limits, or scaling controls** in the
-  manifest.
+- **No replica counts, resource limits, or scaling controls** in the manifest.
+  Durable storage *is* declarable — a `type: stateful` service takes a
+  `volumes:` block (schema in `[[uniac-manifest]]`) — but nothing else about
+  sizing or placement is.
 - **No multiple environments per project.** One project is one running system;
-  a second environment is a second project, linked from a different checkout
-  (or selected with `UNIAC_PROJECT_URL`).
+  a second environment is a second project, linked from a different checkout —
+  or, for `uniac deploy` only, targeted with `UNIAC_PROJECT_URL`. Details in
+  `[[uniac-cli]]`.
 
 ## Operating the system
 
 ```sh
-uniac status                   # every service: version, status, endpoints, holds
+uniac status                   # every service and volume the project holds
 uniac status api               # one service
 ```
 
@@ -171,6 +186,11 @@ uniac status api               # one service
 - `hold` rows are platform-side reasons a service is not converging. A service
   that never reaches its expected state with `hold` rows is a platform
   condition, not a manifest bug.
+- A service's `volume` row names the volume it mounts and where. The volume's
+  own facts — size, and whether it is attached to a service, resting
+  unattached with its data intact, or transitional — appear as their own
+  `volume` sections, and only in the whole-project `uniac status`;
+  `uniac status <service>` omits them. Full row vocabulary in `[[uniac-cli]]`.
 - A service the project runs appears in `status` whether or not the manifest
   still describes it — what is running is not a client's opinion. Deleting a
   resource from `uniac.yaml` does not remove the service; the CLI has no

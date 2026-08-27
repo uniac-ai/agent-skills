@@ -7,13 +7,13 @@ The audience is a **consumer of Uniac** — an agent (or the engineer directing 
 | Skill | Covers |
 |---|---|
 | `uniac-app` | Entry point. What Uniac is, the mental model (services are reusable definitions; deployments instantiate them), the project loop, what the platform owns. Load on any Uniac signal. |
-| `uniac-manifest` | The full `uniac.yaml` schema: resources, `type: service`, `type: stateful`, `type: deployment`, `public_ports` and their tri-state semantics, the `${{service.VAR}}` reference grammar, and every rule that fails at plan time. |
-| `uniac-cli` | The CLI as an operational surface: the command set, the final text frame `deploy` and `status` leave on stdout, typed error codes and exit statuses, headless environment variables. |
+| `uniac-manifest` | The full `uniac.yaml` schema: resources, `type: service`, `type: stateful`, `type: deployment`, the `image:` / `build:` source choice, `volumes:` durable storage on a stateful service, `public_ports` and their tri-state semantics, the `${{service.VAR}}` reference grammar, and every rule that fails at plan time. |
+| `uniac-cli` | The CLI as an operational surface: the command set, the plain-text frame `deploy` leaves on stdout and the state block `status` leaves there, typed error codes and exit statuses, headless environment variables. |
 | `uniac-multi-service` | Composing several services into one system: cross-service wiring, public exposure, deploy ordering, and what the platform does not provide. |
 
-Uniac's CLI is designed agent-first — one final state frame per run whose captured stdout matches what a human's terminal is left holding, a closed set of typed error codes, and an offline `uniac plan` that verifies a manifest without credentials. These skills are written to that surface.
+Uniac's CLI is designed agent-first: `deploy` and `status` answer on stdout with a plain-text frame rather than narration, behind typed error codes and exit statuses, and `uniac plan` verifies a manifest offline, without credentials. These skills are written to that surface; `uniac-cli` specifies it in full.
 
-Every claim was verified against the `uniac` CLI at v0.3.8 and its shipped contracts, not from memory.
+Every claim was verified against the `uniac` CLI at v0.3.12 and its shipped contracts, not from memory.
 
 ## Install
 
@@ -29,7 +29,7 @@ Per skill `<name>`, creates:
 ~/.codex/skills/<name>   ->  ../../.agents/skills/<name>     # Codex
 ```
 
-Every agent consumes the same copy, and that copy is this checkout — content edits are live through the links. Idempotent; re-run only when a skill is added or renamed. Skips (with a warning) any destination that already exists as a real directory rather than a symlink.
+Every agent consumes the same copy, and that copy is this checkout — content edits are live through the links. Idempotent; re-run only when a skill is added or renamed. Skips (with a warning) any destination that already exists and is not a symlink.
 
 Skill names are a global namespace shared by every installed skill repo, so a same-named skill from elsewhere would be relinked here.
 
