@@ -1,6 +1,6 @@
 ---
 name: uniac-manifest
-description: Author uniac.yaml — the complete manifest schema for Uniac projects: resources, type service, type stateful, type deployment, image vs build sources, volumes for durable storage, public_ports and their tri-state semantics, the ${{service.VAR}} reference grammar, and every rule the CLI enforces at plan time. Load whenever a task reads, writes, reviews, or debugs a uniac.yaml.
+description: Author uniac.yaml — the complete manifest schema for Uniac projects — resources, type service, type stateful, type deployment, image vs build sources, volumes for durable storage, public_ports and their tri-state semantics, the ${{service.VAR}} reference grammar, and every rule the CLI enforces at plan time. Load whenever a task reads, writes, reviews, or debugs a uniac.yaml.
 ---
 
 # Authoring `uniac.yaml`
