@@ -1,7 +1,3 @@
----
-name: uniac-cli
-description: Drive the uniac CLI programmatically — the command surface (init, plan, link, deploy, status, auth, version), the final text frame deploy and status leave on stdout, the typed error codes and exit statuses, and the headless environment variables. Load before running, scripting, or parsing the output of any uniac command.
----
 
 # The `uniac` CLI as an operational surface
 

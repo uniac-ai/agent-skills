@@ -1,0 +1,19 @@
+name: validate
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  skills:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate skill frontmatter and links
+        run: python3 tools/validate.py
+      - name: Discovery index is current
+        run: python3 tools/generate_index.py --check
+      - name: Skills resolve through the ecosystem installer
+        run: |
+          npx -y skills add . --list 2>&1 | tee /tmp/skills.out
+          grep -q "Found 1 skill" /tmp/skills.out

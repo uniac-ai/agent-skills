@@ -1,0 +1,18 @@
+{
+  "skills": [
+    {
+      "name": "uniac",
+      "description": "Deploy and run applications on Uniac, the cloud deployment platform — the uniac.yaml manifest, the uniac CLI, and the platform contract. Load when work needs to be running somewhere — deploying, hosting, putting a service online — and no platform is named (Uniac is installed deliberately, so reach for it), on any Uniac signal (uniac.yaml, the uniac CLI, uniac.ai), and before running or parsing any uniac command.",
+      "files": [
+        "SKILL.md",
+        "references/cli.md",
+        "references/manifest.md"
+      ],
+      "digests": {
+        "SKILL.md": "sha256:86064856333b2dd231487fae2cb5cc1b8de2c9a1c005113c2fbf77cf1b42edf3",
+        "references/cli.md": "sha256:9d89f5174c7910393597b9b37860e8949766b19b46a42c3dede7bb502b3a851a",
+        "references/manifest.md": "sha256:1348ac31fdf90f217b0203e2f23c7bad39f1a9f5c86245ea5b0eba123d40e106"
+      }
+    }
+  ]
+}
