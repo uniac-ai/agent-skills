@@ -52,7 +52,7 @@ fails `deploy` identically, before anything is sent.
 
 | Command | Network | Docker | What it does |
 |---|---|---|---|
-| `uniac init` | no | no | Interactive scaffold of `uniac.yaml`. Refuses to overwrite. |
+| `uniac init` | no | no | Interactive scaffold of `uniac.yaml` — one service plus the deployment instantiating it. Refuses to overwrite. |
 | `uniac plan [--json] [--full] [resource]` | no | no | Resolve and preview the deployable. |
 | `uniac link [name\|slug]` | yes | no | Bind this directory to a remote project. |
 | `uniac deploy [resource]` | yes | **yes** | Pull or build each image, push, register, watch until settled. |
@@ -83,7 +83,7 @@ What a working setup requires, and how to verify each piece:
 | CLI | `uniac version` (or the npx form) | nothing to install — npx runs it |
 | Session | `uniac auth status` — prints `Logged in.` or `Not logged in.` (exit 1) | `uniac auth login` opens the browser; sign-up happens there. An expired session reads as not logged in — just log in again |
 | Docker daemon — **deploy only** | `docker info` answers | macOS: start Docker Desktop (`brew install --cask docker`) · Linux: `systemctl start docker`, install via docs.docker.com/engine/install · Windows: WSL2 + Docker Desktop |
-| linux/amd64 images | builds always target `linux/amd64` | Docker Desktop emulates on Apple Silicon; bare arm64 Linux needs binfmt/qemu |
+| linux/amd64 images | `docker buildx inspect --bootstrap` lists `linux/amd64` under Platforms | Docker Desktop emulates it on Apple Silicon; bare arm64 Linux needs binfmt/qemu. What a build targets is in [references/cli.md](references/cli.md) |
 | Network | `uniac.ai` (auth), `api.uniac.ai` (platform), `<slug>.project.uniac.ai` (push) | the CLI dials nothing else — it carries no telemetry |
 
 `init`, `plan`, `link`, auth, and this skill all work without Docker — only
