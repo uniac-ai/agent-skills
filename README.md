@@ -19,6 +19,19 @@ Installs the `uniac` skill for the coding agents on the machine. Re-run the
 same command to update. Once the discovery index is served, the domain form
 works too: `npx skills add uniac.ai`.
 
+This is the one install line to publish: the ecosystem leaderboard counts
+installs per repository slug, so every mention should aggregate under the
+same one.
+
+In Claude Code the repository is also a plugin marketplace:
+
+```
+/plugin marketplace add uniac-ai/agent-skills
+/plugin install uniac@uniac
+```
+
+`/plugin marketplace update uniac` pulls later releases.
+
 ## Layout
 
 ```
@@ -34,10 +47,19 @@ agents/agents.md              the bootstrap page uniac.ai serves to agents —
                               is installed
 tools/validate.py             frontmatter and link gate (what strict
                               installers reject, CI rejects first)
-tools/generate_index.py       emits .well-known/agent-skills/index.json
-                              (per-file sha256 digests) for the website
-.well-known/agent-skills/     the committed discovery index
+tools/generate_manifests.py   the plugin name, release, blurb, licence and
+                              links, and everything rendered from them
+.claude-plugin/               Claude Code marketplace + plugin manifest
+.codex-plugin/plugin.json     Codex plugin manifest
+plugin.json                   agent-plugins.org manifest (Cursor imports it)
+.well-known/agent-skills/     the discovery index and the skill archive
+                              it points at
+LICENSE                       MIT — required by the Cursor marketplace
 ```
+
+Every file under those last four entries is generated. `tools/generate_manifests.py`
+holds the facts they share; CI runs it with `--check`, so editing one of
+them by hand fails the build.
 
 One skill by design: an agent's Uniac task always needs the mental model,
 the manifest, and the CLI together, so they load as one body with the deep
@@ -54,11 +76,14 @@ restates the other.
 - Every claim is verified against the released `uniac` binary — prefer
   having run the command over having read about it. A wrong field is worse
   than a missing one; the skill is read by agents that cannot check it.
-- Current verification stamp: **v0.3.12**.
-- At each CLI release the contracts are re-verified against, tag this
-  repository `v<cli-version>`. The UniacWeb build vendors the tag matching
-  the released CLI and serves `agents.md`, the skill files, and the
-  discovery index same-origin at uniac.ai.
+- The verification stamp is `VERSION` in `tools/generate_manifests.py`. It is
+  the release the contracts were checked against, and the version every
+  plugin manifest carries.
+- At each CLI release the contracts are re-verified against, bump that
+  constant, regenerate, and tag this repository `v<cli-version>`. The
+  UniacWeb build vendors the tag matching the released CLI and serves
+  `agents.md`, the skill files, and the discovery index same-origin at
+  uniac.ai.
 - Before pushing: `python3 tools/validate.py` and
-  `python3 tools/generate_index.py`; CI runs both plus a live resolve
+  `python3 tools/generate_manifests.py`; CI runs both plus a live resolve
   through the ecosystem installer (`npx skills add . --list`).
