@@ -16,12 +16,9 @@ npx skills add uniac-ai/agent-skills -g
 ```
 
 Installs the `uniac` skill for the coding agents on the machine. Re-run the
-same command to update. Once the discovery index is served, the domain form
-works too: `npx skills add uniac.ai`.
-
-This is the one install line to publish: the ecosystem leaderboard counts
-installs per repository slug, so every mention should aggregate under the
-same one.
+same command to update. This is the one install line to publish — the
+ecosystem leaderboard counts installs per repository slug, so every mention
+should aggregate under the same one.
 
 In Claude Code the repository is also a plugin marketplace:
 
@@ -89,10 +86,10 @@ restates the other.
   the release the contracts were checked against, and the version every
   plugin manifest carries.
 - At each CLI release the contracts are re-verified against, bump that
-  constant, regenerate, and tag this repository `v<cli-version>`. The
-  UniacWeb build vendors the tag matching the released CLI and serves
-  `agents.md`, the skill files, and the discovery index same-origin at
-  uniac.ai.
+  constant, regenerate, and tag this repository `v<cli-version>`. Tags are
+  provenance and rollback; nothing installs from them. `main` is the release
+  channel — it is what `npx skills add` resolves, and what uniac.ai takes
+  `agents.md` from, so merging to it is the release.
 - Before pushing: `python3 tools/validate.py` and
   `python3 tools/generate_manifests.py`; CI runs both plus a live resolve
   through the ecosystem installer (`npx skills add . --list`).
