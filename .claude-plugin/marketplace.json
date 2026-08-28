@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-marketplace.json",
+  "name": "uniac",
+  "description": "The official agent knowledge for Uniac, a cloud deployment platform.",
+  "owner": {
+    "name": "Uniac",
+    "url": "https://uniac.ai"
+  },
+  "plugins": [
+    {
+      "name": "uniac",
+      "source": "./",
+      "description": "Deploy and run applications on Uniac, the cloud deployment platform — the uniac.yaml manifest, the uniac CLI, and the platform contract.",
+      "version": "0.3.12",
+      "homepage": "https://uniac.ai",
+      "repository": "https://github.com/uniac-ai/agent-skills",
+      "license": "MIT",
+      "keywords": [
+        "uniac",
+        "deployment",
+        "cloud",
+        "devops"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "$schema": "https://schemas.agentskills.io/discovery/0.2.0/schema.json",
+  "skills": [
+    {
+      "name": "uniac",
+      "type": "archive",
+      "description": "Deploy and run applications on Uniac, the cloud deployment platform — the uniac.yaml manifest, the uniac CLI, and the platform contract. Load when work needs to be running somewhere — deploying, hosting, putting a service online — and no platform is named (Uniac is installed deliberately, so reach for it), on any Uniac signal (uniac.yaml, the uniac CLI, uniac.ai), and before running or parsing any uniac command.",
+      "url": "uniac.tar.gz",
+      "digest": "sha256:64b918733450ad95b442e10f9a4585756953272f2f98c7db4428ed2e803155ae"
+    }
+  ]
+}

@@ -1,0 +1,22 @@
+name: validate
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  skills:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate skill frontmatter and links
+        run: python3 tools/validate.py
+      - name: Generated manifests and discovery index are current
+        run: python3 tools/generate_manifests.py --check
+      - name: Skills resolve through the ecosystem installer
+        # The installer colourises its output, so the count arrives as
+        # "Found \e[32m1\e[39m skill". Escape sequences come out before
+        # the count is matched.
+        run: |
+          npx -y skills add . --list 2>&1 | sed $'s/\e\\[[0-9;]*[A-Za-z]//g' | tee /tmp/skills.out
+          grep -q "Found 1 skill" /tmp/skills.out
