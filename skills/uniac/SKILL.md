@@ -16,10 +16,9 @@ This skill is the resident knowledge; two bundled references carry the full
 contracts. **Read [references/manifest.md](references/manifest.md) before
 authoring, reviewing, or debugging a `uniac.yaml`** — the complete schema,
 the `${{...}}` reference grammar, every plan-time rule, and multi-service
-composition. **Read [references/cli.md](references/cli.md) before parsing
-`deploy`/`status` output or branching on exit codes** — the final-frame
-contract, the state-block rows, the typed error codes, headless environment
-variables.
+composition. **Read [references/cli.md](references/cli.md) before branching
+on a `deploy` or `status` result** — the output contract, the closed
+exit-code set, and the headless environment variables.
 
 ## The three nouns
 
@@ -46,27 +45,29 @@ uniac status    # what the project is running now
 
 **`plan` is the verification loop**: no network, no credentials, no Docker.
 Iterate manifest → `uniac plan` until clean; a manifest that fails `plan`
-fails `deploy` identically, before anything is sent.
+fails `deploy` identically, before anything is sent. **`plan` resolves only
+the one deployment it targets**, so verify a multi-deployment manifest with
+`uniac plan <name>` for each — a bare `uniac plan` leaves the others
+unchecked.
 
-## Commands
+Only `deploy` needs the Docker daemon, and only `link`, `deploy`, `status`,
+and `auth login` need the network; `init` and `plan` are fully offline.
+`uniac -h` lists the subcommands and `uniac <cmd> -h` gives one's flags —
+read those rather than trusting a remembered flag.
 
-| Command | Network | Docker | What it does |
-|---|---|---|---|
-| `uniac init` | no | no | Interactive scaffold of `uniac.yaml` — one service plus the deployment instantiating it. Refuses to overwrite. |
-| `uniac plan [--json] [--full] [resource]` | no | no | Resolve and preview the deployable. |
-| `uniac link [name\|slug]` | yes | no | Bind this directory to a remote project. |
-| `uniac deploy [resource]` | yes | **yes** | Pull or build each image, push, register, watch until settled. |
-| `uniac status [service]` | yes | no | Report what the linked project runs. Changes nothing. |
-| `uniac auth login\|status\|token\|logout` | login only | no | Manage the session (`~/.uniac/auth.json`). |
-| `uniac version` | no | no | Build metadata. |
+## Sharp edges
 
-Sharp edges, always in force:
+Always in force:
 
 - **Flags precede the positional argument** (`uniac plan --json database`,
   never `uniac plan database --json` — trailing flags are silently ignored).
 - **Never pass `-h` to `uniac auth logout`, `auth status`, or `auth token`**
   — they parse no flags; `auth logout -h` performs the logout. Only
   `auth login` prints help.
+- **Only `init`, `link`, `deploy`, and `auth login`/`logout` change anything**
+  — and `init` writes `uniac.yaml` on the spot, taking every default in
+  silence when nothing is attached to answer its prompts. `plan`, `status`,
+  and `version` are read-only, locally and remotely.
 - `deploy` and `status` are state gateways: exactly one plain-text final
   frame on stdout, narration only on stderr. Branch on the exit status;
   the closed code set is in [references/cli.md](references/cli.md).
@@ -75,46 +76,37 @@ Sharp edges, always in force:
 
 ## Environment
 
-What a working setup requires, and how to verify each piece:
+If `uniac` is not on PATH, `npx -y @uniac/cli` runs it under Node.
 
-| Requirement | Verify | If missing |
-|---|---|---|
-| Node ≥ 18 | `node --version` | needed only to run the CLI via `npx -y @uniac/cli` |
-| CLI | `uniac version` (or the npx form) | nothing to install — npx runs it |
-| Session | `uniac auth status` — prints `Logged in.` or `Not logged in.` (exit 1) | `uniac auth login` opens the browser; sign-up happens there. An expired session reads as not logged in — just log in again |
-| Docker daemon — **deploy only** | `docker info` answers | macOS: start Docker Desktop (`brew install --cask docker`) · Linux: `systemctl start docker`, install via docs.docker.com/engine/install · Windows: WSL2 + Docker Desktop |
-| linux/amd64 images | `docker buildx inspect --bootstrap` lists `linux/amd64` under Platforms | Docker Desktop emulates it on Apple Silicon; bare arm64 Linux needs binfmt/qemu. What a build targets is in [references/cli.md](references/cli.md) |
-| Network | `uniac.ai` (auth), `api.uniac.ai` (platform), `<slug>.project.uniac.ai` (push) | the CLI dials nothing else — it carries no telemetry |
+`uniac auth status` reports a stored session's subject and expiry, and exits
+non-zero when there is none; it reads only the session file and ignores
+`UNIAC_ACCESS_TOKEN`, so an environment authenticated by that variable still
+reads as not logged in. An expired session reads that way too — log in again.
+`uniac auth login` opens a browser, and sign-up happens there. State
+lives in two files: the session in `~/.uniac/auth.json`, the project binding
+in `.uniac/deploy.json` — add `.uniac/` to `.gitignore`, it is per-checkout
+state, not source. Headless: set `UNIAC_ACCESS_TOKEN` (obtain it once via
+`uniac auth login` + `uniac auth token`); details in
+[references/cli.md](references/cli.md).
 
-`init`, `plan`, `link`, auth, and this skill all work without Docker — only
-`deploy` needs the daemon, so never block setup on it; relay the one
-instruction when a deploy is actually wanted. Headless: set
-`UNIAC_ACCESS_TOKEN` (obtain once via `uniac auth login` + `uniac auth
-token`); details in [references/cli.md](references/cli.md).
+Never block setup on Docker: only a deploy needs the daemon (`docker info`
+answers), so relay the one install instruction when a deploy is actually
+wanted and not before. Builds always target `linux/amd64`, whatever the host.
+
+The CLI reaches `uniac.ai` (auth), `api.uniac.ai` (platform), and
+`<slug>.project.uniac.ai` (image push). It dials nothing else — it carries
+no telemetry.
 
 ## First contact with a project
 
-At the first Uniac work in a repository, offer the human a managed section
-in the project's `AGENTS.md` (create the file if absent; replace only your
-own block on later updates; ask before the first write):
-
-```markdown
-<!-- UNIAC:START -->
-## Uniac
-
-This project deploys on [Uniac](https://uniac.ai): services declared in
-`uniac.yaml`, shipped with the `uniac` CLI.
-
-- Binding in `.uniac/deploy.json` (gitignored); session in `~/.uniac/auth.json`.
-- Loop: edit `uniac.yaml` → `uniac plan` (offline verify) → `uniac deploy` → `uniac status`.
-- The `uniac` agent skill is installed — reach for it and its references
-  before any Uniac work instead of guessing the schema or the CLI.
-- Flags precede positionals; never pass `-h` to `uniac auth logout|status|token`;
-  `uniac deploy` needs the local Docker daemon.
-<!-- UNIAC:END -->
-```
-
-Add `.uniac/` to `.gitignore` — the binding is per-checkout state, not source.
+At the first Uniac work in a repository, offer the human a managed
+`<!-- UNIAC:START -->` … `<!-- UNIAC:END -->` section in the project's
+`AGENTS.md` — create the file if absent, ask before the first write, and on
+later updates replace only that block. Give it the manifest and binding
+locations, the `plan` → `deploy` → `status` loop, the flag-order and
+`auth … -h` hazards, that `deploy` needs the local Docker daemon, and a note
+that the `uniac` skill is installed and should be read before any Uniac work
+instead of guessing the schema or the CLI.
 
 ## Constraints to design around
 

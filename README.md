@@ -40,8 +40,8 @@ skills/uniac/                 the one skill
                               commands, environment, sharp edges
   references/manifest.md      full uniac.yaml schema, reference grammar,
                               plan-time rules, multi-service composition
-  references/cli.md           the final-frame output contract, state-block
-                              rows, typed exit codes, headless env vars
+  references/cli.md           what each command does and needs, the output
+                              contract, typed exit codes, headless env vars
 agents/agents.md              the bootstrap page uniac.ai serves to agents —
                               machine setup and sign-in, before knowledge
                               is installed
@@ -76,6 +76,15 @@ restates the other.
 - Every claim is verified against the released `uniac` binary — prefer
   having run the command over having read about it. A wrong field is worse
   than a missing one; the skill is read by agents that cannot check it.
+- Carry what is durable and unobservable; drop what churns or can simply be
+  run. The reader is a coding agent with a shell, so the skill says what a
+  command *does* and what the surface *is*, and leaves the rest to be looked
+  at. The test for a sentence: if a change to the CLI's rendering would
+  falsify it, it is presentation — cut it, and name the command that shows
+  it. Three things stay however small they look: hazards that must not be
+  discovered by experiment, what has to be known *before* anything can run
+  (the manifest schema), and statements about output that survive a
+  re-render.
 - The verification stamp is `VERSION` in `tools/generate_manifests.py`. It is
   the release the contracts were checked against, and the version every
   plugin manifest carries.

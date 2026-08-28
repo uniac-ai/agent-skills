@@ -109,46 +109,19 @@ api:
 - **No manifest field chooses a build platform.** The architecture a build
   targets, and when it runs, are deploy-time behavior — see [cli.md](cli.md).
 
-`uniac plan` renders a build in both sections — the `Building` line qualifies
-only the non-default fields, in the fixed order context, dockerfile, target;
-the `Deploying` column carries the bare `build <root>`:
-
-```
-Building
-  build ./api (context frontend, dockerfile deploy/Dockerfile.prod, target production)
-
-Deploying
-  api  build ./api  public: 8080 (http)
-```
-
-A pulled service instead renders `pull <ref>` under `Building` and the bare ref
-under `Deploying`. A declaration's `env` and `start_command` appear only under
-`uniac plan --full` — see [cli.md](cli.md).
+`uniac plan` previews the resolved build; `uniac plan --full` adds each
+declaration's `env` and `start_command`.
 
 ## `type: stateful`
 
 A service the platform runs as **exactly one instance** — the single-writer
-condition durable storage needs. It takes the same fields as `type: service`
-and is instantiated the same way; the kind is the only difference.
-`uniac plan` marks the instance on its row:
-`database (stateful)  postgres:18-alpine`.
-
-```yaml
-db:
-  type: stateful
-  image: postgres:18-alpine
-  env:
-    PGDATA: /var/lib/postgresql/data/pgdata
-  volumes:
-    - name: data
-      size_gb: 10
-      mount_path: /var/lib/postgresql/data
-```
+condition durable storage needs. Otherwise it is a `type: service`: the same
+fields, instantiated the same way, plus the `volumes:` block below.
 
 ### `volumes:` — durable storage
 
-Only a `type: stateful` service may declare a volume: durable storage needs the
-single-writer guarantee. `volumes` is a sequence of mappings, and each entry
+Only a `type: stateful` service may declare a volume — the single-writer
+guarantee is the point. `volumes` is a sequence of mappings, and each entry
 takes exactly these three keys, all required:
 
 | Key | Meaning |
@@ -166,13 +139,6 @@ takes exactly these three keys, all required:
   directly. A definition declaring `name: data`, instantiated as `primary`,
   yields the volume `primary.data`; a second instantiation named `replica`
   yields `replica.data`.
-
-`uniac plan` adds it as a fourth column on the instance row:
-
-```
-Deploying
-  database (stateful)  postgres:18-alpine  public: 5432 (tcp)  volume: database.data (10GB)
-```
 
 Once deployed the volume is a project-scoped entity that outlives any single
 deploy; what it is doing — size, lifecycle state, which service holds it — is
@@ -199,6 +165,10 @@ env:
 - **`self`** is the reflexive scope — the declaring service's own builtins and
   variables — and **`host`** is the only builtin: the platform-allocated
   internal hostname, the one fact the platform contributes to the environment.
+- **Chains resolve transitively, and `self` stays bound to the service that
+  *declared* the value, never the one that referenced it.** A consumer reading
+  `${{database.DATABASE_URL}}` therefore receives the database's own host and
+  password — which is what makes the exported-URL pattern below work.
 - **Names resolve at plan time; values resolve at deploy time**, by the
   platform, and are injected at container start — **exactly** the resolved
   map, nothing more.
@@ -270,58 +240,17 @@ listen port.
 
 ## What fails at plan time
 
-Each message below is printed as `Error: ` plus the origin that decided it:
-`uniac.yaml: ` for a manifest-reader failure — often further qualified
-`resource "<n>": `, `service "<n>": `, or
-`deployment "<d>": instance "<i>": ` — and `deployment "<d>": ` for a
-composition failure. Target resolution and the four
-build-source existence checks carry no `uniac.yaml: ` prefix; the latter run
-after the manifest itself has decoded, against the instantiated service, so
-their `service "<n>": ` names the deployment's **instance** — where a
-`uniac.yaml: `-prefixed `service "<n>": ` names the definition.
-
-| Condition | Error |
-|---|---|
-| Unknown field anywhere | `field ports not found in type registry.serviceSchema` |
-| Unknown resource `type` | `unknown type "widget" (supported: service, stateful, deployment)` |
-| `runtime` other than `yaml` | `runtime "python" is not supported (only "yaml")` |
-| Service declaring neither source | `service "a" declares no source (set image: or build:)` |
-| Service declaring both sources | `service "a" declares both image and build — a service has one source` |
-| `build:` that is neither a string nor a mapping | `resource "a": build: takes a root path or an object; use "." for defaults` |
-| Unknown key inside the `build` mapping | `field args not found in type registry.fields` |
-| Absolute build path | `service "a": build root: "/abs/path" is absolute — build paths are relative` (likewise `build context:`, `build dockerfile:`) |
-| Build path escaping its anchor | `service "a": build root: "../outside" escapes the directory it is declared against` |
-| Build root missing on disk | `service "web": build root "api" does not exist` |
-| Build context missing on disk | `service "web": build context "api/frontend" does not exist` |
-| No Dockerfile, and none named | `service "web": no Dockerfile at the build root . — add one, set build.dockerfile, or set image:` |
-| Named dockerfile missing | `service "web": dockerfile "api/deploy/Dockerfile.prod" not found` |
-| `volumes` on a non-stateful service | ``service "db" declares volumes but is not stateful — durable storage needs the single-writer guarantee (`type: stateful`)`` |
-| More than one volume on a service | `service "db" declares 2 volumes; one volume per service for now` |
-| Missing required key in a volume entry | `resource "db": volumes[0]: 'name' is required` (likewise `'size_gb'`, `'mount_path'`) |
-| Volume name outside the grammar | `service "db": volume name "pg_data" must be a lowercase label (dashes inside, no dots — the instance name scopes it)` |
-| Non-positive size | `service "db": volume "data" needs a positive size_gb` |
-| Mount path not a normalized absolute path | `service "db": volume "data": mount_path "data" must be a normalized absolute path (not /)` |
-| Unknown key inside a volume entry | `field size not found in type registry.volumeSchema` |
-| Composed volume name too long | ``deployment "d": service "<instance>": composed volume name "<instance>.data" does not fit the platform grammar (`<instance>.<local>`, lowercase, one dot, at most 127 chars)`` |
-| Reserved env key | `env key "host" is reserved for ${{self.host}}` |
-| Malformed reference | `malformed reference at "${{ Bad.VAR }}" — expected ${{service.VAR}} or ${{self.VAR}}` |
-| `${{self.X}}` with no such own variable | `env U references ${{self.MISSING}} but no such variable is declared` |
-| Reference to an in-set instance's missing variable | `env U references database.NOPE, but "database" declares no such variable (available: host, DATABASE_URL)` |
-| Reference chain that never grounds in a literal | `value-resolution cycle a.X → a.Y → a.X never grounds in a literal` |
-| Unknown ingress kind | `public port 80 claims unknown exposure kind "grpc" (supported: http, tcp)` |
-| Bare integer in `public_ports` | ``cannot unmarshal !!int `8080` into registry.publicPortSchema`` |
-| Instance drawing from a missing definition | `instance "a": no service "nope"` |
-| Deployment instantiating nothing | `resource "d" must instantiate at least one service` |
-| Targeting a service | `resource "api" is a service — services are reusable definitions, not directly deployable; instantiate it in a deployment: …` (a snippet showing the fix follows) |
-| `default` naming a service | `default "a" is a service — only deployments are deployable targets` |
-| Instance name outside the grammar | `service instance name "Bad-Name-" must match ^[a-z0-9]+(?:(?:__?\|-+)[a-z0-9]+)*$` |
-| Manifest with no deployment | `uniac.yaml declares no deployment — services are reusable definitions; add one: …` (a snippet showing the fix follows) |
-| Several deployments, no `default` | `uniac.yaml has multiple deployments and no 'default'; name one (have: d1, d2)` |
-
-The bare `build:` key with no value, a non-string scalar such as `build: 5`, and
-a sequence all produce the same `takes a root path or an object` message. The
-not-stateful gate fires before every other volume rule, and within an entry the
-order is name, then `size_gb`, then `mount_path`.
+`uniac plan` decodes the whole manifest offline and exits 1 on the first
+failure, naming the rule and the resource that broke it. **It resolves only the
+deployment it targets**: schema and decode errors surface from any resource,
+but the build-source and reference checks below run on that one deployment
+alone — so a multi-deployment manifest is verified only by planning each
+deployment by name, never by a bare `uniac plan`. Three checks are not
+visible in the schema above: it stats the build sources on disk (`root`,
+`context`, and the Dockerfile must exist); a reference chain must ground in a
+literal, so a resolution cycle fails; and only a deployment is a deployable
+target, whether named as `default` or as the argument. Run `uniac plan` to see
+the exact message.
 
 What is **not** checked locally: any reference to a name outside the deployed
 set. It passes through by design, and a dangling one surfaces at deploy time as
@@ -332,65 +261,10 @@ a warning with the variable left unset — never as a failure. See Wiring, below
 `uniac plan --json` prints `{resource, digest, deployable}`. The deployable is
 the canonical, target-free artifact the platform consumes — the manifest after
 every default, resolution, and canonicalization has been applied. Read it, not
-the YAML, when you need to know what will actually ship:
-
-```json
-{
-  "kind": "deployable",
-  "services": [
-    {
-      "container": {
-        "source": {
-          "ref": "mendhak/http-https-echo:31"
-        }
-      },
-      "env": {
-        "GREETING": "hello"
-      },
-      "name": "web",
-      "public_ports": [
-        {
-          "port": 8080,
-          "type": "http"
-        }
-      ],
-      "start_command": "node index.js"
-    }
-  ]
-}
-```
-
-The container source is a two-arm union. A pulled service carries
-`"source": { "ref": "…" }`; a built one carries `"source": { "build": { … } }`,
-with every field omitted at its default — so `build: .` serializes as
-`"build": {}` and the fully refined form as:
-
-```json
-"container": { "source": { "build": {
-  "context": "frontend",
-  "dockerfile": "deploy/Dockerfile.prod",
-  "root": "api",
-  "target": "production"
-} } }
-```
-
-`ref` and `build` are mutually exclusive, and build paths are canonical and
-root-relative.
-
-A `type: stateful` service's entry additionally carries `"kind": "stateful"`;
-stateless entries omit the field. A declared volume rides on the service as a
-single object — never a list, and there is no project-level volume section:
-
-```json
-"volume": {
-  "mount_path": "/var/lib/postgresql/data",
-  "name": "database.data",
-  "size_gb": 10
-}
-```
-
-`volume.name` is the composed entity name, never the local one. The key is
-absent for any service that declares no volume.
+the YAML, when you need to know what will actually ship; run the command to see
+its shape. Build paths in the artifact are canonical and root-relative, and
+defaults are omitted rather than spelled out — so distinct spellings of one
+declaration serialize identically.
 
 Its `digest` is the release identity, and it is content-addressed: the services
 are name-sorted, claim lists are canonicalized by `(port, type)`, and env keys
@@ -449,8 +323,9 @@ resources:
 ```
 
 ```sh
-uniac deploy database    # provider first
-uniac deploy api-web     # then the consumer
+uniac plan database; uniac plan api-web   # verify each deployment by name
+uniac deploy database                     # provider first
+uniac deploy api-web                      # then the consumer
 ```
 
 Keep deployment and instance names aligned with the service they ship, and keep
@@ -466,24 +341,15 @@ stateful services you name and wire individually, each with its own address.
 **References name the deployed instance, never the definition** (the scope
 rule above). Getting this backwards is the most common wiring bug, and it
 fails silently: a reference to a name that is not an instance in the deployed
-set is treated as a *cross-deployment* reference and passes through.
+set is treated as a *cross-deployment* reference and passes through. Because
+each service gets its own deployment, essentially every cross-service reference
+in a real system is exactly that: unchecked locally, resolved remotely. Spell
+instance names carefully, and confirm with `uniac status` that the provider is
+actually running under the name you referenced.
 
-| Reference | Resolved |
-|---|---|
-| `${{self.host}}` | The declaring service's own internal hostname. The only builtin. |
-| `${{self.VAR}}` | Its own declared variable. Checked at plan time. |
-| `${{inst.VAR}}` where `inst` is in the same deployment | Checked at plan time — a missing variable fails the plan. |
-| `${{inst.VAR}}` where `inst` is elsewhere in the project | Passes through; the platform resolves it at deploy time against the project's other deployments. **Not checked locally.** |
-
-Because each service gets its own deployment, essentially every cross-service
-reference in a real system is the last row: unchecked locally, resolved
-remotely. Spell instance names carefully, and confirm with `uniac status` that
-the provider is actually running under the name you referenced.
-
-**A dangling reference never fails a deploy.** The affected variable is left
-unset and the run returns a warning — it lands as a `warning` row on the
-service in the final frame's state block. Check for `warning` rows on every
-deploy; an unset `DATABASE_URL` is otherwise a runtime mystery.
+**A dangling reference never fails a deploy.** The variable is left unset and
+the run warns. Check every deploy for warnings — an unset `DATABASE_URL` is
+otherwise a runtime mystery. See [cli.md](cli.md).
 
 **Consumer propagation.** After a successful deploy the platform re-resolves the
 project's other services and recreates any whose injected values changed. So
@@ -505,8 +371,8 @@ Exposure is claimed per instance by `public_ports`, above. Operationally:
   reachable only from the project's other services — the correct default for
   databases, caches, workers, and internal APIs.
 - Use `http` for anything speaking HTTP. Use `tcp` only when a client cannot
-  speak HTTP, and read the allocated public `host:port` back from the
-  service's `endpoint` row in `uniac status`.
+  speak HTTP, and read the allocated public `host:port` back with
+  `uniac status`.
 - **Respect the tri-state on redeploys.** Whether a `public_ports` block is
   omitted, empty, or spelled out is itself the instruction a redeploy carries,
   and the three are not interchangeable. So never "clean up" a `public_ports`
@@ -539,16 +405,11 @@ invented field fails the plan.
 
 ### Operating the system
 
-```sh
-uniac status                   # every service and volume the project holds
-uniac status api               # one service
-```
-
-The full row vocabulary — `v<N>`, `endpoint`, `volume`, `hold`, `warning`, and
-the rest — is in [cli.md](cli.md). Two readings matter against the manifest: a
-service that never reaches its expected state with `hold` rows is a platform
+`uniac status` reports every service and volume the project holds;
+`uniac status <service>` narrows to one. Two readings matter against the
+manifest: a service that never reaches its expected state is a platform
 condition, not a manifest bug; and a service the project runs appears in
 `status` whether or not the manifest still describes it — what is running is
-not a client's opinion. Deleting a resource from `uniac.yaml` does not remove
-the service; the CLI has no removal command, so retire a service from the
-dashboard.
+not a client's opinion. Row vocabulary is in [cli.md](cli.md). Deleting a
+resource from `uniac.yaml` does not remove the service; the CLI has no removal
+command, so retire a service from the dashboard.
