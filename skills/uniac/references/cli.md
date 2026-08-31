@@ -95,8 +95,8 @@ dependency can never be mistaken for a meaning the CLI assigned.
 |---|---|---|---|
 | 0 | — | Success. | Read the state it reports. |
 | 2 | `usage` | Malformed invocation. Nothing was sent anywhere. | Fix the arguments. |
-| 3 | `auth` | Missing credential — none stored, or the stored one expired. | `uniac auth login`, or set `UNIAC_ACCESS_TOKEN`. |
-| 4 | `not_linked` | Directory not bound to a remote project. | `uniac link`, or set `UNIAC_PROJECT_URL`. |
+| 3 | `auth` | Missing credential for the platform the run addresses — none stored, or the stored one expired. | `uniac auth login`, or set `UNIAC_ACCESS_TOKEN`. |
+| 4 | `not_linked` | Directory not bound to a remote project, or bound to a different platform than `UNIAC_PLATFORM_URL` selects. | `uniac link`, unset the selector, or set `UNIAC_PROJECT_URL`. |
 | 5 | `manifest` | `uniac.yaml` does not describe a valid system. | Fix the manifest; `uniac plan` reproduces most of these offline. |
 | 6 | `build` | Failed obtaining or materializing a container — daemon, image reference, or the Dockerfile build itself. | Check the Docker daemon and the image reference; for a `build:` service, reproduce with `docker build`. |
 | 7 | `push` | Failed publishing the image to the registry. | Usually retryable. |
@@ -135,9 +135,12 @@ Rules for consuming this:
   identical command could succeed with nothing else changed. Prefer it to your
   own heuristics.
 - **Read the message on exit 70 before calling it a CLI defect.** As of
-  v0.3.12 exits 4 and 10 are reserved but unreached: a deploy that outlives its
-  deadline arrives as exit 8, and an unlinked directory as exit 3 when no
-  credential is stored, or as 70 with one — never 4.
+  v0.3.14 exit 10 is reserved but unreached — a deploy that outlives its
+  deadline arrives as exit 8. Exit 4 is real: `deploy` raises it when the
+  account holds no projects, and both state gateways raise it before any
+  network call when the directory's binding and an explicit
+  `UNIAC_PLATFORM_URL` name different platforms. An unlinked directory is
+  still exit 3 when no credential is stored, or 70 with one — never 4.
 
 `plan`, `init`, `link`, and `auth` are **not** state-gateway commands: they are
 human-oriented and exit `1` on error, `2` on a usage error. `plan`, `init`, and
@@ -150,8 +153,9 @@ and its confirmation to stderr and leaves stdout empty.
 |---|---|
 | `UNIAC_ACCESS_TOKEN` | Bypasses interactive login. |
 | `UNIAC_PROJECT_URL` | Targets a project by full URL or bare slug, bypassing `.uniac/deploy.json` and the interactive picker. `deploy` only — see below. |
+| `UNIAC_PLATFORM_URL` | Platform gateway origin for the entry actions — `auth login`, `project create`, `link` (default `https://api.uniac.ai`). Operations in a linked directory follow the binding's recorded platform instead; an explicit value contradicting the binding exits 4 naming both. |
 | `UNIAC_PROGRESS` | `1` forces stderr progress lines, `0` silences them. Never affects stdout. |
-| `UNIAC_AUTH_HOST` | The host serving the `/cli/auth` handoff (default `uniac.ai`). |
+| `UNIAC_AUTH_HOST` | The host serving the `/cli/auth` handoff. The default platform signs in at `uniac.ai`; any other `UNIAC_PLATFORM_URL` requires this set — the CLI never derives a sign-in host from a platform's name. |
 | `UNIAC_STORE_DIR` | Root of the local artifact store (default `~/.uniac/store`), the directory `uniac deploy` writes each run's release record under. |
 
 `UNIAC_ACCESS_TOKEN` + `UNIAC_PROJECT_URL` together are the fully headless
@@ -167,4 +171,11 @@ directory it then fails with exit 3 and a misleading not-linked message, which
 points at the wrong fix. Observation needs the real link binding: run
 `uniac link` once, and unset `UNIAC_PROJECT_URL` when running `status`.
 
-`.uniac/deploy.json` holds `{project_slug, project_name, gateway_url}`.
+`.uniac/deploy.json` holds
+`{project_slug, project_name, gateway_url, platform_url}` — the binding
+records everything operations on the directory need, its platform included,
+so a linked directory never resolves its platform from the environment.
+Sessions in `~/.uniac/auth.json` are likewise stored per platform, keyed by
+platform gateway origin: signing in to one platform never disturbs a session
+held for another, and acting where no session is stored exits 3 naming the
+platform.
