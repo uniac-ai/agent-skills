@@ -1,0 +1,41 @@
+name: re-vendor uniac.ai
+
+# uniac.ai serves agents/agents.md vendored into the UniacWeb build: the
+# Pages project watches UniacWeb's `release` branch and re-fetches this
+# repository's main at every build. This repository is therefore a build
+# input of a pipeline it does not live in — a change to the served
+# document here produces no build there on its own. This workflow is the
+# missing trigger: when the document changes on main (or on demand), it
+# POSTs the uniac.ai Pages deploy hook and the rebuild re-vendors main.
+#
+# The hook URL is a Cloudflare Pages deploy hook for the uniac.ai
+# project's `release` branch, created in the Pages dashboard and stored
+# as the UNIAC_AI_PAGES_DEPLOY_HOOK repository secret. Without the
+# secret the workflow warns and exits 0 — the document then goes live
+# with the next UniacWeb release build instead.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "agents/agents.md"
+  workflow_dispatch:
+
+concurrency:
+  group: revendor-web
+  cancel-in-progress: false
+
+jobs:
+  trigger-rebuild:
+    runs-on: ubuntu-latest
+    steps:
+      - name: POST the Pages deploy hook
+        env:
+          HOOK: ${{ secrets.UNIAC_AI_PAGES_DEPLOY_HOOK }}
+        run: |
+          if [ -z "$HOOK" ]; then
+            echo "::warning::UNIAC_AI_PAGES_DEPLOY_HOOK is not set — uniac.ai/agents.md stays on its last vendored copy until the next UniacWeb release build"
+            exit 0
+          fi
+          curl -fsS -X POST "$HOOK" >/dev/null
+          echo "uniac.ai rebuild triggered — the build re-vendors agents/agents.md from main"
