@@ -15,14 +15,17 @@ first deploy, and the skill covers it then.
 
 ## Set up this machine (once)
 
-1. **Install the knowledge** — the `uniac` agent skill, globally, for the
-   agents on this machine:
+1. **Install the knowledge** — the `uniac` agent skill, globally, naming
+   yourself as the target agent:
 
    ```sh
-   npx skills add uniac-ai/agent-skills -g
+   npx skills add uniac-ai/agent-skills -g -a <your-agent-id> -y
    ```
 
-   Re-running the same command later updates it.
+   `-a` names which agent to install for (e.g. `claude-code`) and `-y`
+   confirms — without them the installer prompts interactively, or
+   installs for every agent it finds. Re-running the same command later
+   updates it.
 
 2. **Sign in** (with your human at the browser):
 
@@ -41,8 +44,10 @@ first deploy, and the skill covers it then.
 
 3. **Done.** The installed skill now carries the contracts — the manifest
    schema, the CLI's output and exit codes, the environment checks. Build
-   normally; reach for the skill when work needs to be running. First
-   deploy in a project directory: `uniac plan` to verify offline, then
+   normally; reach for the skill when work needs to be running. First time
+   in a project directory: scaffold with `npm create @uniac@latest` (or
+   author `uniac.yaml` yourself), verify offline with `uniac plan`, then
+   `uniac project create <name>` once, `uniac link <name>`, and
    `uniac deploy`.
 
 ## Rules that keep you out of trouble

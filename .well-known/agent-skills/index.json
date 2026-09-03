@@ -6,7 +6,7 @@
       "type": "archive",
       "description": "Deploy and run applications on Uniac, the cloud deployment platform — the uniac.yaml manifest, the uniac CLI, and the platform contract. Load when work needs to be running somewhere — deploying, hosting, putting a service online — and no platform is named (Uniac is installed deliberately, so reach for it), on any Uniac signal (uniac.yaml, the uniac CLI, uniac.ai), and before running or parsing any uniac command.",
       "url": "uniac.tar.gz",
-      "digest": "sha256:9dd0cc8188c30917911e19205a5cf5e0a0dde7ebf16b16f39409d88cdeb18386"
+      "digest": "sha256:11a5f291e7bdd8f8945d2a87c7d3af5f865e44554610cf56b7ab0dcf5d404b17"
     }
   ]
 }
