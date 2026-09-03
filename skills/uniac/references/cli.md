@@ -96,7 +96,7 @@ dependency can never be mistaken for a meaning the CLI assigned.
 | 0 | — | Success. | Read the state it reports. |
 | 2 | `usage` | Malformed invocation. Nothing was sent anywhere. | Fix the arguments. |
 | 3 | `auth` | Missing credential for the platform the run addresses — none stored, or the stored one expired. | `uniac auth login`, or set `UNIAC_ACCESS_TOKEN`. |
-| 4 | `not_linked` | Directory not bound to a remote project, or bound to a different platform than `UNIAC_PLATFORM_URL` selects. | `uniac link`, unset the selector, or set `UNIAC_PROJECT_URL`. |
+| 4 | `not_linked` | Directory not bound to a remote project, or bound to a different platform than `UNIAC_PLATFORM_URL` selects. | `uniac link` — after `uniac project create <name>` when the account holds no projects; or unset the selector, or set `UNIAC_PROJECT_URL`. |
 | 5 | `manifest` | `uniac.yaml` does not describe a valid system. | Fix the manifest; `uniac plan` reproduces most of these offline. |
 | 6 | `build` | Failed obtaining or materializing a container — daemon, image reference, or the Dockerfile build itself. | Check the Docker daemon and the image reference; for a `build:` service, reproduce with `docker build`. |
 | 7 | `push` | Failed publishing the image to the registry. | Usually retryable. |
@@ -142,10 +142,11 @@ Rules for consuming this:
   `UNIAC_PLATFORM_URL` name different platforms. An unlinked directory is
   still exit 3 when no credential is stored, or 70 with one — never 4.
 
-`plan`, `init`, `link`, and `auth` are **not** state-gateway commands: they are
-human-oriented and exit `1` on error, `2` on a usage error. `plan`, `init`, and
-`auth` print their results to stdout; `link` writes its listing, its prompt,
-and its confirmation to stderr and leaves stdout empty.
+`plan`, `init`, `project`, `link`, and `auth` are **not** state-gateway
+commands: they are human-oriented and exit `1` on error, `2` on a usage
+error. `plan`, `init`, `project create`, and `auth` print their results to
+stdout; `link` writes its listing, its prompt, and its confirmation to
+stderr and leaves stdout empty.
 
 ## Headless operation
 

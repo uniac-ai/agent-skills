@@ -36,12 +36,17 @@ internal hostname, and what every `${{...}}` reference resolves against.
 ## The loop
 
 ```sh
-uniac init      # scaffold uniac.yaml (or author it from the manifest reference)
-uniac plan      # resolve and preview — offline, no auth, no Docker
-uniac link      # bind this directory to a remote project
-uniac deploy    # materialize + push + register, then watch it settle
-uniac status    # what the project is running now
+npm create @uniac@latest     # scaffold uniac.yaml — runs `uniac init` (or author it from the manifest reference)
+uniac plan                   # resolve and preview — offline, no auth, no Docker
+uniac project create <name>  # once: allocate the project on the platform
+uniac link <name>            # bind this directory to it
+uniac deploy                 # materialize + push + register, then watch it settle
+uniac status                 # what the project is running now
 ```
+
+Creating and linking are separate acts: `link` binds only to a project
+that already exists, so an account with none creates one first.
+Thereafter the loop is edit → `plan` → `deploy`.
 
 **`plan` is the verification loop**: no network, no credentials, no Docker.
 Iterate manifest → `uniac plan` until clean; a manifest that fails `plan`
@@ -50,8 +55,9 @@ the one deployment it targets**, so verify a multi-deployment manifest with
 `uniac plan <name>` for each — a bare `uniac plan` leaves the others
 unchecked.
 
-Only `deploy` needs the Docker daemon, and only `link`, `deploy`, `status`,
-and `auth login` need the network; `init` and `plan` are fully offline.
+Only `deploy` needs the Docker daemon, and only `project create`, `link`,
+`deploy`, `status`, and `auth login` need the network; `init` and `plan`
+are fully offline.
 `uniac -h` lists the subcommands and `uniac <cmd> -h` gives one's flags —
 read those rather than trusting a remembered flag.
 
@@ -64,10 +70,11 @@ Always in force:
 - **Never pass `-h` to `uniac auth logout`, `auth status`, or `auth token`**
   — they parse no flags; `auth logout -h` performs the logout. Only
   `auth login` prints help.
-- **Only `init`, `link`, `deploy`, and `auth login`/`logout` change anything**
-  — and `init` writes `uniac.yaml` on the spot, taking every default in
-  silence when nothing is attached to answer its prompts. `plan`, `status`,
-  and `version` are read-only, locally and remotely.
+- **Only `init`, `project create`, `link`, `deploy`, and `auth
+  login`/`logout` change anything** — `init` writes `uniac.yaml` on the
+  spot, taking every default in silence when nothing is attached to answer
+  its prompts, and `project create` allocates a remote project. `plan`,
+  `status`, and `version` are read-only, locally and remotely.
 - `deploy` and `status` are state gateways: exactly one plain-text final
   frame on stdout, narration only on stderr. Branch on the exit status;
   the closed code set is in [references/cli.md](references/cli.md).
