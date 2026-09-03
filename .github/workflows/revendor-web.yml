@@ -8,11 +8,14 @@ name: re-vendor uniac.ai
 # missing trigger: when the document changes on main (or on demand), it
 # POSTs the uniac.ai Pages deploy hook and the rebuild re-vendors main.
 #
-# The hook URL is a Cloudflare Pages deploy hook for the uniac.ai
-# project's `release` branch, created in the Pages dashboard and stored
-# as the UNIAC_AI_PAGES_DEPLOY_HOOK repository secret. Without the
-# secret the workflow warns and exits 0 — the document then goes live
-# with the next UniacWeb release build instead.
+# The hook URLs are Cloudflare Pages deploy hooks, created in the Pages
+# dashboard and stored as repository secrets — one per environment's
+# domain-owning project (each hook is bound to a project and branch;
+# both projects build UniacWeb, whose build fetches this repository):
+#   UNIAC_AI_PAGES_DEPLOY_HOOK      — prod project, `release` branch
+#   UNIAC_AI_DEV_PAGES_DEPLOY_HOOK  — dev project, `main` branch
+# Each is optional: an unset one warns and is skipped — that
+# environment then re-vendors with its next UniacWeb build instead.
 
 on:
   push:
@@ -29,13 +32,24 @@ jobs:
   trigger-rebuild:
     runs-on: ubuntu-latest
     steps:
-      - name: POST the Pages deploy hook
+      - name: POST the Pages deploy hooks
         env:
-          HOOK: ${{ secrets.UNIAC_AI_PAGES_DEPLOY_HOOK }}
+          PROD_HOOK: ${{ secrets.UNIAC_AI_PAGES_DEPLOY_HOOK }}
+          DEV_HOOK: ${{ secrets.UNIAC_AI_DEV_PAGES_DEPLOY_HOOK }}
         run: |
-          if [ -z "$HOOK" ]; then
-            echo "::warning::UNIAC_AI_PAGES_DEPLOY_HOOK is not set — uniac.ai/agents.md stays on its last vendored copy until the next UniacWeb release build"
-            exit 0
+          fired=0
+          if [ -n "$PROD_HOOK" ]; then
+            curl -fsS -X POST "$PROD_HOOK" >/dev/null
+            echo "prod rebuild triggered — uniac.ai re-vendors agents/agents.md from main"
+            fired=1
+          else
+            echo "::warning::UNIAC_AI_PAGES_DEPLOY_HOOK is not set — uniac.ai stays on its last vendored copy until the next UniacWeb release build"
           fi
-          curl -fsS -X POST "$HOOK" >/dev/null
-          echo "uniac.ai rebuild triggered — the build re-vendors agents/agents.md from main"
+          if [ -n "$DEV_HOOK" ]; then
+            curl -fsS -X POST "$DEV_HOOK" >/dev/null
+            echo "dev rebuild triggered — the dev domain re-vendors agents/agents.md from main"
+            fired=1
+          else
+            echo "::warning::UNIAC_AI_DEV_PAGES_DEPLOY_HOOK is not set — the dev domain stays on its last vendored copy until its next UniacWeb build"
+          fi
+          [ "$fired" = "1" ] || echo "::warning::no hook secret is set; nothing was triggered"
