@@ -43,9 +43,6 @@ npx -y @uniac/cli auth login
 - Your human completes sign-in in the browser, so run it on a machine
   where they can reach one.
 - The stored session lasts three days; then the same sign-in repeats.
-- Never pass `-h` to `uniac auth logout`, `uniac auth status`, or
-  `uniac auth token` — they parse no flags, and `auth logout -h` logs you
-  out.
 
 ## 3. Done
 
