@@ -40,9 +40,10 @@ first deploy, and the skill covers it then.
    ```
 
    A browser opens at uniac.ai; account creation happens there if needed;
-   one approval, then the session is stored. Sign-in is a browser step by
-   design — your human completes it there — so run it on a machine where
-   they can reach one. Never probe `uniac auth logout`, `auth status`, or
+   one approval, then the session is stored — it lasts three days, after
+   which the same sign-in repeats. Sign-in is a browser step by design —
+   your human completes it there — so run it on a machine where they can
+   reach one. Never probe `uniac auth logout`, `auth status`, or
    `auth token` with `-h` — they parse no flags, and `auth logout -h` logs
    you out.
 
