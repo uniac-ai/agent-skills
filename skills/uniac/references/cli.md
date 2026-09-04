@@ -1,182 +1,112 @@
+# CLI
 
-# The `uniac` CLI as an operational surface
+`uniac …` can run as `npx -y @uniac/cli …` with Node ≥ 18, or through a
+global installation from `npm i -g @uniac/cli`.
 
-Two commands — `deploy` and `status` — are **state gateways**: once the
-arguments parse, each leaves exactly one plain-text **final frame** on stdout
-and says nothing else there. The command list, the flags-before-positionals
-rule, the `auth -h` hazard, and the environment requirements live in the skill
-body; this document is the contract beneath them.
+For commands accepting positional arguments, flags precede them:
+`uniac plan --json database`. Parsing stops at the first positional argument;
+trailing flags are ignored.
+`uniac -h` lists commands and `uniac <command> -h` lists flags.
 
-## Command behavior
+## Commands
 
-`deploy` needs a running Docker daemon for both sources. A service declaring
-`image:` is pulled locally with **your own** docker credentials (`config.json`
-and its helpers, exactly like `docker pull`); a service declaring `build:` is
-built locally from your project tree. Either way the resulting image is pushed
-to the project registry, and the two paths are identical from there on. A
-private base image your local docker cannot pull fails the build phase.
-Builds always target `linux/amd64` regardless of host architecture, and run on
-every deploy — nothing is cached between runs beyond docker's own layer cache,
-and no build arguments are injected. `uniac plan` never builds and never
-contacts the Docker daemon, even for a `build:` service — it only checks that
-the build root, context, and Dockerfile exist on disk.
-
-The link phase resolves a supplied target — a `.uniac/deploy.json` binding or
-`UNIAC_PROJECT_URL` — without contacting the platform, and the credential is
-not validated until the first platform call, which comes after the build. So a
-build failure reproduces offline with a throwaway slug and a dummy token.
-
-`--full` adds each instance's declared env and start command to the preview's
-text form; run `uniac plan --full` to see the shape. It shapes the text form
-only — `uniac plan --json` carries `env` and `start_command` either way — and
-the deployable *artifact* names the instance, never the definition it was drawn
-from, though the `--full` text form names both.
-
-Both `plan` and `deploy` target a **deployment** (resolution order in
-[manifest.md](manifest.md)), and as of v0.3.12 it must instantiate exactly one
-service: `plan` previews a multi-service deployment happily; `deploy` refuses
-it with exit 5. `deploy` blocks until the platform's deployment task settles or
-its deadline expires (minutes, not seconds), and reports what the service
-settled as — registration alone is not success.
-
-Flag parsing stops at the first non-flag token, and an *undefined* flag after
-the positional is silently ignored too — `uniac plan main --nope` exits 0
-rather than 2 — so a flag that had no effect is the only signal. Each command's
-own flags are in `uniac <cmd> -h`.
-
-## The output contract
-
-There is no machine encoding to select: no `-o`/`--output` flag and no
-`UNIAC_OUTPUT` variable exist, and passing `-o json` is a usage error. The text
-frame is the output; the only JSON surface is `uniac plan --json` — the
-deployable artifact, a different mechanism — emitting
-`{resource, digest, deployable}`, whose keys are stable. Narration, the live
-progress a run may emit while it is in flight, is a stderr concern only:
-`UNIAC_PROGRESS` (see the environment table below) forces or silences it and
-never changes stdout. A terminal is never consulted for the frame either — the
-same run piped, captured, or under a pty leaves identical bytes on stdout
-whatever the watch mode.
-
-A `deploy` frame reports what the run did and, when a project was resolved, the
-state that resulted. A failure carries its code on the frame's root line, and
-marks that failure retryable there when it is; **`deploy` prints no error block
-at all** — the code and the exit status are the machine contract. **A state
-half is not evidence the platform was reached**: it appears once the link phase
-has resolved a *named* project, so a purely local failure in a linked directory
-still carries one.
-
-`uniac status` writes the state alone, and it is the only command that prints
-an error block. The state it reports is the state a deploy frame reports, so
-when a deploy's account looks stale or incomplete, `uniac status` is the
-authoritative re-read.
-
-That state is a report for a human reader, not a wire format: branch on the
-exit status rather than parsing it. **An omitted row is an absent fact, never a
-hidden one** — two cases break that, and both are among the consumption rules
-below. What the state reports, per service, is what the platform is running
-*now*, not what was shipped: it carries no image reference and no digest.
-Volume entities are reported only by a whole-project `uniac status` — never by
-`uniac status <service>`, never by a deploy frame. Run `uniac status` against a
-linked project to see which rows exist.
-
-**A run that got past argument parsing still leaves its frame, pass or fail.**
-The one exception is a usage error (exit 2) and `-h` (exit 0): both write only
-to stderr and leave stdout empty.
-
-## Exit statuses and error codes
-
-Each code maps to exactly one exit status: `deploy` carries the code on its
-frame's root line and prints no error block, `uniac status` carries it in its
-error block, and in both the exit status is the same word. **1 is deliberately
-unassigned** by the state-gateway commands, so a bare `exit 1` from some future
-dependency can never be mistaken for a meaning the CLI assigned.
-
-| Exit | `error` code | Meaning | What to do |
-|---|---|---|---|
-| 0 | — | Success. | Read the state it reports. |
-| 2 | `usage` | Malformed invocation. Nothing was sent anywhere. | Fix the arguments. |
-| 3 | `auth` | Missing credential for the platform the run addresses — none stored, or the stored one expired. | `uniac auth login`, or set `UNIAC_ACCESS_TOKEN`. |
-| 4 | `not_linked` | Directory not bound to a remote project, or bound to a different platform than `UNIAC_PLATFORM_URL` selects. | `uniac link` — after `uniac project create <name>` when the account holds no projects; or unset the selector, or set `UNIAC_PROJECT_URL`. |
-| 5 | `manifest` | `uniac.yaml` does not describe a valid system. | Fix the manifest; `uniac plan` reproduces most of these offline. |
-| 6 | `build` | Failed obtaining or materializing a container — daemon, image reference, or the Dockerfile build itself. | Check the Docker daemon and the image reference; for a `build:` service, reproduce with `docker build`. |
-| 7 | `push` | Failed publishing the image to the registry. | Usually retryable. |
-| 8 | `deploy_failed` | The platform refused the operation — a deployment task that failed, or a read it declined. | Terminal unless `retryable` says otherwise. |
-| 9 | `unreachable` | The platform did not answer; nothing was decided either way. | Retry with backoff. |
-| 10 | `pending` | **Not a failure** — the work is still running. | Re-observe with `uniac status`. |
-| 70 | `internal` | A defect in the CLI. | Report it with the message. |
-
-Rules for consuming this:
-
-- **Branch on the exit status; read the code for detail.** Never match on the
-  message — prose is for people, and rewording it would silently change your
-  behavior.
-- **Never treat exit 10 as failure.** A consumer that does will abandon
-  deployments that are about to succeed.
-- **Treat any unrecognized code as internal.** The set is closed and additions
-  are additive; surface the message rather than guessing.
-- **A credential the platform *rejects* is not `auth`.** Exit 3 is a credential
-  the CLI has no usable copy of, or a `status` with no project name to read by
-  — a working token changes neither. A rejection lands under whatever the run
-  was doing when it was refused: most often exit 8, sometimes 7 or 70. A
-  consumer that branches on exit 3 to re-authenticate never catches a revoked
-  or wrong token, and loops forever on a project it cannot name.
-- **Exit 8 from `uniac status` means the read was refused, not that a
-  deployment failed.** The read that decides the command is the project listing
-  for a whole-project run and the per-service read for
-  `uniac status <service>`. A platform that did not answer that read at all is
-  exit 9, not 8.
-- **Two cases break *an omitted row is an absent fact*.** A deploy that could
-  not read the service's state back says so in a warning. A whole-project
-  `uniac status` whose additive per-service or volumes read was refused says
-  nothing at all and still exits 0 — the facts those reads would have carried
-  are simply missing, and no row admits it. `uniac status <service>` makes no
-  additive read, so the same refusal there is exit 8.
-- `retryable` is the platform's own judgment on whether re-running the
-  identical command could succeed with nothing else changed. Prefer it to your
-  own heuristics.
-- **Read the message on exit 70 before calling it a CLI defect.** As of
-  v0.3.14 exit 10 is reserved but unreached — a deploy that outlives its
-  deadline arrives as exit 8. Exit 4 is real: `deploy` raises it when the
-  account holds no projects, and both state gateways raise it before any
-  network call when the directory's binding and an explicit
-  `UNIAC_PLATFORM_URL` name different platforms. An unlinked directory is
-  still exit 3 when no credential is stored, or 70 with one — never 4.
-
-`plan`, `init`, `project`, `link`, and `auth` are **not** state-gateway
-commands: they are human-oriented and exit `1` on error, `2` on a usage
-error. `plan`, `init`, `project create`, and `auth` print their results to
-stdout; `link` writes its listing, its prompt, and its confirmation to
-stderr and leaves stdout empty.
-
-## Headless operation
-
-| Variable | Effect |
+| Command | Effect and requirements |
 |---|---|
-| `UNIAC_ACCESS_TOKEN` | Bypasses interactive login. |
-| `UNIAC_PROJECT_URL` | Targets a project by full URL or bare slug, bypassing `.uniac/deploy.json` and the interactive picker. `deploy` only — see below. |
-| `UNIAC_PLATFORM_URL` | Platform gateway origin for the entry actions — `auth login`, `project create`, `link` (default `https://api.uniac.ai`). Operations in a linked directory follow the binding's recorded platform instead; an explicit value contradicting the binding exits 4 naming both. |
-| `UNIAC_PROGRESS` | `1` forces stderr progress lines, `0` silences them. Never affects stdout. |
-| `UNIAC_AUTH_HOST` | The host serving the `/cli/auth` handoff. The default platform signs in at `uniac.ai`; any other `UNIAC_PLATFORM_URL` requires this set — the CLI never derives a sign-in host from a platform's name. |
-| `UNIAC_STORE_DIR` | Root of the local artifact store (default `~/.uniac/store`), the directory `uniac deploy` writes each run's release record under. |
+| `init` | Writes a starter `uniac.yaml` with one prebuilt-image service and its deployment. Offline; takes defaults when unattended. `npm create @uniac@latest` invokes it. |
+| `plan [deployment]` | Validates and resolves a manifest locally. No credentials, network, or Docker; validation limits are in [manifest.md](manifest.md). |
+| `project create <name>` | Creates a remote project. Requires authentication and network access. |
+| `link [name-or-slug]` | Creates or replaces the binding between a directory containing `uniac.yaml` and an existing project. Requires authentication and network access; omitting the argument opens a project picker. |
+| `deploy [deployment]` | Builds or pulls an image, uploads it, and requests deployment. Requires a project target, credentials, network access, and Docker. Can also write a directory binding through its project picker. |
+| `status [service]` | Reads remote state for a linked project or one service. Requires credentials and network access. |
+| `auth login` | Starts browser sign-in and stores the resulting session. Reports whether the browser opened and prints the sign-in URL. Requires network access and the user's browser interaction. |
+| `auth status` | Reads stored sessions and their expiry locally. Does not validate credentials or inspect `UNIAC_ACCESS_TOKEN`. |
+| `auth token` | Prints the current token from the environment override or the selected platform's stored session. |
+| `auth logout` | Removes all stored platform sessions. |
+| `version` | Prints the installed version. |
 
-`UNIAC_ACCESS_TOKEN` + `UNIAC_PROJECT_URL` together are the fully headless
-**deploy** path: no picker, no browser. Without a link binding and without the
-override, `uniac deploy` drops into the interactive project picker; unattended
-it fails fast rather than wedging. Set one of the two in CI because the run
-cannot otherwise succeed, not because it would hang.
+## Authentication and project selection
 
-**`uniac status` cannot use the override.** An override names a target but not
-a project, and `status` reads by project name — so the override, which wins
-over the binding, leaves it with no name to read by. Even in a linked
-directory it then fails with exit 3 and a misleading not-linked message, which
-points at the wrong fix. Observation needs the real link binding: run
-`uniac link` once, and unset `UNIAC_PROJECT_URL` when running `status`.
+Sessions are stored per platform in `~/.uniac/auth.json`. An expired stored
+token requires another login; `UNIAC_ACCESS_TOKEN` overrides stored tokens.
 
-`.uniac/deploy.json` holds
-`{project_slug, project_name, gateway_url, platform_url}` — the binding
-records everything operations on the directory need, its platform included,
-so a linked directory never resolves its platform from the environment.
-Sessions in `~/.uniac/auth.json` are likewise stored per platform, keyed by
-platform gateway origin: signing in to one platform never disturbs a session
-held for another, and acting where no session is stored exits 3 naming the
-platform.
+`link` writes `.uniac/deploy.json`, containing
+`{project_slug, project_name, gateway_url, platform_url}`. This records the
+checkout's destination and is not project source. `deploy` and `status` use
+its recorded platform; a conflicting `UNIAC_PLATFORM_URL` fails before a
+network call.
+
+Without a binding or target override, `deploy` opens the project picker.
+An unattended invocation fails if selection requires interaction.
+`UNIAC_ACCESS_TOKEN` and `UNIAC_PROJECT_URL` together permit deployment
+without a browser or picker.
+
+**`UNIAC_PROJECT_URL` overrides the binding but supports deployment only.**
+It supplies no project name for observation, so `status` with this variable
+set fails with exit 3 even in a linked directory. `status` requires a binding
+and the variable unset.
+
+| Variable | Meaning |
+|---|---|
+| `UNIAC_ACCESS_TOKEN` | Access token for the selected platform. |
+| `UNIAC_PROJECT_URL` | Deployment target as a gateway URL or project slug; takes precedence over the directory binding. |
+| `UNIAC_PLATFORM_URL` | Platform API origin for login, `auth token`, project creation, linking, and target overrides. Default: `https://api.uniac.ai`. |
+| `UNIAC_AUTH_HOST` | Browser sign-in host. Defaults to `uniac.ai` for the default platform; required for another platform unless login's `--host` is supplied. |
+| `UNIAC_PROGRESS` | `1` enables progress on stderr; `0` disables it. Does not affect stdout. |
+| `UNIAC_STORE_DIR` | Local release-record directory. Default: `~/.uniac/store`. |
+
+## Deployment
+
+Both `image:` and `build:` require the local Docker daemon. Prebuilt images
+are pulled with local Docker credentials; builds use the declared Dockerfile
+and context. Images target `linux/amd64`. Builds run on each deployment,
+using Docker's layer cache, with no injected build arguments. The resulting
+image is pushed to the project registry.
+
+When a project name and deployment task ID are available, the CLI waits for
+the task to finish. Without either, or if the first task read fails, it can
+return success after registration without observing completion. This includes
+deployment through `UNIAC_PROJECT_URL`. Interrupting the CLI does not cancel
+work already accepted by the platform.
+
+## Output and exit codes
+
+`plan --json` emits the [generated artifact](manifest.md#planning-and-the-generated-artifact).
+Its `env` and `start_command` fields are included regardless of `--full`;
+that flag adds them to the text preview only.
+
+`deploy` and `status` emit one final text report on stdout; progress goes to
+stderr. They have no JSON output mode. Help and argument-parsing errors leave
+stdout empty. Exit status and error codes carry command outcomes; message
+wording and text layout are not a parsing interface. A project label in a
+deploy report can appear even when the failure happened locally.
+
+The following codes apply to `deploy` and `status`:
+
+| Exit | Code | Current meaning |
+|---|---|---|
+| 0 | — | The command succeeded. Deployment observation can be incomplete as described above; a successful status read does not establish application health. |
+| 2 | `usage` | Invalid invocation; no deployment attempted. |
+| 3 | `auth` | No usable credential, or `status` has no project name, including with `UNIAC_PROJECT_URL`. |
+| 4 | `not_linked` | Binding/platform conflict, or deployment's project picker found no projects. |
+| 5 | `manifest` | Manifest or deployment-shape error, including more than one service in the selected deployment. |
+| 6 | `build` | Docker, image-pull, or build failure. |
+| 7 | `push` | Image upload failed. |
+| 8 | `deploy_failed` | Deployment task failure, observation deadline expiry, or a refused platform read. For `status`, this describes the read, not workload health. |
+| 9 | `unreachable` | The platform could not be reached. |
+| 10 | `pending` | Reserved for unfinished work; currently not emitted. |
+| 70 | `internal` | Unclassified error, including unattended project selection failures. Does not by itself establish a CLI defect. |
+
+Exit 1 is unassigned for these two commands. A rejected token can produce
+7, 8, or 70 according to the operation; exit 3 does not cover all credential
+failures. `retryable`, when reported, indicates whether the same operation
+may succeed without changes.
+
+Whole-project `status` can omit service details or volumes when those
+additional reads fail, while still exiting 0. A direct `status <service>`
+read failure instead fails the command. Only whole-project `status` reports
+volumes. Reports contain current service state, not image references or
+digests. [Platform behavior](platform.md) explains what that state establishes.
+
+Other commands generally return 1 on failure and 2 on usage errors.
+`link` writes its listing, prompt, and confirmation to stderr; other
+commands' results go to stdout.

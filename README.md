@@ -33,15 +33,13 @@ In Claude Code the repository is also a plugin marketplace:
 
 ```
 skills/uniac/                 the one skill
-  SKILL.md                    resident knowledge: mental model, loop,
-                              commands, environment, sharp edges
-  references/manifest.md      full uniac.yaml schema, reference grammar,
-                              plan-time rules, multi-service composition
-  references/cli.md           what each command does and needs, the output
-                              contract, typed exit codes, headless env vars
+  SKILL.md                    essential model and reference map
+  references/manifest.md      uniac.yaml schema and local validation
+  references/cli.md           commands, authentication, project selection,
+                              output and exit codes
+  references/platform.md      runtime, networking, storage and removal
 agents/agents.md              the bootstrap page uniac.ai serves to agents —
-                              machine setup and sign-in, before knowledge
-                              is installed
+                              machine setup and sign-in
 tools/validate.py             frontmatter and link gate (what strict
                               installers reject, CI rejects first)
 tools/generate_manifests.py   the plugin name, release, blurb, licence and
@@ -54,34 +52,36 @@ plugin.json                   agent-plugins.org manifest (Cursor imports it)
 LICENSE                       MIT — required by the Cursor marketplace
 ```
 
-Every file under those last four entries is generated. `tools/generate_manifests.py`
-holds the facts they share; CI runs it with `--check`, so editing one of
-them by hand fails the build.
+Plugin manifests, the discovery index, and the skill archive are generated.
+`tools/generate_manifests.py` holds their shared metadata; CI runs it with
+`--check` to verify that the committed files match their sources.
 
-One skill by design: an agent's Uniac task always needs the mental model,
-the manifest, and the CLI together, so they load as one body with the deep
-contracts as on-demand references. A second skill appears only when a
-distinct activity earns it.
+The installed skill provides knowledge for any Uniac task. Its root defines
+the model and links to references by subject; each reference owns that
+subject's detailed contract. `agents/agents.md` serves the website's machine
+setup prompt. It includes an introduction to later use; the installed
+references own the operational details.
 
-The boundary with `agents/agents.md`: the bootstrap document carries only
-what an agent needs *before* the skill is installed (consent etiquette,
-the install line, sign-in); the skill carries everything after. Neither
-restates the other.
+## Content
+
+Write for a capable coding agent. Keep Uniac-specific facts that change its
+decisions: schema, prerequisites, effects, limits, and behavior it cannot
+infer safely. Express prerequisites as conditions, not a prescribed workflow.
+Use actual field names and established terms, defining Uniac concepts once.
+Remove generic advice, invented labels, failure stories, and repeated facts.
+Project-specific instructions belong in the customer's project; public
+contracts remain in this skill rather than copied into customer `AGENTS.md`.
 
 ## Publishing
 
 - Every claim is verified against the released `uniac` binary — prefer
   having run the command over having read about it. A wrong field is worse
   than a missing one; the skill is read by agents that cannot check it.
-- Carry what is durable and unobservable; drop what churns or can simply be
-  run. The reader is a coding agent with a shell, so the skill says what a
-  command *does* and what the surface *is*, and leaves the rest to be looked
-  at. The test for a sentence: if a change to the CLI's rendering would
-  falsify it, it is presentation — cut it, and name the command that shows
-  it. Three things stay however small they look: hazards that must not be
-  discovered by experiment, what has to be known *before* anything can run
-  (the manifest schema), and statements about output that survive a
-  re-render.
+- Keep output contracts independent of display layout. Command help owns
+  the flag inventory; the reference retains parsing hazards that make
+  discovery unsafe. Document actual release behavior in one place, including
+  reserved codes and limitations, rather than a general rule followed by
+  contradictory exceptions.
 - The verification stamp is `VERSION` in `tools/generate_manifests.py`. It is
   the release the contracts were checked against, and the version every
   plugin manifest carries.
