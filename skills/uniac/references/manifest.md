@@ -411,5 +411,9 @@ manifest: a service that never reaches its expected state is a platform
 condition, not a manifest bug; and a service the project runs appears in
 `status` whether or not the manifest still describes it — what is running is
 not a client's opinion. Row vocabulary is in [cli.md](cli.md). Deleting a
-resource from `uniac.yaml` does not remove the service; the CLI has no removal
-command, so retire a service from the dashboard.
+resource from `uniac.yaml` does not remove the service, and the CLI has no
+removal command. Removal happens in the platform dashboard at
+`https://uniac.ai` (sign in with the same account): open the project under
+Projects, then either open a service and choose **Delete service**, or open
+the project's Settings and choose **Delete project** (it asks you to type the
+project's name; this removes every service and endpoint the project holds).
