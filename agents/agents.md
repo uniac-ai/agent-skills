@@ -40,12 +40,11 @@ first deploy, and the skill covers it then.
    ```
 
    A browser opens at uniac.ai; account creation happens there if needed;
-   one approval, then the session is stored.
-
-   No browser on this machine? Have the human run the login where there is
-   one, then `uniac auth token`, and set `UNIAC_ACCESS_TOKEN` here (the CI
-   path). Never probe `uniac auth logout`, `auth status`, or `auth token`
-   with `-h` — they parse no flags, and `auth logout -h` logs you out.
+   one approval, then the session is stored. Sign-in is a browser step by
+   design — your human completes it there — so run it on a machine where
+   they can reach one. Never probe `uniac auth logout`, `auth status`, or
+   `auth token` with `-h` — they parse no flags, and `auth logout -h` logs
+   you out.
 
 3. **Done.** The installed skill now carries the contracts — the manifest
    schema, the CLI's output and exit codes, the environment checks. Build
