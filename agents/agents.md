@@ -19,43 +19,55 @@ first deploy, and the skill covers it then.
 
 ## Set up this machine (once)
 
-1. **Install the knowledge** — the `uniac` agent skill, globally, naming
-   yourself as the target agent:
+### 1. Install the knowledge
 
-   ```sh
-   npx skills add uniac-ai/agent-skills -g -a <your-agent-id> -y
-   ```
+```sh
+# -a <your-agent-id>  the agent this install is for, e.g. claude-code
+# -g                  install for the whole machine
+# -y                  answer the installer's prompts
+npx skills add uniac-ai/agent-skills -g -a <your-agent-id> -y
+```
 
-   `-a` names which agent to install for (e.g. `claude-code`) and `-y`
-   confirms — without them the installer prompts interactively, or
-   installs for every agent it finds. Re-running the same command later
-   updates it.
+- Without `-a` and `-y` the installer prompts interactively, or installs
+  for every agent it finds.
+- Re-running the same command later updates the skill.
 
-2. **Sign in** — the one step that needs your human's hand. Say one line
-   first, so they are at the browser: "Signing you in to Uniac — a browser
-   window will open; sign in (or sign up) once." Then run:
+### 2. Sign in
 
-   ```sh
-   npx -y @uniac/cli auth login
-   ```
+Say this one line first, so your human is at the browser:
 
-   A browser opens at uniac.ai; account creation happens there if needed;
-   one approval, then the session is stored — it lasts three days, after
-   which the same sign-in repeats. Sign-in is a browser step by design —
-   your human completes it there — so run it on a machine where they can
-   reach one. Never probe `uniac auth logout`, `auth status`, or
-   `auth token` with `-h` — they parse no flags, and `auth logout -h` logs
-   you out.
+```text
+Signing you in to Uniac — a browser window will open; sign in (or sign up) once.
+```
 
-3. **Done.** The installed skill now carries the contracts — the manifest
-   schema, the CLI's output and exit codes, the environment checks. Build
-   normally; reach for the skill when work needs to be running. Commands
-   below are written as `uniac …`: run them as `npx -y @uniac/cli …`, or
-   `npm i -g @uniac/cli` once to have `uniac` on PATH. First time in a
-   project directory: scaffold with `npm create @uniac@latest` (or author
-   `uniac.yaml` yourself), verify offline with `uniac plan`, then
-   `uniac project create <name>` once, `uniac link <name>`, and
-   `uniac deploy`.
+Then run:
+
+```sh
+npx -y @uniac/cli auth login
+```
+
+- A browser opens at uniac.ai; account creation happens there if needed;
+  one approval, then the session is stored.
+- Sign-in is a browser step by design — your human completes it there —
+  so run it on a machine where they can reach one.
+- The stored session lasts three days; after that, the same sign-in
+  repeats.
+- Never pass `-h` to `uniac auth logout`, `uniac auth status`, or
+  `uniac auth token` — they parse no flags, and `auth logout -h` logs you
+  out.
+
+### 3. Done
+
+The installed skill now carries everything else — what a project, a
+deployment and a link are, how to verify a manifest offline, how to deploy,
+observe and remove — and the full contracts: the `uniac.yaml` schema, the
+CLI's output and exit codes, the environment checks. Build normally; read
+the skill before the first Uniac work in a project, and reach for it
+whenever work needs to be running.
+
+- Commands in the skill and docs are written as `uniac …`. Run them as
+  `npx -y @uniac/cli …`, or `npm i -g @uniac/cli` once to have `uniac` on
+  PATH.
 
 ## Rules that keep you out of trouble
 
