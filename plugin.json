@@ -1,7 +1,7 @@
 {
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "uniac",
-  "version": "0.3.14",
+  "version": "0.3.15",
   "description": "Deploy and run applications on Uniac, the cloud deployment platform — the uniac.yaml manifest, the uniac CLI, and the platform contract.",
   "author": {
     "name": "Uniac",

@@ -41,7 +41,7 @@ WELL_KNOWN = ROOT / ".well-known" / "agent-skills"
 # The CLI release whose contracts the skills here are verified against.
 # Every manifest carries it as the plugin version, and the repository is
 # tagged v<VERSION> at that release.
-VERSION = "0.3.14"
+VERSION = "0.3.15"
 
 NAME = "uniac"
 OWNER = "Uniac"

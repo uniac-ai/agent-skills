@@ -101,9 +101,6 @@ Always in force:
 
 - **Flags precede the positional argument** (`uniac plan --json database`,
   never `uniac plan database --json` — trailing flags are silently ignored).
-- **Never pass `-h` to `uniac auth logout`, `auth status`, or `auth token`**
-  — they parse no flags; `auth logout -h` performs the logout. Only
-  `auth login` prints help.
 - **Only `init`, `project create`, `link`, `deploy`, and `auth
   login`/`logout` change anything** — `init` writes `uniac.yaml` on the
   spot, taking every default in silence when nothing is attached to answer
@@ -123,7 +120,8 @@ If `uniac` is not on PATH, `npx -y @uniac/cli` runs it under Node.
 non-zero when there is none; it reads only the session file and ignores
 `UNIAC_ACCESS_TOKEN`, so an environment authenticated by that variable still
 reads as not logged in. An expired session reads that way too — log in again.
-`uniac auth login` opens a browser, and sign-up happens there. State
+`uniac auth login` opens a browser and says so — or says it could not, with
+the URL to open — and sign-up happens there. State
 lives in two files: the session in `~/.uniac/auth.json`, the project binding
 in `.uniac/deploy.json` — add `.uniac/` to `.gitignore`, it is per-checkout
 state, not source. Headless: set `UNIAC_ACCESS_TOKEN` (obtain it once via
@@ -145,7 +143,7 @@ At the first Uniac work in a repository, add a managed
 `AGENTS.md` — create the file if absent, say in one line that you did, and
 on later updates replace only that block. Give it the manifest and binding
 locations, the fact that `plan` verifies offline and `deploy` needs the
-local Docker daemon, the flag-order and `auth … -h` hazards, and a note
+local Docker daemon, the flag-order hazard, and a note
 that the `uniac` skill is installed and should be read before any Uniac
 work instead of guessing the schema or the CLI.
 
