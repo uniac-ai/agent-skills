@@ -33,33 +33,67 @@ flat list of running services; deployments are client-side composition.
 **The instance name is the identity**: the deployed service's name, its
 internal hostname, and what every `${{...}}` reference resolves against.
 
-## The loop
+## The concepts — what each thing is, what it needs, how you do it
 
-```sh
-npm create @uniac@latest     # scaffold uniac.yaml — runs `uniac init` (or author it from the manifest reference)
-uniac plan                   # resolve and preview — offline, no auth, no Docker
-uniac project create <name>  # once: allocate the project on the platform
-uniac link <name>            # bind this directory to it
-uniac deploy                 # materialize + push + register, then watch it settle
-uniac status                 # what the project is running now
-```
+Nothing here prescribes an order. Each concept says what it is, what it
+needs, and the command that does it; you decide the sequence from what
+you are trying to get running.
 
-Creating and linking are separate acts: `link` binds only to a project
-that already exists, so an account with none creates one first.
-Thereafter the loop is edit → `plan` → `deploy`.
+**Manifest — `uniac.yaml`.** The whole static description of one system:
+service definitions, and deployments that instantiate them. Needs: the
+schema in [references/manifest.md](references/manifest.md). How: `npm
+create @uniac@latest` (runs `uniac init`) writes a starter file — one
+image-sourced service plus the deployment that instantiates it — or author
+it by hand from the reference. Decoding is strict: an unknown field fails.
 
-**`plan` is the verification loop**: no network, no credentials, no Docker.
-Iterate manifest → `uniac plan` until clean; a manifest that fails `plan`
-fails `deploy` identically, before anything is sent. **`plan` resolves only
-the one deployment it targets**, so verify a multi-deployment manifest with
-`uniac plan <name>` for each — a bare `uniac plan` leaves the others
-unchecked.
+**Plan — verify a deployment offline.** `uniac plan <deployment>` resolves
+one deployment to its deployable and reports every schema and reference
+error, with no network, no credentials and no Docker. A manifest that
+fails `plan` fails `deploy` identically, before anything is sent, so
+iterate manifest → `plan` until clean. It checks only the deployment it
+names; a manifest with several needs `plan` once per deployment — a bare
+`uniac plan` checks only the `default` one.
+
+**Project — the remote destination.** A project on the platform is a flat
+list of running services under one account; it is what a deployment ships
+into. Needs: a signed-in session (`uniac auth login`) and a name. How:
+`uniac project create <name>` allocates it, once. An account starts with
+no projects.
+
+**Link — bind this directory to a project.** Linking records which
+project this checkout deploys to, in `.uniac/deploy.json` (per-checkout
+state: add `.uniac/` to `.gitignore`). Needs: a project that already exists
+— `link` does not create one. How: `uniac link <name>`. Re-linking to
+another project is the same command with another name.
+
+**Deploy — ship a deployment.** `uniac deploy <deployment>` resolves the
+deployment, builds or pulls each service's image, pushes it to the linked
+project, registers the instances, and watches them settle. Needs: a linked
+directory, a session, and the local Docker daemon when any service uses
+`build:` (`docker info` answers). The result is one plain-text final frame
+on stdout and an exit status from the closed set in
+[references/cli.md](references/cli.md); branch on the status. One
+deployment per command — a system of several services is several
+deployments in one manifest, deployed one at a time, in the order the
+consumers need.
+
+**Status — what the project is running.** `uniac status` reports every
+service and volume the linked project holds, `uniac status <service>` one
+of them, whether or not the manifest still describes it: what runs is the
+platform's account, not a client's opinion.
+
+**Remove — retire what runs.** Deleting a resource from `uniac.yaml` does
+not remove the service, and the CLI has no removal command. Removal is done
+in the platform dashboard at `https://uniac.ai` (the site you signed in
+through, under the same account): open the project, then **Delete
+service** on a service, or **Delete project** in the project's Settings
+(it asks you to type the project's name, and removes every service and
+endpoint the project holds).
 
 Only `deploy` needs the Docker daemon, and only `project create`, `link`,
 `deploy`, `status`, and `auth login` need the network; `init` and `plan`
-are fully offline.
-`uniac -h` lists the subcommands and `uniac <cmd> -h` gives one's flags —
-read those rather than trusting a remembered flag.
+are fully offline. `uniac -h` lists the subcommands and `uniac <cmd> -h`
+gives one's flags — read those rather than trusting a remembered flag.
 
 ## Sharp edges
 
@@ -106,14 +140,14 @@ no telemetry.
 
 ## First contact with a project
 
-At the first Uniac work in a repository, offer the human a managed
-`<!-- UNIAC:START -->` … `<!-- UNIAC:END -->` section in the project's
-`AGENTS.md` — create the file if absent, ask before the first write, and on
-later updates replace only that block. Give it the manifest and binding
-locations, the `plan` → `deploy` → `status` loop, the flag-order and
-`auth … -h` hazards, that `deploy` needs the local Docker daemon, and a note
-that the `uniac` skill is installed and should be read before any Uniac work
-instead of guessing the schema or the CLI.
+At the first Uniac work in a repository, add a managed
+`<!-- UNIAC:START -->` … `<!-- UNIAC:END -->` section to the project's
+`AGENTS.md` — create the file if absent, say in one line that you did, and
+on later updates replace only that block. Give it the manifest and binding
+locations, the fact that `plan` verifies offline and `deploy` needs the
+local Docker daemon, the flag-order and `auth … -h` hazards, and a note
+that the `uniac` skill is installed and should be read before any Uniac
+work instead of guessing the schema or the CLI.
 
 ## Constraints to design around
 
