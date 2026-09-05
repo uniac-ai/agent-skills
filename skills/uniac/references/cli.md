@@ -49,9 +49,14 @@ locally stored platform sessions.
 ## Project selection
 
 `link` writes `.uniac/deploy.json`, containing
-`{project_slug, project_name, gateway_url, platform_url}`; `gateway_url` is
-the project's gateway, the endpoint the CLI pushes images to and registers
-services with. The deploy project picker can also write this binding.
+`{project_slug, project_name, gateway_url, platform_url}`: `project_name` is
+the name given at `project create`, unique within the account; `project_slug`
+is the identifier the platform assigned the project, and the label of its
+gateway host; `gateway_url` is the project's gateway, the endpoint the CLI
+pushes images to and registers services with; `platform_url` is the platform
+API origin the project belongs to (`https://api.uniac.ai` by default), which
+a linked directory follows without any environment setting. The deploy
+project picker can also write this binding.
 
 `UNIAC_PROJECT_URL` supplies a gateway URL or project slug, overriding the
 binding without supplying a project name. Without this override, `deploy`
