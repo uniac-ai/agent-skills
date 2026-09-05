@@ -4,9 +4,9 @@
     {
       "name": "uniac",
       "type": "archive",
-      "description": "Build, deploy, and operate applications on Uniac. Use for uniac.yaml, the uniac CLI, or applications targeting Uniac.",
+      "description": "Uniac system composition, uniac.yaml, CLI commands, and platform behavior for developing and operating applications.",
       "url": "uniac.tar.gz",
-      "digest": "sha256:843b2ab80fbdec624f9c456b684b0eccdce1b8fdb30daa9d4b21264ec847f2a1"
+      "digest": "sha256:eee363ed7bb55bdefa36156c428c1a52720b6d3f199d590587542de222870a80"
     }
   ]
 }

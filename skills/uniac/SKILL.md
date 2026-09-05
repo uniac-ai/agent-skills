@@ -1,6 +1,6 @@
 ---
 name: uniac
-description: Build, deploy, and operate applications on Uniac. Use for uniac.yaml, the uniac CLI, or applications targeting Uniac.
+description: Uniac system composition, uniac.yaml, CLI commands, and platform behavior for developing and operating applications.
 ---
 
 # Uniac
@@ -10,8 +10,12 @@ services.
 
 ## System composition
 
-[System model](references/system.md) — projects, services, volumes, public
-endpoints, and their relationships.
+| Component | Meaning |
+|---|---|
+| Project | The remote scope containing services and volumes, with a shared private network. |
+| Service | An application component named within its project. |
+| Volume | Durable storage with its own identity and lifetime, attached to a service or retained unattached. |
+| Public endpoint | A service's public address for incoming traffic. |
 
 ## Manifest
 
@@ -21,8 +25,7 @@ fields, references, and local validation.
 
 ## CLI and platform
 
-- [CLI](references/cli.md) — commands that create, apply, and inspect
-  declarations or operate on live projects; authentication, project selection,
-  output, and exit codes.
+- [CLI](references/cli.md) — command behavior, authentication, project
+  selection, and output.
 - [Platform](references/platform.md) — how deployed services run, communicate,
   retain data, change, and are removed; what observed state establishes.
