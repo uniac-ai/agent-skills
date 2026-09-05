@@ -40,7 +40,7 @@ skills/uniac/                 the one skill
   references/cli.md           commands, authentication, project selection,
                               output and exit codes
   references/platform.md      runtime, networking, storage and removal
-agents/agents.md              machine setup: agent knowledge and account access
+agents/agents.md              machine setup: skill, CLI and account access
 tools/validate.py             frontmatter, links, and reference-cycle checks
 tools/generate_manifests.py   the plugin name, release, blurb, licence and
                               links, and everything rendered from them
@@ -87,9 +87,12 @@ The entrypoint explains the goal and core system model; references own
 substantial, distinct subjects. Layers organize concepts without requiring
 a file per layer. Keep syntax, tooling, and runtime mechanisms below the
 system model, and keep field semantics together with their declarations.
-Links lead to more detailed contracts; shared detail has one owner, and
-references must not form cycles. CI checks cycles from the Markdown links
-themselves, without a separate graph to maintain.
+Links lead to more detailed contracts; shared detail has one owner.
+Authentication owns credential acquisition, renewal, selection, and status
+semantics; commands that use credentials inherit that contract. Conditional
+requirements stay with the operation that needs them, rather than becoming
+default setup steps. References must not form cycles. CI checks cycles from
+the Markdown links themselves, without a separate graph to maintain.
 
 Use actual field names and established terms, defining Uniac concepts once.
 Remove generic advice, invented labels, failure stories, and repeated facts.
