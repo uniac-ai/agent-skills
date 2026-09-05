@@ -1,7 +1,8 @@
 # CLI
 
-`uniac …` can run as `npx -y @uniac/cli …` with Node ≥ 18, or through a
-global installation from `npm i -g @uniac/cli`.
+`npm install -g @uniac/cli` installs the `uniac` command with Node 18+.
+Alternatively, `npx -y @uniac/cli …` runs any `uniac …` invocation without
+a global installation.
 
 For commands accepting positional arguments, parsing stops at the first
 positional argument; trailing flags are ignored. `uniac -h` lists commands
@@ -17,24 +18,31 @@ and `uniac <command> -h` lists flags.
 | `link [name-or-slug]` | Creates or replaces a directory's binding to an existing project. The directory must contain `uniac.yaml`. Omitting the argument opens a project picker. |
 | `deploy [deployment]` | Requests deployment of the selected manifest declaration. |
 | `status [service]` | Reads current state for a linked project, including services absent from the local manifest, or one named service. |
-| `auth login` | Starts browser sign-in, with account creation available, and stores the resulting session. Reports whether the browser opened and prints the sign-in URL. Sign-in requires the user's browser interaction. |
-| `auth status` | Reads stored sessions and their expiry locally. Does not validate credentials or inspect `UNIAC_ACCESS_TOKEN`. |
-| `auth token` | Prints the selected access token. |
-| `auth logout` | Removes all stored platform sessions. |
+| `auth <login\|status\|token\|logout>` | Manages account credentials; see [Authentication](#authentication). |
 | `version` | Prints the installed version. |
 
 The CLI has no removal command.
 
 ## Authentication
 
-`project create`, `link`, `deploy`, and `status` require authentication.
-Sessions are stored per platform in `~/.uniac/auth.json`. A stored token
-becomes unusable 60 seconds before its recorded expiry. The CLI does not
-refresh it automatically.
+`auth login` stores the token returned by browser sign-in for the selected
+platform, replacing any previous session for that platform. Sign-in requires
+the user's browser interaction, with account creation available there. The CLI
+prints the sign-in URL and reports whether the browser opened.
+
+`project create`, `link`, `deploy`, `status`, and `auth token` use
+`UNIAC_ACCESS_TOKEN` when nonempty, otherwise the selected platform's session in
+`~/.uniac/auth.json`. A stored token becomes unusable 60 seconds before its
+recorded expiry. The CLI does not refresh tokens automatically.
+
+`auth status` reads stored sessions and expiry locally. Its `Logged in.`
+message means stored sessions exist, even when expired. It does not validate
+credentials with the platform or inspect `UNIAC_ACCESS_TOKEN`.
+`auth token` prints the selected credential. `auth logout` removes all
+locally stored platform sessions.
 
 | Variable | Meaning |
 |---|---|
-| `UNIAC_ACCESS_TOKEN` | Access token for the selected platform; takes precedence over stored tokens. |
 | `UNIAC_PLATFORM_URL` | Platform API origin for login, `auth token`, project creation, linking, and target overrides. Default: `https://api.uniac.ai`. |
 | `UNIAC_AUTH_HOST` | Browser sign-in host. Defaults to `uniac.ai` for the default platform; required for another platform unless login's `--host` is supplied. |
 

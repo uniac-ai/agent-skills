@@ -12,13 +12,15 @@ to Uniac's own source, and nothing here documents how the platform is built.
 ## Install
 
 ```sh
-npx skills add uniac-ai/agent-skills -g
+npx -y skills@1.5.15 add uniac-ai/agent-skills -g
 ```
 
 Installs the `uniac` skill for the coding agents on the machine. Re-run the
-same command to update. This is the one install line to publish — the
-ecosystem leaderboard counts installs per repository slug, so every mention
-should aggregate under the same one.
+same command to update. Installation examples use `uniac-ai/agent-skills`;
+the ecosystem leaderboard counts installs per repository slug.
+
+The installer is pinned for Node 18 compatibility; it fetches this repository's
+current skill. CI checks installer discovery on Node 18.
 
 In Claude Code the repository is also a plugin marketplace:
 
@@ -38,7 +40,7 @@ skills/uniac/                 the one skill
   references/cli.md           commands, authentication, project selection,
                               output and exit codes
   references/platform.md      runtime, networking, storage and removal
-agents/agents.md              machine setup: agent knowledge and account access
+agents/agents.md              machine setup: skill, CLI and account access
 tools/validate.py             frontmatter, links, and reference-cycle checks
 tools/generate_manifests.py   the plugin name, release, blurb, licence and
                               links, and everything rendered from them
@@ -85,9 +87,12 @@ The entrypoint explains the goal and core system model; references own
 substantial, distinct subjects. Layers organize concepts without requiring
 a file per layer. Keep syntax, tooling, and runtime mechanisms below the
 system model, and keep field semantics together with their declarations.
-Links lead to more detailed contracts; shared detail has one owner, and
-references must not form cycles. CI checks cycles from the Markdown links
-themselves, without a separate graph to maintain.
+Links lead to more detailed contracts; shared detail has one owner.
+Authentication owns credential acquisition, renewal, selection, and status
+semantics; commands that use credentials inherit that contract. Conditional
+requirements stay with the operation that needs them, rather than becoming
+default setup steps. References must not form cycles. CI checks cycles from
+the Markdown links themselves, without a separate graph to maintain.
 
 Use actual field names and established terms, defining Uniac concepts once.
 Remove generic advice, invented labels, failure stories, and repeated facts.
@@ -99,6 +104,9 @@ contracts remain in this skill rather than copied into customer `AGENTS.md`.
 - Every claim is verified against the released `uniac` binary — prefer
   having run the command over having read about it. A wrong field is worse
   than a missing one; the skill is read by agents that cannot check it.
+- Setup verification runs the installer on the documented Node version in
+  an isolated environment. Existing global binaries or agent directories
+  must not supply a prerequisite or result the setup itself fails to produce.
 - Keep output contracts independent of display layout. Command help owns
   the flag inventory; the reference retains parsing hazards that make
   discovery unsafe. Document actual release behavior in one place, including
@@ -114,4 +122,4 @@ contracts remain in this skill rather than copied into customer `AGENTS.md`.
   `agents.md` from, so merging to it is the release.
 - Before pushing: `python3 -B tools/test_validate.py`, `python3 tools/validate.py`, and
   `python3 tools/generate_manifests.py`; CI runs these plus a live resolve
-  through the ecosystem installer (`npx skills add . --list`).
+  through the ecosystem installer (`npx -y skills@1.5.15 add . --list`).
