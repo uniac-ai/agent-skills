@@ -82,6 +82,12 @@ restates the other.
   discovered by experiment, what has to be known *before* anything can run
   (the manifest schema), and statements about output that survive a
   re-render.
+- Information, not directives. The skill says what a command does, what a
+  file holds, what the platform provides; it does not tell the agent what to
+  say or in which order to act — the agent decides that from the facts. A
+  directive stays only where the experience depends on it (a hazard that
+  must not be discovered by experiment, the exit-status contract, the
+  one-line heads-up before sign-in), and it names why.
 - The verification stamp is `VERSION` in `tools/generate_manifests.py`. It is
   the release the contracts were checked against, and the version every
   plugin manifest carries.
