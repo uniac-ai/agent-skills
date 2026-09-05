@@ -66,6 +66,8 @@ the installed references own the operational details.
 Write for a capable coding agent. Keep Uniac-specific facts that change its
 decisions: schema, prerequisites, effects, limits, and behavior it cannot
 infer safely. Express prerequisites as conditions, not a prescribed workflow.
+The skill states what commands, files, and the platform do. Directives belong
+only where the user experience depends on them, with that reason stated.
 Organize knowledge from the platform's goal to its components and their
 relationships, then the manifest that declares them, then CLI and platform
 operation. This order expresses levels of explanation, not steps to execute.
