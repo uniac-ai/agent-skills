@@ -49,8 +49,9 @@ locally stored platform sessions.
 ## Project selection
 
 `link` writes `.uniac/deploy.json`, containing
-`{project_slug, project_name, gateway_url, platform_url}`. The deploy project
-picker can also write this binding.
+`{project_slug, project_name, gateway_url, platform_url}`; `gateway_url` is
+the project's gateway, the endpoint the CLI pushes images to and registers
+services with. The deploy project picker can also write this binding.
 
 `UNIAC_PROJECT_URL` supplies a gateway URL or project slug, overriding the
 binding without supplying a project name. Without this override, `deploy`
