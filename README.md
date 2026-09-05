@@ -38,7 +38,7 @@ skills/uniac/                 the one skill
   references/cli.md           commands, authentication, project selection,
                               output and exit codes
   references/platform.md      runtime, networking, storage and removal
-agents/agents.md              the website's skill installation reference
+agents/agents.md              machine setup: agent knowledge and account access
 tools/validate.py             frontmatter, links, and reference-cycle checks
 tools/generate_manifests.py   the plugin name, release, blurb, licence and
                               links, and everything rendered from them
@@ -55,9 +55,10 @@ Plugin manifests, the discovery index, and the skill archive are generated.
 `--check` to verify that the committed files match their sources.
 
 The installed skill separates the platform's goal, system composition,
-static declaration, and live operation. `agents/agents.md` provides the
-installation interface and links into that knowledge. CLI authentication
-and operation belong to the installed references.
+static declaration, and live operation. `agents/agents.md` defines the
+website's machine setup outcome and provides installation, account access,
+and commands for inspecting setup state. The installed references own the detailed
+authentication and operational contracts.
 
 ## Content
 
@@ -65,6 +66,7 @@ Write for a capable coding agent. Keep Uniac-specific facts: schema,
 prerequisites, effects, limits, and behavior. Review document boundaries,
 sections, and paragraphs before individual sentences. Each passage should
 explain one concern coherently, with the context needed to understand it.
+Judge each document against the outcome promised where readers enter it.
 Then check its sentences, tables, and examples for directives and information
 derivable from retained facts. Remove repeated explanations and constructed
 procedures while preserving their independently useful premises.
