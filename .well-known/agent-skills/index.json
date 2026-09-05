@@ -6,7 +6,7 @@
       "type": "archive",
       "description": "Uniac system composition, uniac.yaml, CLI commands, and platform behavior for developing and operating applications.",
       "url": "uniac.tar.gz",
-      "digest": "sha256:32565aff6802e51fc260acb89ade58e89d956f201164ad3562e32b74b15e347b"
+      "digest": "sha256:193566a6b2a112b27ffc55221b98149ff0a93976ae8e1e316a86fb1d460cc070"
     }
   ]
 }
