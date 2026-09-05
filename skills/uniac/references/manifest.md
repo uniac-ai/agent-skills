@@ -17,9 +17,13 @@ runtime behavior are in [platform.md](platform.md).
 | `default` | Optional name of a deployment resource. |
 | `resources` | Required, nonempty mapping of names to resource definitions. Each resource requires `type: service`, `type: stateful`, or `type: deployment`. |
 
-Resource and service instance names match
-`^[a-z0-9]+(?:(?:__?|-+)[a-z0-9]+)*$`; resource names are unique within the
-file. Target selection is described in
+Resource names are lowercase letters and digits, with runs separated by
+one or two underscores or by dashes, and are unique within the file. A
+service instance name (a key under a deployment's `services`) is one DNS
+label: lowercase letters, digits and dashes, starting and ending with a
+letter or digit, at most 63 characters — it becomes the service's hostname
+and the label of its `<name>.internal` address, and `uniac plan` rejects
+any other shape. Target selection is described in
 [planning and deployment](cli.md#planning-and-deployment).
 
 ## Service definitions
