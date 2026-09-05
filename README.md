@@ -12,13 +12,15 @@ to Uniac's own source, and nothing here documents how the platform is built.
 ## Install
 
 ```sh
-npx skills add uniac-ai/agent-skills -g
+npx -y skills@1.5.15 add uniac-ai/agent-skills -g
 ```
 
 Installs the `uniac` skill for the coding agents on the machine. Re-run the
-same command to update. This is the one install line to publish — the
-ecosystem leaderboard counts installs per repository slug, so every mention
-should aggregate under the same one.
+same command to update. Installation examples use `uniac-ai/agent-skills`;
+the ecosystem leaderboard counts installs per repository slug.
+
+The installer is pinned for Node 18 compatibility; it fetches this repository's
+current skill. CI checks installer discovery on Node 18.
 
 In Claude Code the repository is also a plugin marketplace:
 
@@ -99,6 +101,9 @@ contracts remain in this skill rather than copied into customer `AGENTS.md`.
 - Every claim is verified against the released `uniac` binary — prefer
   having run the command over having read about it. A wrong field is worse
   than a missing one; the skill is read by agents that cannot check it.
+- Setup verification runs the installer on the documented Node version in
+  an isolated environment. Existing global binaries or agent directories
+  must not supply a prerequisite or result the setup itself fails to produce.
 - Keep output contracts independent of display layout. Command help owns
   the flag inventory; the reference retains parsing hazards that make
   discovery unsafe. Document actual release behavior in one place, including
@@ -114,4 +119,4 @@ contracts remain in this skill rather than copied into customer `AGENTS.md`.
   `agents.md` from, so merging to it is the release.
 - Before pushing: `python3 -B tools/test_validate.py`, `python3 tools/validate.py`, and
   `python3 tools/generate_manifests.py`; CI runs these plus a live resolve
-  through the ecosystem installer (`npx skills add . --list`).
+  through the ecosystem installer (`npx -y skills@1.5.15 add . --list`).
