@@ -33,14 +33,12 @@ In Claude Code the repository is also a plugin marketplace:
 
 ```
 skills/uniac/                 the one skill
-  SKILL.md                    platform goal and ordered reference map
-  references/system.md        components and their relationships
+  SKILL.md                    platform goal, system composition, reference map
   references/manifest.md      uniac.yaml schema and local validation
   references/cli.md           commands, authentication, project selection,
                               output and exit codes
   references/platform.md      runtime, networking, storage and removal
-agents/agents.md              the bootstrap page uniac.ai serves to agents —
-                              machine setup and sign-in
+agents/agents.md              machine setup: agent knowledge and account access
 tools/validate.py             frontmatter, links, and reference-cycle checks
 tools/generate_manifests.py   the plugin name, release, blurb, licence and
                               links, and everything rendered from them
@@ -57,22 +55,36 @@ Plugin manifests, the discovery index, and the skill archive are generated.
 `--check` to verify that the committed files match their sources.
 
 The installed skill separates the platform's goal, system composition,
-static declaration, and live operation. `agents/agents.md` serves the
-website's machine setup prompt. It includes an introduction to later use;
-the installed references own the operational details.
+static declaration, and live operation. `agents/agents.md` defines the
+website's machine setup outcome and provides installation, account access,
+and commands for inspecting setup state. The installed references own the detailed
+authentication and operational contracts.
 
 ## Content
 
-Write for a capable coding agent. Keep Uniac-specific facts that change its
-decisions: schema, prerequisites, effects, limits, and behavior it cannot
-infer safely. Express prerequisites as conditions, not a prescribed workflow.
-The skill states what commands, files, and the platform do. Directives belong
-only where the user experience depends on them, with that reason stated.
+Write for a capable coding agent. Keep Uniac-specific facts: schema,
+prerequisites, effects, limits, and behavior. Review document boundaries,
+sections, and paragraphs before individual sentences. Each passage should
+explain one concern coherently, with the context needed to understand it.
+Judge each document against the outcome promised where readers enter it.
+Then check its sentences, tables, and examples for directives and information
+derivable from retained facts. Remove repeated explanations and constructed
+procedures while preserving their independently useful premises.
+
+Describe what commands, files, and the platform do. A directive is justified
+only by an essential user-experience requirement that the agent cannot infer
+from those facts. State its concrete reason. First check whether the missing
+knowledge is a prerequisite or side effect, and document that instead.
+Permission, communication, and execution policies belong to the agent's
+managing layer. Product confirmation controls are facts about the interface.
+
 Organize knowledge from the platform's goal to its components and their
 relationships, then the manifest that declares them, then CLI and platform
 operation. This order expresses levels of explanation, not steps to execute.
-The entrypoint owns the goal and reference map; each reference owns one
-subject. Keep syntax, tooling, and runtime mechanisms below the system model.
+The entrypoint explains the goal and core system model; references own
+substantial, distinct subjects. Layers organize concepts without requiring
+a file per layer. Keep syntax, tooling, and runtime mechanisms below the
+system model, and keep field semantics together with their declarations.
 Links lead to more detailed contracts; shared detail has one owner, and
 references must not form cycles. CI checks cycles from the Markdown links
 themselves, without a separate graph to maintain.
