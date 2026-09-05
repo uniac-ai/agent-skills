@@ -109,8 +109,8 @@ Always in force:
 - `deploy` and `status` are state gateways: exactly one plain-text final
   frame on stdout, narration only on stderr. Branch on the exit status;
   the closed code set is in [references/cli.md](references/cli.md).
-- Interrupting `deploy` does not cancel platform-side work — re-observe
-  with `uniac status`.
+- Interrupting `deploy` does not cancel platform-side work; `uniac status`
+  shows where it got to.
 
 ## Environment
 
@@ -119,18 +119,17 @@ If `uniac` is not on PATH, `npx -y @uniac/cli` runs it under Node.
 `uniac auth status` reports a stored session's subject and expiry, and exits
 non-zero when there is none; it reads only the session file and ignores
 `UNIAC_ACCESS_TOKEN`, so an environment authenticated by that variable still
-reads as not logged in. An expired session reads that way too — log in again.
-`uniac auth login` opens a browser and says so — or says it could not, with
-the URL to open — and sign-up happens there. State
-lives in two files: the session in `~/.uniac/auth.json`, the project binding
-in `.uniac/deploy.json` — add `.uniac/` to `.gitignore`, it is per-checkout
-state, not source. Headless: set `UNIAC_ACCESS_TOKEN` (obtain it once via
-`uniac auth login` + `uniac auth token`); details in
-[references/cli.md](references/cli.md).
+reads as not logged in. An expired session reads the same way; a new
+`auth login` replaces it. `uniac auth login` opens a browser and prints the
+login URL (also when no browser could be opened); sign-up happens there.
+State lives in two files: the session in `~/.uniac/auth.json`, the project
+binding in `.uniac/deploy.json` — per-checkout state, not source, which a
+`.gitignore` entry for `.uniac/` keeps out of commits. Headless: set
+`UNIAC_ACCESS_TOKEN` (obtainable once via `uniac auth login` + `uniac auth
+token`); details in [references/cli.md](references/cli.md).
 
-Never block setup on Docker: only a deploy needs the daemon (`docker info`
-answers), so relay the one install instruction when a deploy is actually
-wanted and not before. Builds always target `linux/amd64`, whatever the host.
+Only a deploy needs the Docker daemon (`docker info` answers); nothing
+before a deploy does. Builds always target `linux/amd64`, whatever the host.
 
 The CLI reaches `uniac.ai` (auth), `api.uniac.ai` (platform), and
 `<slug>.project.uniac.ai` (image push). It dials nothing else — it carries
