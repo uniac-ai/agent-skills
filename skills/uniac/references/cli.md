@@ -13,11 +13,11 @@ trailing flags are ignored.
 | Command | Effect and requirements |
 |---|---|
 | `init` | Writes a starter `uniac.yaml` with one prebuilt-image service and its deployment. Offline; takes defaults when unattended. `npm create @uniac@latest` invokes it. |
-| `plan [deployment]` | Validates and resolves a manifest locally. No credentials, network, or Docker; validation limits are in [manifest.md](manifest.md). |
+| `plan [deployment]` | Validates and resolves a manifest locally. No credentials, network, or Docker. |
 | `project create <name>` | Creates a remote project. Requires authentication and network access. |
 | `link [name-or-slug]` | Creates or replaces the binding between a directory containing `uniac.yaml` and an existing project. Requires authentication and network access; omitting the argument opens a project picker. |
 | `deploy [deployment]` | Builds or pulls an image, uploads it, and requests deployment. Requires a project target, credentials, network access, and Docker. Can also write a directory binding through its project picker. |
-| `status [service]` | Reads remote state for a linked project or one service. Requires credentials and network access. |
+| `status [service]` | Reads current state for a linked project, including services absent from the local manifest, or one named service. Requires credentials and network access. |
 | `auth login` | Starts browser sign-in and stores the resulting session. Reports whether the browser opened and prints the sign-in URL. Requires network access and the user's browser interaction. |
 | `auth status` | Reads stored sessions and their expiry locally. Does not validate credentials or inspect `UNIAC_ACCESS_TOKEN`. |
 | `auth token` | Prints the current token from the environment override or the selected platform's stored session. |
@@ -56,6 +56,8 @@ and the variable unset.
 
 ## Deployment
 
+A deploy target must contain exactly one entry in `services`.
+
 Both `image:` and `build:` require the local Docker daemon. Prebuilt images
 are pulled with local Docker credentials; builds use the declared Dockerfile
 and context. Images target `linux/amd64`. Builds run on each deployment,
@@ -70,9 +72,9 @@ work already accepted by the platform.
 
 ## Output and exit codes
 
-`plan --json` emits the [generated artifact](manifest.md#planning-and-the-generated-artifact).
-Its `env` and `start_command` fields are included regardless of `--full`;
-that flag adds them to the text preview only.
+`plan --json` emits `{resource, digest, deployable}`, where `deployable` is
+the generated service description. Its `env` and `start_command` fields are
+included regardless of `--full`; that flag adds them to the text preview only.
 
 `deploy` and `status` emit one final text report on stdout; progress goes to
 stderr. They have no JSON output mode. Help and argument-parsing errors leave
@@ -88,7 +90,7 @@ The following codes apply to `deploy` and `status`:
 | 2 | `usage` | Invalid invocation; no deployment attempted. |
 | 3 | `auth` | No usable credential, or `status` has no project name, including with `UNIAC_PROJECT_URL`. |
 | 4 | `not_linked` | Binding/platform conflict, or deployment's project picker found no projects. |
-| 5 | `manifest` | Manifest or deployment-shape error, including more than one service in the selected deployment. |
+| 5 | `manifest` | Manifest or deployment-shape error. |
 | 6 | `build` | Docker, image-pull, or build failure. |
 | 7 | `push` | Image upload failed. |
 | 8 | `deploy_failed` | Deployment task failure, observation deadline expiry, or a refused platform read. For `status`, this describes the read, not workload health. |
@@ -104,7 +106,8 @@ may succeed without changes.
 Whole-project `status` can omit service details or volumes when those
 additional reads fail, while still exiting 0. A direct `status <service>`
 read failure instead fails the command. Only whole-project `status` reports
-volumes. Reports contain current service state, not image references or
+volumes and their attachment state, including retained unattached volumes.
+Reports contain current service state, not image references or
 digests. [Platform behavior](platform.md) explains what that state establishes.
 
 Other commands generally return 1 on failure and 2 on usage errors.

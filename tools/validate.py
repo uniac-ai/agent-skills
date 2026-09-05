@@ -12,7 +12,8 @@ Checks, per skills/<name>/SKILL.md:
     string values;
   - name matches the directory;
   - every relative markdown link resolves to a file in the skill;
-  - referenced files live inside the skill directory.
+  - referenced files live inside the skill directory;
+  - links between Markdown files form a directed acyclic graph.
 
 Exits non-zero on any failure, printing one line per defect.
 """
@@ -66,7 +67,8 @@ def parse_frontmatter(text: str, defects: list, where: str):
     return fields
 
 
-LINK_RE = re.compile(r"\]\(([^)#\s]+)(?:#[^)\s]*)?\)")
+LINK_RE = re.compile(r"\]\(([^)\s]+)\)")
+SCHEME_RE = re.compile(r"^[A-Za-z][A-Za-z0-9+.-]*:")
 CODE_RE = re.compile(r"```.*?```|`[^`\n]*`", re.S)
 
 
@@ -74,6 +76,50 @@ def prose_of(text: str) -> str:
     """Markdown with code fences and inline code removed, so link
     checking never trips over `](...)` sequences inside code."""
     return CODE_RE.sub("", text)
+
+
+def validate_links(skill: Path, root: Path) -> list[str]:
+    defects = []
+    graph = {f.resolve(): set() for f in sorted(skill.rglob("*.md"))}
+    for source in graph:
+        for target in LINK_RE.findall(prose_of(source.read_text(encoding="utf-8"))):
+            if SCHEME_RE.match(target) or target.startswith("//"):
+                continue
+            path, anchor, _ = target.partition("#")
+            if not path:
+                continue
+            resolved = (source.parent / path).resolve()
+            if not resolved.exists():
+                defects.append(f"{source.relative_to(root)}: broken link {target!r}")
+            elif skill.resolve() not in resolved.parents and resolved != skill.resolve():
+                defects.append(f"{source.relative_to(root)}: link {target!r} escapes the skill")
+            elif resolved in graph and not (resolved == source and anchor):
+                graph[source].add(resolved)
+
+    visited = set()
+    active = []
+
+    def find_cycle(node: Path) -> list[Path] | None:
+        if node in active:
+            return active[active.index(node):] + [node]
+        if node in visited:
+            return None
+        active.append(node)
+        for child in sorted(graph[node]):
+            cycle = find_cycle(child)
+            if cycle:
+                return cycle
+        active.pop()
+        visited.add(node)
+        return None
+
+    for source in graph:
+        cycle = find_cycle(source)
+        if cycle:
+            chain = " -> ".join(str(node.relative_to(root)) for node in cycle)
+            defects.append(f"cyclic Markdown links: {chain}")
+            break
+    return defects
 
 
 def main() -> int:
@@ -98,19 +144,7 @@ def main() -> int:
             if not fields.get("description"):
                 defects.append(f"{where}: empty or missing description")
 
-        for f in d.rglob("*.md"):
-            for target in LINK_RE.findall(prose_of(f.read_text(encoding="utf-8"))):
-                if "://" in target or target.startswith("mailto:"):
-                    continue
-                resolved = (f.parent / target).resolve()
-                if not resolved.exists():
-                    defects.append(
-                        f"{f.relative_to(ROOT)}: broken link {target!r}"
-                    )
-                elif d.resolve() not in resolved.parents and resolved != d.resolve():
-                    defects.append(
-                        f"{f.relative_to(ROOT)}: link {target!r} escapes the skill"
-                    )
+        defects.extend(validate_links(d, ROOT))
 
     for line in defects:
         print(f"FAIL {line}")

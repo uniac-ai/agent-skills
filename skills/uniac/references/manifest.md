@@ -1,9 +1,14 @@
 # `uniac.yaml`
 
-The CLI reads `uniac.yaml` from the project directory. It declares reusable
-service definitions and deployments that give those definitions instance
-names. Unknown fields are rejected at every level. The tables below describe
-all supported fields; runtime behavior is in [platform.md](platform.md).
+`uniac.yaml` statically declares services and their relationships. It is read
+from the project directory. A **service definition** describes reusable application
+configuration; a **manifest deployment** selects definitions and gives them **instance
+names** that identify the services in a project. Manifest deployments do not
+create remote service groups or environments.
+
+Unknown fields are rejected at every level. The tables below describe all
+supported fields. The platform's distinct live deployment lifecycle and
+runtime behavior are in [platform.md](platform.md).
 
 ```yaml
 runtime: yaml
@@ -104,11 +109,10 @@ declare no volume. Persistence, reuse, and deletion are described under
 | `services.<instance>.from` | Required name of an existing `service` or `stateful` definition in this manifest. |
 | `services.<instance>.public_ports` | Optional list of public exposure requests, described below. |
 
-An instance name identifies the deployed service; the `from` name identifies
-its reusable definition. One definition can be instantiated under multiple
-names. The schema accepts multiple instances in one deployment, but a deploy
-target must contain exactly one entry in `services`. Separate deployment
-targets can place services in the same remote project.
+One definition can be instantiated under multiple names. The schema accepts
+multiple instances in one deployment; execution limits belong to
+[CLI deployment](cli.md#deployment). Separate deployment targets can place
+services in the same remote project.
 
 ### Public exposure
 
@@ -132,6 +136,9 @@ The list has three meanings on deployment:
 | Nonempty list | Replaces public exposure with exactly this list. |
 
 ## Environment references
+
+Environment values are plaintext. The manifest has no secrets management or
+external-secret reference mechanism.
 
 References occur inside `env` values, with this grammar:
 
@@ -171,12 +178,12 @@ resolution and missing-variable behavior are in
 It does not build images, verify application startup, resolve references to
 other deployments, or enforce platform policy. Selecting one deployment does
 not perform the second set of checks on other deployments. Deploy uses this
-same planning before any remote action, plus its one-service limit.
+same planning before any remote action.
 
-`uniac plan --json` returns `{resource, digest, deployable}`. The `deployable`
-is the generated service description: instance names, normalized source
-declarations, environment templates, and runtime configuration. It contains no
-remote project binding, and environment values remain templates until deploy.
+The generated service description contains instance names, normalized source
+declarations, environment templates, and runtime configuration. It contains
+no remote project binding, and environment values remain templates until
+deploy. The [CLI](cli.md#output-and-exit-codes) can emit it as JSON.
 
 The digest identifies that description. Equivalent path spellings, omitted
 build defaults, YAML formatting, and mapping or exposure-list ordering do not

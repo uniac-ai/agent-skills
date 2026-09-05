@@ -33,15 +33,15 @@ In Claude Code the repository is also a plugin marketplace:
 
 ```
 skills/uniac/                 the one skill
-  SKILL.md                    essential model and reference map
+  SKILL.md                    platform goal and ordered reference map
+  references/system.md        components and their relationships
   references/manifest.md      uniac.yaml schema and local validation
   references/cli.md           commands, authentication, project selection,
                               output and exit codes
   references/platform.md      runtime, networking, storage and removal
 agents/agents.md              the bootstrap page uniac.ai serves to agents —
                               machine setup and sign-in
-tools/validate.py             frontmatter and link gate (what strict
-                              installers reject, CI rejects first)
+tools/validate.py             frontmatter, links, and reference-cycle checks
 tools/generate_manifests.py   the plugin name, release, blurb, licence and
                               links, and everything rendered from them
 .claude-plugin/               Claude Code marketplace + plugin manifest
@@ -56,17 +56,25 @@ Plugin manifests, the discovery index, and the skill archive are generated.
 `tools/generate_manifests.py` holds their shared metadata; CI runs it with
 `--check` to verify that the committed files match their sources.
 
-The installed skill provides knowledge for any Uniac task. Its root defines
-the model and links to references by subject; each reference owns that
-subject's detailed contract. `agents/agents.md` serves the website's machine
-setup prompt. It includes an introduction to later use; the installed
-references own the operational details.
+The installed skill separates the platform's goal, system composition,
+static declaration, and live operation. `agents/agents.md` serves the
+website's machine setup prompt. It includes an introduction to later use;
+the installed references own the operational details.
 
 ## Content
 
 Write for a capable coding agent. Keep Uniac-specific facts that change its
 decisions: schema, prerequisites, effects, limits, and behavior it cannot
 infer safely. Express prerequisites as conditions, not a prescribed workflow.
+Organize knowledge from the platform's goal to its components and their
+relationships, then the manifest that declares them, then CLI and platform
+operation. This order expresses levels of explanation, not steps to execute.
+The entrypoint owns the goal and reference map; each reference owns one
+subject. Keep syntax, tooling, and runtime mechanisms below the system model.
+Links lead to more detailed contracts; shared detail has one owner, and
+references must not form cycles. CI checks cycles from the Markdown links
+themselves, without a separate graph to maintain.
+
 Use actual field names and established terms, defining Uniac concepts once.
 Remove generic advice, invented labels, failure stories, and repeated facts.
 Project-specific instructions belong in the customer's project; public
@@ -90,6 +98,6 @@ contracts remain in this skill rather than copied into customer `AGENTS.md`.
   provenance and rollback; nothing installs from them. `main` is the release
   channel — it is what `npx skills add` resolves, and what uniac.ai takes
   `agents.md` from, so merging to it is the release.
-- Before pushing: `python3 tools/validate.py` and
-  `python3 tools/generate_manifests.py`; CI runs both plus a live resolve
+- Before pushing: `python3 -B tools/test_validate.py`, `python3 tools/validate.py`, and
+  `python3 tools/generate_manifests.py`; CI runs these plus a live resolve
   through the ecosystem installer (`npx skills add . --list`).

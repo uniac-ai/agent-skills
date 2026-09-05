@@ -9,6 +9,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Test Markdown link validation
+        run: python3 -B -m unittest discover -s tools -p 'test_*.py'
       - name: Validate skill frontmatter and links
         run: python3 tools/validate.py
       - name: Generated manifests and discovery index are current
