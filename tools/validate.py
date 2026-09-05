@@ -11,9 +11,9 @@ Checks, per skills/<name>/SKILL.md:
     the keys the spec requires (name, description) with non-empty
     string values;
   - name matches the directory;
-  - every relative markdown link resolves to a file in the skill;
-  - referenced files live inside the skill directory;
-  - links between Markdown files form a directed acyclic graph.
+  - every relative Markdown link resolves to a file inside the skill;
+  - canonical repository URLs resolve to files in this checkout;
+  - links between all skills' Markdown files form a directed acyclic graph.
 
 Exits non-zero on any failure, printing one line per defect.
 """
@@ -21,6 +21,7 @@ Exits non-zero on any failure, printing one line per defect.
 import re
 import sys
 from pathlib import Path
+from urllib.parse import unquote, urlsplit
 
 ROOT = Path(__file__).resolve().parent.parent
 SKILLS = ROOT / "skills"
@@ -70,6 +71,8 @@ def parse_frontmatter(text: str, defects: list, where: str):
 LINK_RE = re.compile(r"\]\(([^)\s]+)\)")
 SCHEME_RE = re.compile(r"^[A-Za-z][A-Za-z0-9+.-]*:")
 CODE_RE = re.compile(r"```.*?```|`[^`\n]*`", re.S)
+REPOSITORY_URL = "https://github.com/uniac-ai/agent-skills/blob/main/"
+REPOSITORY_PATH = urlsplit(REPOSITORY_URL).path
 
 
 def prose_of(text: str) -> str:
@@ -78,21 +81,33 @@ def prose_of(text: str) -> str:
     return CODE_RE.sub("", text)
 
 
-def validate_links(skill: Path, root: Path) -> list[str]:
+def validate_links(skills: list[Path], root: Path) -> list[str]:
     defects = []
-    graph = {f.resolve(): set() for f in sorted(skill.rglob("*.md"))}
+    owners = {
+        f.resolve(): skill.resolve()
+        for skill in skills
+        for f in sorted(skill.rglob("*.md"))
+    }
+    graph = {source: set() for source in owners}
     for source in graph:
         for target in LINK_RE.findall(prose_of(source.read_text(encoding="utf-8"))):
-            if SCHEME_RE.match(target) or target.startswith("//"):
+            if target.startswith(REPOSITORY_URL):
+                path = unquote(urlsplit(target).path[len(REPOSITORY_PATH):])
+                resolved = (root / path).resolve()
+                scope, scope_name = root.resolve(), "repository"
+                anchor = "#" in target
+            elif SCHEME_RE.match(target) or target.startswith("//"):
                 continue
-            path, anchor, _ = target.partition("#")
-            if not path:
-                continue
-            resolved = (source.parent / path).resolve()
-            if not resolved.exists():
+            else:
+                path, anchor, _ = target.partition("#")
+                if not path:
+                    continue
+                resolved = (source.parent / path).resolve()
+                scope, scope_name = owners[source], "skill"
+            if not resolved.is_file():
                 defects.append(f"{source.relative_to(root)}: broken link {target!r}")
-            elif skill.resolve() not in resolved.parents and resolved != skill.resolve():
-                defects.append(f"{source.relative_to(root)}: link {target!r} escapes the skill")
+            elif scope not in resolved.parents:
+                defects.append(f"{source.relative_to(root)}: link {target!r} escapes the {scope_name}")
             elif resolved in graph and not (resolved == source and anchor):
                 graph[source].add(resolved)
 
@@ -144,7 +159,7 @@ def main() -> int:
             if not fields.get("description"):
                 defects.append(f"{where}: empty or missing description")
 
-        defects.extend(validate_links(d, ROOT))
+    defects.extend(validate_links(skill_dirs, ROOT))
 
     for line in defects:
         print(f"FAIL {line}")

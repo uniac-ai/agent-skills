@@ -25,6 +25,9 @@ fields, references, and local validation.
 
 ## CLI and platform
 
+- [Quickstart](https://github.com/uniac-ai/agent-skills/blob/main/skills/uniac-quickstart/SKILL.md)
+  — a complete first-deployment example connecting the application,
+  manifest, project, and public endpoint.
 - [CLI](references/cli.md) — command behavior, authentication, project
   selection, and output.
 - [Platform](references/platform.md) — how deployed services run, communicate,

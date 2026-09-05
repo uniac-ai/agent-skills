@@ -15,7 +15,17 @@ class MarkdownLinksTest(unittest.TestCase):
                 path = skill / name
                 path.parent.mkdir(parents=True, exist_ok=True)
                 path.write_text(text, encoding="utf-8")
-            return validate_links(skill, root)
+            return validate_links([skill], root)
+
+    def validate_skills(self, files: dict[str, str]) -> list[str]:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory).resolve()
+            skills = root / "skills"
+            for name, text in files.items():
+                path = skills / name
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_text(text, encoding="utf-8")
+            return validate_links(sorted(skills.iterdir()), root)
 
     def test_shared_child_is_acyclic(self):
         self.assertEqual(self.validate({
@@ -54,6 +64,53 @@ class MarkdownLinksTest(unittest.TestCase):
         self.assertEqual(defects, [
             "skill/SKILL.md: broken link 'missing.md#detail'",
             "skill/SKILL.md: link '../outside.md' escapes the skill",
+        ])
+
+    def test_canonical_cross_skill_links_form_one_acyclic_graph(self):
+        self.assertEqual(self.validate_skills({
+            "uniac/SKILL.md": (
+                "[quickstart](https://github.com/uniac-ai/agent-skills/blob/main/"
+                "skills/uniac-quickstart/SKILL.md) [cli](references/cli.md)"
+            ),
+            "uniac-quickstart/SKILL.md": (
+                "[cli](https://github.com/uniac-ai/agent-skills/blob/main/"
+                "skills/uniac/references/cli.md#commands)"
+            ),
+            "uniac/references/cli.md": "# Commands",
+        }), [])
+
+    def test_canonical_cross_skill_cycle_reports_the_closed_path(self):
+        defects = self.validate_skills({
+            "uniac/SKILL.md": (
+                "[quickstart](https://github.com/uniac-ai/agent-skills/blob/main/"
+                "skills/uniac-quickstart/SKILL.md)"
+            ),
+            "uniac-quickstart/SKILL.md": (
+                "[knowledge](https://github.com/uniac-ai/agent-skills/blob/main/"
+                "skills/uniac/SKILL.md)"
+            ),
+        })
+        self.assertEqual(defects, [
+            "cyclic Markdown links: skills/uniac/SKILL.md -> "
+            "skills/uniac-quickstart/SKILL.md -> skills/uniac/SKILL.md"
+        ])
+
+    def test_missing_canonical_repository_file_fails(self):
+        target = (
+            "https://github.com/uniac-ai/agent-skills/blob/main/"
+            "skills/uniac/references/missing.md#detail"
+        )
+        self.assertEqual(self.validate_skills({
+            "uniac-quickstart/SKILL.md": f"[missing]({target})",
+        }), [f"skills/uniac-quickstart/SKILL.md: broken link {target!r}"])
+
+    def test_relative_sibling_link_still_escapes_its_archive(self):
+        self.assertEqual(self.validate_skills({
+            "uniac/SKILL.md": "Knowledge.",
+            "uniac-quickstart/SKILL.md": "[knowledge](../uniac/SKILL.md)",
+        }), [
+            "skills/uniac-quickstart/SKILL.md: "
+            "link '../uniac/SKILL.md' escapes the skill"
         ])
 
 

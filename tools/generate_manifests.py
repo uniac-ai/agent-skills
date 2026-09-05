@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Render every generated distribution artifact from the facts below.
 
-One skill is published to four plugin ecosystems and to the discovery
+The skills are published to four plugin ecosystems and to the discovery
 standard, and all five want the same handful of facts: the name, the
 release the contracts are verified against, the listing blurb, the
 licence and the links. They are declared once here and rendered into

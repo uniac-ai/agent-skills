@@ -2,7 +2,7 @@
 
 The public agent knowledge for [Uniac](https://uniac.ai), a cloud deployment
 platform. Everything an agent needs to build on Uniac ships from this
-repository: the `uniac` skill (with its bundled contract references), and the
+repository: framework knowledge, a first-deployment quickstart, and the
 `agents.md` bootstrap document the website serves to visiting agents.
 
 The audience is a **consumer of Uniac** — an agent (or the engineer directing
@@ -15,7 +15,7 @@ to Uniac's own source, and nothing here documents how the platform is built.
 npx -y skills@1.5.15 add uniac-ai/agent-skills -g
 ```
 
-Installs the `uniac` skill for the coding agents on the machine. Re-run the
+Offers the Uniac skills for the coding agents on the machine. Re-run the
 same command to update. Installation examples use `uniac-ai/agent-skills`;
 the ecosystem leaderboard counts installs per repository slug.
 
@@ -34,13 +34,14 @@ In Claude Code the repository is also a plugin marketplace:
 ## Layout
 
 ```
-skills/uniac/                 the one skill
+skills/uniac/                 framework orientation and knowledge
   SKILL.md                    platform goal, system composition, reference map
   references/manifest.md      uniac.yaml schema and local validation
   references/cli.md           commands, authentication, project selection,
                               output and exit codes
   references/platform.md      runtime, networking, storage and removal
-agents/agents.md              machine setup: skill, CLI and account access
+skills/uniac-quickstart/       a complete first-deployment example
+agents/agents.md              machine setup: skills, CLI and account access
 tools/validate.py             frontmatter, links, and reference-cycle checks
 tools/generate_manifests.py   the plugin name, release, blurb, licence and
                               links, and everything rendered from them
@@ -56,11 +57,11 @@ Plugin manifests, the discovery index, and the skill archive are generated.
 `tools/generate_manifests.py` holds their shared metadata; CI runs it with
 `--check` to verify that the committed files match their sources.
 
-The installed skill separates the platform's goal, system composition,
-static declaration, and live operation. `agents/agents.md` defines the
-website's machine setup outcome and provides installation, account access,
-and commands for inspecting setup state. The installed references own the detailed
-authentication and operational contracts.
+`uniac` separates the platform's goal, system composition, static declaration,
+and live operation. It routes first-deployment tasks to `uniac-quickstart`,
+whose worked example links to the shared references. `agents/agents.md` owns
+machine setup and introduces both skills. The website quickstart is the human
+walkthrough; its documentation index exposes the page inventory.
 
 ## Content
 
@@ -71,7 +72,9 @@ explain one concern coherently, with the context needed to understand it.
 Judge each document against the outcome promised where readers enter it.
 Then check its sentences, tables, and examples for directives and information
 derivable from retained facts. Remove repeated explanations and constructed
-procedures while preserving their independently useful premises.
+procedures while preserving their independently useful premises. A quickstart
+example states its starting conditions and connects inputs to results; its
+command order applies to that example, not to every task.
 
 Describe what commands, files, and the platform do. A directive is justified
 only by an essential user-experience requirement that the agent cannot infer
@@ -93,6 +96,9 @@ semantics; commands that use credentials inherit that contract. Conditional
 requirements stay with the operation that needs them, rather than becoming
 default setup steps. References must not form cycles. CI checks cycles from
 the Markdown links themselves, without a separate graph to maintain.
+Cross-skill references use canonical HTTPS URLs: each skill also ships as an
+independent archive. Quickstart links to shared reference files rather than
+back to the framework entrypoint.
 
 Use actual field names and established terms, defining Uniac concepts once.
 Remove generic advice, invented labels, failure stories, and repeated facts.

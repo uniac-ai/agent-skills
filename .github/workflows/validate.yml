@@ -19,9 +19,14 @@ jobs:
         with:
           node-version: '18'
       - name: Skills resolve through the ecosystem installer
-        # The installer colourises its output, so the count arrives as
-        # "Found \e[32m1\e[39m skill". Escape sequences come out before
-        # the count is matched.
+        # Strip colour escapes before matching the discovered skill count
+        # and names against the source directories.
         run: |
           npx -y skills@1.5.15 add . --list 2>&1 | sed $'s/\e\\[[0-9;]*[A-Za-z]//g' | tee /tmp/skills.out
-          grep -q "Found 1 skill" /tmp/skills.out
+          skill_files=(skills/*/SKILL.md)
+          grep -q "Found ${#skill_files[@]} skill" /tmp/skills.out
+          for path in "${skill_files[@]}"; do
+            name="${path#skills/}"
+            name="${name%/SKILL.md}"
+            grep -Eq "^[[:space:]]*│[[:space:]]+$name[[:space:]]*$" /tmp/skills.out
+          done

@@ -1,6 +1,6 @@
 # Set up Uniac for your agent
 
-Uniac machine setup installs the `uniac` skill for the coding agent, makes
+Uniac machine setup installs the Uniac skills for the coding agent, makes
 the `uniac` command available, and connects it to the user's Uniac account.
 Project creation and application deployment are separate tasks.
 
@@ -26,13 +26,15 @@ npx -y skills@1.5.15 add uniac-ai/agent-skills -g -a codex -y
 npx -y skills@1.5.15 add uniac-ai/agent-skills -g -a cursor -y
 ```
 
-Each command installs `uniac` globally for the named agent and answers the
-installer's prompts. Repeating it updates the installed skill. Additional
+Each command installs both skills globally for the named agent and answers the
+installer's prompts. Repeating it updates the installed skills. Additional
 integrations are listed in the installer's
 [supported agents](https://github.com/vercel-labs/skills/tree/v1.5.15#supported-agents).
 
-The installed [Uniac skill](https://github.com/uniac-ai/agent-skills/blob/main/skills/uniac/SKILL.md)
-is the entrypoint for the platform's system model, manifest, and operations.
+| Installed skill | Purpose |
+|---|---|
+| [uniac-quickstart](https://github.com/uniac-ai/agent-skills/blob/main/skills/uniac-quickstart/SKILL.md) | First deployment: a complete example connecting the application, manifest, remote project, and public endpoint. |
+| [uniac](https://github.com/uniac-ai/agent-skills/blob/main/skills/uniac/SKILL.md) | Framework knowledge: system composition, manifest, CLI, and platform behavior. |
 
 ## CLI
 
@@ -61,4 +63,5 @@ described in the
 | `uniac version` | Version of the CLI available on PATH. |
 | `uniac auth status` | Locally stored account sessions and expiry. |
 
-[Full documentation](https://docs.uniac.ai).
+The website has a [quickstart walkthrough](https://docs.uniac.ai/quickstart)
+and a [documentation index](https://docs.uniac.ai/llms.txt) listing its pages.
