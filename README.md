@@ -115,9 +115,9 @@ contracts remain in this skill rather than copied into customer `AGENTS.md`.
 
 ## Publishing
 
-- Every claim is verified against the released `uniac` binary — prefer
-  having run the command over having read about it. A wrong field is worse
-  than a missing one; the skill is read by agents that cannot check it.
+- Verify command and schema contracts against the released CLI. Verify
+  platform effects at the deployed implementation that applies them;
+  schema acceptance and CLI output do not establish runtime behavior.
 - Setup verification runs the installer on the documented Node version in
   an isolated environment. Existing global binaries or agent directories
   must not supply a prerequisite or result the setup itself fails to produce.
