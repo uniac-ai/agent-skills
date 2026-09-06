@@ -16,8 +16,11 @@ a [volume](../volume.md) whose data survives container replacement.
 | Execution type | Yes | Stateless or stateful. |
 | Container source | Exactly one | An OCI image reference or a Dockerfile build source. |
 | Environment variables | No | [Environment values and references](environment.md). |
-| Start command | No | Overrides the image CMD at runtime; the image is unchanged. |
+| Start command | No | Replaces the image's startup command (`ENTRYPOINT` and `CMD`) at runtime; the image is unchanged. |
 | Volume attachment | No | [Durable storage](../volume.md) for a stateful service. |
+
+A start command is split into arguments with shell-style quoting. A shell is
+not automatically invoked.
 
 [Public endpoints](networking.md) are declared on an instance in a deployment,
 independently of the reusable service definition.
@@ -50,19 +53,24 @@ build fields above. An empty string selects the default root; `build: null`
 is invalid. The application directory is the directory containing
 `uniac.yaml`.
 
-The `api-code` definition supplies the container configuration; the deployment
-instantiates it as the service `api` in the selected project.
+The `cache-code` definition starts Redis with append-only persistence. The
+deployment instantiates it as `cache` with a 1 GB volume mounted at `/data`.
 
 ```yaml
 resources:
-  api-code:
-    type: service
-    image: mendhak/http-https-echo:31
+  cache-code:
+    type: stateful
+    image: redis:7-alpine
+    start_command: redis-server --appendonly yes
+    volumes:
+      - name: data
+        size_gb: 1
+        mount_path: /data
   application:
     type: deployment
     services:
-      api:
-        from: api-code
+      cache:
+        from: cache-code
 ```
 
 The generated description uses `container.source.ref` for `image` and
