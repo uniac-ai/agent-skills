@@ -19,19 +19,20 @@ The following `uniac.yaml` declares one service and exposes its HTTP port:
 runtime: yaml
 default: main
 resources:
-  api:
+  api_definition:
     type: service
     build: .
   main:
     type: deployment
     services:
       api:
-        from: api
+        from: api_definition
         public_ports: [{ port: 8080, type: http }]
 ```
 
+The `main` deployment instantiates `api_definition` as the service `api`.
 [Composition in YAML](https://github.com/uniac-ai/agent-skills/blob/main/skills/uniac/references/composition/yaml.md)
-defines the relationship between `api`, its definition, and `main`.
+describes the file format and instantiation rules.
 
 ## Destination and deployment
 
