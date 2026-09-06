@@ -19,9 +19,9 @@ updated independently.
 
 Services represent the application's microservices. Each service has an
 identity within its project, which other services address on the private
-network. The identity stays the same as the running copies of the service,
-its **replicas**, change. A public endpoint allows clients outside the project
-to reach a service.
+network. Each running copy, or **replica**, is a container running the
+application's OCI image. The service identity stays the same as its replicas
+change. A public endpoint allows clients outside the project to reach a service.
 
 A stateless service can run multiple interchangeable replicas behind that
 identity. Connections may reach different replicas; a replica's memory and
@@ -59,11 +59,13 @@ longer be inspected or managed through the deleted project.
 ## Describing the application
 
 A **composition** describes the resources making up an application and how
-they connect. Reusable definitions describe service configuration; named
-instances give the resulting services their identities in the target project.
-Deployment declarations select the instances to create or update.
+they connect. A **service definition** supplies reusable image and runtime
+configuration. A **deployment declaration** instantiates definitions under
+service names in a target project. A definition alone creates no running
+service; deploying a declaration creates or updates its named service
+instances. Each instance can run the replicas permitted by its execution type.
 
 [Composition in YAML](composition/yaml.md) introduces the description file
-and combines these parts in an example. Detailed configuration and lifecycle information
-is available for [Service](resources/service.md) and
+and combines these parts in an example. Detailed configuration and lifecycle
+information is available for [Service](resources/service.md) and
 [Volume](resources/volume.md).

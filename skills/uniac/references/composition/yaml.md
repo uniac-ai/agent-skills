@@ -12,7 +12,7 @@ The document is a mapping with these top-level fields:
 | Field | Required | Meaning |
 |---|---|---|
 | `resources` | Yes | Nonempty mapping of resource names to typed definitions. |
-| `runtime` | No | `yaml`, the default and only supported value. |
+| `runtime` | No | Composition format: `yaml`, the default and only supported value. |
 | `default` | No | Deployment resource selected when no target is named explicitly. |
 
 Resource names match `^[a-z0-9]+(?:(?:__?|-+)[a-z0-9]+)*$` and are unique
@@ -21,13 +21,17 @@ at every level.
 
 ## Definitions and service instances
 
-`type: service` defines a stateless service; `type: singleton` defines a service
-with at most one running replica and an optional volume. The definition holds
-its image or build source, environment, startup command, and storage needs.
-The complete field contracts are in [Service](../resources/service.md)
-and [Volume](../resources/volume.md).
+`type: service` and `type: singleton` create reusable **service definitions**
+for stateless and singleton execution. A definition holds the OCI image or
+Dockerfile build source, environment, startup command, and storage needs.
+Declaring it alone creates no remote service. Complete field contracts are
+in [Service](../resources/service.md) and [Volume](../resources/volume.md).
 
-A `type: deployment` resource maps instance names to those definitions:
+A `type: deployment` resource **instantiates** definitions: its `services`
+mapping gives each instance a service name and a definition to instantiate.
+The selected declaration contributes its named instances to the deployment
+description; unreferenced definitions and other deployment declarations in
+the file are not included.
 
 | Field | Required | Meaning |
 |---|---|---|
@@ -35,10 +39,12 @@ A `type: deployment` resource maps instance names to those definitions:
 | `services.<instance>.from` | Yes | Name of a `service` or `singleton` definition in this file. |
 | `services.<instance>.public_ports` | No | [Public endpoint declarations](../resources/service.md#public-endpoints). |
 
-The instance name identifies the remote service; the definition's name is a
-local label for reuse. An instance name is one DNS label: lowercase letters,
-digits and dashes, starting and ending with a letter or digit, at most
-63 characters.
+The **service instance** is the named remote service, not an individual
+container replica. Multiple instances can reuse one definition. The
+definition's name is a local label; the instance name supplies the service's
+identity in the target project. An instance name is one DNS label: lowercase
+letters, digits and dashes, starting and ending with a letter or digit, at
+most 63 characters.
 
 Only a deployment declaration is a selectable target. It creates no remote
 service group or environment; each resulting service has its own
@@ -53,7 +59,7 @@ uses `CACHE_URL` to connect to Redis.
 
 ```yaml
 runtime: yaml
-default: api
+default: api-deployment
 resources:
   api_definition:
     type: service
@@ -68,13 +74,13 @@ resources:
       - name: data
         size_gb: 1
         mount_path: /data
-  api:
+  api-deployment:
     type: deployment
     services:
       api:
         from: api_definition
         public_ports: [{port: 8080, type: http}]
-  cache:
+  cache-deployment:
     type: deployment
     services:
       cache:
@@ -82,11 +88,15 @@ resources:
         public_ports: []
 ```
 
-The separate declarations allow each service to be updated independently.
-Their instances become services named `api` and `cache` in the selected project.
-The API's reference names the `cache` instance, and that instance gives its
-volume the project-scoped name `cache.data`. The API is publicly exposed;
-Redis is reachable within the project's private network.
+`api-deployment` instantiates `api_definition` as the service `api`;
+`cache-deployment` instantiates `cache_definition` as `cache`. Selecting
+`api-deployment` includes only `api` in the deployment description. Its
+reference to `cache` does not instantiate that service; `cache-deployment`
+is a separate target.
+
+The reference names the `cache` instance, and that instance gives its volume
+the project-scoped name `cache.data`. The API is publicly exposed; Redis is
+reachable within the project's private network.
 
 [Environment and references](../resources/service.md#environment-and-references) explains
 resolution between services, including services outside a selected

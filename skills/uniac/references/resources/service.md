@@ -1,9 +1,21 @@
 # Service
 
-A service is a named application component within a project. It runs
-containers from a reusable definition that supplies the image source and
-runtime configuration. The service keeps its identity across container
-replacements and deployment versions.
+A service is a named application component within a project. Each replica
+runs a container from an OCI (Open Container Initiative) image, which supplies
+the application and its runtime dependencies. The image can be supplied
+directly or built from a Dockerfile. Uniac adds no SDK or runtime dependency
+to the application.
+
+## Definitions and instances
+
+A **service definition** supplies reusable image and runtime configuration.
+A **deployment declaration** instantiates it under a service name in the
+target project. A definition alone creates no remote service; deploying a
+declaration creates or updates the service instances it names.
+
+A **service instance** is the named remote service; its **replicas** are the
+running containers. Its identity persists across replica replacements and
+deployment versions.
 
 Stateless services can run multiple container replicas behind the same
 service identity. A singleton service permits at most one running replica
@@ -145,13 +157,17 @@ is invalid. The application directory is the directory containing
 | `[]` | Removes all public exposure. |
 | Nonempty list | Replaces public exposure with exactly this list. |
 
+The `web-code` and `cache-code` resources are definitions. Deploying
+`web-deployment` instantiates only `web`; `cache-deployment` instantiates
+`cache`. The `from` field connects each instance to its definition.
+
 The stateless `web` service receives the URL declared by `cache`, which uses
 `cache`'s own internal hostname. The `web` service's port 8080 is exposed through
 HTTPS and a separately allocated raw TCP endpoint. The singleton `cache` service starts
 Redis with append-only persistence on a 1 GB volume mounted at `/data`.
 
 ```yaml
-default: web
+default: web-deployment
 resources:
   web-code:
     type: service
@@ -168,7 +184,7 @@ resources:
       - name: data
         size_gb: 1
         mount_path: /data
-  web:
+  web-deployment:
     type: deployment
     services:
       web:
@@ -178,7 +194,7 @@ resources:
             type: http
           - port: 8080
             type: tcp
-  cache:
+  cache-deployment:
     type: deployment
     services:
       cache:
@@ -192,9 +208,6 @@ while `type: service` omits `kind`. Build paths are normalized and omitted at
 their defaults; an all-defaults build is `{}`.
 
 ## Runtime and deployment versions
-
-Uniac runs the application's container image without adding an SDK or runtime
-dependency to the application.
 
 In live state, a deployment is a version of one service, with its own
 lifecycle and running containers. Redeploying an existing instance updates

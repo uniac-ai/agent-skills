@@ -88,8 +88,9 @@ managing layer. Product confirmation controls are facts about the interface.
 The entrypoint gives a short reading path through the top-level system
 overview, composition, and CLI before offering detailed references.
 Composition contains application description formats. The introduction
-explains how the parts work together in connected prose; a glossary or topic
-catalog does not establish those relationships. The path teaches the system,
+explains how the parts work together, including what runs and how reusable
+definitions become running instances; a glossary or topic catalog does not
+establish those relationships. The path teaches the system,
 not an assumed command sequence. The overview, Composition, and Resources
 describe the system independently of the CLI. Resource pages distinguish
 required and optional configuration from examples in a composition language.
