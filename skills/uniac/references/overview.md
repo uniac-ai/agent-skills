@@ -28,20 +28,19 @@ identity. Connections may reach different replicas; a replica's memory and
 local files belong to that replica. Services that need shared or persistent
 state communicate with the component holding it.
 
-## Stateful services and volumes
+## Singleton services and volumes
 
-A stateful service permits at most one running replica. Its service identity
-addresses that single active destination, which suits a component whose state
-must have one owner. Both service kinds retain their network identity across
-replica replacement.
+A singleton service permits at most one running replica per service in its
+project. During replacement, the previous replica stops before its successor
+starts. Both service kinds retain their network identity across replacement.
 
 A volume supplies durable storage that survives replacement of the container
-using it. A stateful service can attach a volume; the volume provides data
-persistence, while the service kind constrains concurrent replicas. The
-volume has its own identity and lifetime within the project. Detaching it or
-deleting its service retains the data.
+using it. A singleton service can attach a volume; data written to its mount
+survives replica replacement. Singleton execution alone does not preserve
+memory or container-local files. The volume has its own identity and lifetime
+within the project. Detaching it or deleting its service retains the data.
 
-For example, an application can have a stateless API and a stateful database.
+For example, an application can have a stateless API and a singleton database.
 The API's replicas reach the database through its service identity; the
 database's replica stores persistent data on its volume. Public clients need
 an endpoint for the API, while the database can remain private.

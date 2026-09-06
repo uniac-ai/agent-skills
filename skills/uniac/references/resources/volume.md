@@ -5,7 +5,7 @@ lifetime are independent of the service holding it.
 
 ## Required and optional configuration
 
-Volume attachment is optional and available only to stateful services, with
+Volume attachment is optional and available only to singleton services, with
 at most one volume per service. An attachment requires:
 
 | Field | Required | Meaning |
@@ -27,14 +27,14 @@ mapping with `name`, `size_gb`, and `mount_path` inside the service definition's
 optional `volumes` list. Omitting `volumes`, setting it to `null`, or using
 `[]` declares no volume.
 
-The stateful `cache` service mounts `cache.data` at `/data`. Redis writes its
+The singleton `cache` service mounts `cache.data` at `/data`. Redis writes its
 append-only persistence files there, and the volume retains them across
 container replacement.
 
 ```yaml
 resources:
   cache-code:
-    type: stateful
+    type: singleton
     image: redis:7-alpine
     start_command: redis-server --appendonly yes
     volumes:

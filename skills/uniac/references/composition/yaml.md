@@ -21,8 +21,8 @@ at every level.
 
 ## Definitions and service instances
 
-`type: service` defines a stateless service; `type: stateful` defines a service
-limited to one running replica, optionally with a volume. The definition holds
+`type: service` defines a stateless service; `type: singleton` defines a service
+with at most one running replica and an optional volume. The definition holds
 its image or build source, environment, startup command, and storage needs.
 The complete field contracts are in [Service](../resources/service.md)
 and [Volume](../resources/volume.md).
@@ -32,7 +32,7 @@ A `type: deployment` resource maps instance names to those definitions:
 | Field | Required | Meaning |
 |---|---|---|
 | `services` | Yes | Nonempty mapping of instance names to definitions and public exposure. |
-| `services.<instance>.from` | Yes | Name of a `service` or `stateful` definition in this file. |
+| `services.<instance>.from` | Yes | Name of a `service` or `singleton` definition in this file. |
 | `services.<instance>.public_ports` | No | [Public endpoint declarations](../resources/service.md#public-endpoints). |
 
 The instance name identifies the remote service; the definition's name is a
@@ -61,7 +61,7 @@ resources:
     env:
       CACHE_URL: "redis://${{cache.host}}:6379"
   cache_definition:
-    type: stateful
+    type: singleton
     image: redis:7-alpine
     start_command: "redis-server --appendonly yes"
     volumes:

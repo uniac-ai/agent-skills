@@ -6,18 +6,20 @@ runtime configuration. The service keeps its identity across container
 replacements and deployment versions.
 
 Stateless services can run multiple container replicas behind the same
-service identity. Stateful services run at most one container and can attach
-a [volume](volume.md) whose data survives container replacement.
+service identity. A singleton service permits at most one running replica
+per service in a project. During replacement, the previous replica stops
+before its successor starts. Persistent local storage requires an attached
+[volume](volume.md); singleton execution alone does not preserve data.
 
 ## Required and optional configuration
 
 | Information | Required | Meaning |
 |---|---|---|
-| Execution type | Yes | Stateless or stateful. |
+| Execution type | Yes | Stateless or singleton. |
 | Container source | Exactly one | An OCI image reference or a Dockerfile build source. |
 | Environment variables | No | [Environment values and references](#environment-and-references). |
 | Start command | No | Replaces the image's startup command (`ENTRYPOINT` and `CMD`) at runtime; the image is unchanged. |
-| Volume attachment | No | [Durable storage](volume.md) for a stateful service. |
+| Volume attachment | No | [Durable storage](volume.md) for a singleton service. |
 | Public exposure | No | [Public endpoints](#public-endpoints) on a service instance. |
 
 A start command is split into arguments with shell-style quoting. A shell is
@@ -124,7 +126,7 @@ dependency ordering or readiness coordination.
 ## YAML composition example
 
 In [YAML composition](../composition/yaml.md), `type: service` selects
-stateless execution and `type: stateful` selects stateful execution. Exactly
+stateless execution and `type: singleton` selects singleton execution. Exactly
 one of `image` or `build` supplies the container source; `image: ""` counts
 as absent. Optional configuration uses `env`, the `start_command` string,
 and the `volumes` list. `env` maps variable names to string values.
@@ -145,7 +147,7 @@ is invalid. The application directory is the directory containing
 
 The stateless `web` service receives the URL declared by `cache`, which uses
 `cache`'s own internal hostname. The `web` service's port 8080 is exposed through
-HTTPS and a separately allocated raw TCP endpoint. The stateful `cache` service starts
+HTTPS and a separately allocated raw TCP endpoint. The singleton `cache` service starts
 Redis with append-only persistence on a 1 GB volume mounted at `/data`.
 
 ```yaml
@@ -157,7 +159,7 @@ resources:
     env:
       CACHE_URL: "${{cache.URL}}"
   cache-code:
-    type: stateful
+    type: singleton
     image: redis:7-alpine
     env:
       URL: "redis://${{self.host}}:6379"
@@ -185,7 +187,7 @@ resources:
 ```
 
 The generated description uses `container.source.ref` for `image` and
-`container.source.build` for `build`. `type: stateful` adds `kind: stateful`,
+`container.source.build` for `build`. `type: singleton` adds `kind: singleton`,
 while `type: service` omits `kind`. Build paths are normalized and omitted at
 their defaults; an all-defaults build is `{}`.
 
