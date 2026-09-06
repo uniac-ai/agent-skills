@@ -103,7 +103,7 @@ establish that this deployment limit is satisfied.
 Deployment additionally requires credentials for the target project's
 platform and a reachable local Docker daemon for either `image:` or `build:`.
 A saved binding is optional because deployment can select an existing project
-interactively. The command does not create projects.
+interactively.
 
 For [service sources](../resources/service/overview.md), deployment pulls
 prebuilt images using local Docker credentials or builds from the current

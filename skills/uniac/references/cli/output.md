@@ -91,9 +91,7 @@ These warnings do not make the command fail. A name-only service row can also
 appear after registration fails and does not establish a running service.
 
 Platform warnings are passed through, including unresolved
-[environment references](../resources/service/environment.md). A successful
-CLI result does not establish application readiness; that limit belongs to
-[service observation](../resources/service/overview.md#observed-state).
+[environment references](../resources/service/environment.md).
 
 ## Errors and exit codes
 

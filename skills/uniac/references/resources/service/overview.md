@@ -41,8 +41,7 @@ invalid.
 
 Paths are relative and checked lexically: `root` must stay within the
 directory containing `uniac.yaml`, and `context` and `dockerfile` within the
-root. The Dockerfile is located relative to `root`, independently of
-`context`.
+root.
 
 In the generated description, build paths are normalized and omitted at
 their defaults; an all-defaults build is `{}`.

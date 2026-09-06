@@ -42,8 +42,6 @@ resources:
 
 ## uniac.yaml
 
-The description file has these top-level fields:
-
 | Field | Meaning |
 |---|---|
 | `runtime` | Optional; `yaml` is the default and only supported value. |

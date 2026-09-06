@@ -35,8 +35,7 @@ resized.
 
 A volume's state distinguishes attachment to a service from an unattached
 volume whose data is retained. Transitional states include `provisioning`,
-`attaching`, `detaching`, and `deleting`. The volume has its own provisioned
-size; a service's mount records which volume it holds and its mount path.
+`attaching`, `detaching`, and `deleting`.
 
 A fresh volume contains `lost+found`.
 

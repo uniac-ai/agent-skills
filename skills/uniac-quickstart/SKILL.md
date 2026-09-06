@@ -49,10 +49,8 @@ An existing project can be linked by name or slug instead of creating one.
 The [project-selection contract](https://github.com/uniac-ai/agent-skills/blob/main/skills/uniac/references/cli/overview.md#project-selection)
 also describes selection during deployment and target overrides.
 
-`plan` previews the declaration locally. `deploy` builds the application
-image and submits the deployment; `status` reads the resulting project state.
-Their [planning and deployment contract](https://github.com/uniac-ai/agent-skills/blob/main/skills/uniac/references/cli/overview.md#planning-and-deployment)
-defines requirements and completion behavior.
+The [CLI reference](https://github.com/uniac-ai/agent-skills/blob/main/skills/uniac/references/cli/overview.md#planning-and-deployment)
+defines these commands' requirements and completion behavior.
 
 ## Application address
 
