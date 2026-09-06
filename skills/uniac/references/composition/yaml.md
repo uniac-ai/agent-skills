@@ -24,7 +24,7 @@ at every level.
 `type: service` defines a stateless service; `type: stateful` defines a service
 limited to one running replica, optionally with a volume. The definition holds
 its image or build source, environment, startup command, and storage needs.
-The complete field contracts are in [Service](../resources/service/overview.md)
+The complete field contracts are in [Service](../resources/service.md)
 and [Volume](../resources/volume.md).
 
 A `type: deployment` resource maps instance names to those definitions:
@@ -33,7 +33,7 @@ A `type: deployment` resource maps instance names to those definitions:
 |---|---|---|
 | `services` | Yes | Nonempty mapping of instance names to definitions and public exposure. |
 | `services.<instance>.from` | Yes | Name of a `service` or `stateful` definition in this file. |
-| `services.<instance>.public_ports` | No | [Public endpoint declarations](../resources/service/networking.md#public-endpoints). |
+| `services.<instance>.public_ports` | No | [Public endpoint declarations](../resources/service.md#public-endpoints). |
 
 The instance name identifies the remote service; the definition's name is a
 local label for reuse. An instance name is one DNS label: lowercase letters,
@@ -42,7 +42,7 @@ digits and dashes, starting and ending with a letter or digit, at most
 
 Only a deployment declaration is a selectable target. It creates no remote
 service group or environment; each resulting service has its own
-[deployment versions](../resources/service/overview.md#runtime-and-deployment-versions).
+[deployment versions](../resources/service.md#runtime-and-deployment-versions).
 The target project's identity is supplied separately from this file.
 
 ## Example composition
@@ -88,7 +88,7 @@ The API's reference names the `cache` instance, and that instance gives its
 volume the project-scoped name `cache.data`. The API is publicly exposed;
 Redis is reachable within the project's private network.
 
-[Environment and references](../resources/service/environment.md) explains
+[Environment and references](../resources/service.md#environment-and-references) explains
 resolution between services, including services outside a selected
 declaration.
 

@@ -47,8 +47,8 @@ a report and project or service rows.
 ## State rows
 
 Service state is explained in
-[Service observation](../resources/service/overview.md#observed-state), public
-addresses in [Networking](../resources/service/networking.md), and durable
+[Service observation](../resources/service.md#observed-state), public
+addresses in [Networking](../resources/service.md#networking-and-endpoints), and durable
 storage state in [Volume lifecycle](../resources/volume.md#lifecycle).
 
 | Row | Representation |
@@ -91,7 +91,7 @@ These warnings do not make the command fail. A name-only service row can also
 appear after registration fails and does not establish a running service.
 
 Platform warnings are passed through, including unresolved
-[environment references](../resources/service/environment.md).
+[environment references](../resources/service.md#environment-and-references).
 
 ## Errors and exit codes
 

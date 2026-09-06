@@ -38,7 +38,7 @@ skills/uniac/                 framework documentation
   SKILL.md                    reading path and topic map
   references/overview.md      system model and projects
   references/composition/     application description formats
-  references/resources/       services, networking, environment and volumes
+  references/resources/       service and volume contracts and examples
   references/cli/             commands, authentication, output and errors
 skills/uniac-quickstart/       a complete first-deployment example
 agents/agents.md              machine setup: skills, CLI and account access
@@ -93,6 +93,8 @@ catalog does not establish those relationships. The path teaches the system,
 not an assumed command sequence. The overview, Composition, and Resources
 describe the system independently of the CLI. Resource pages distinguish
 required and optional configuration from examples in a composition language.
+Keep topics normally needed together in one document with sections; separate
+references serve independently useful questions.
 Brief restatement and cross-links between composition and resource examples
 are useful when they let each page be understood in context; full contracts
 still have one owner. Progressive disclosure controls loading, not which

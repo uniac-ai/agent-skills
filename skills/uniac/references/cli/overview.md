@@ -110,7 +110,7 @@ platform and a reachable local Docker daemon for either `image:` or `build:`.
 A saved binding is optional because deployment can select an existing project
 interactively.
 
-For [service sources](../resources/service/overview.md), deployment pulls
+For [service sources](../resources/service.md#required-and-optional-configuration), deployment pulls
 prebuilt images using local Docker credentials or builds from the current
 working tree. Both target `linux/amd64`. The build context's `.dockerignore`
 filters input; `.gitignore` does not. Builds run on every deployment, use
@@ -121,8 +121,8 @@ description.
 Missing build directories or Dockerfiles fail during local planning.
 Dockerfile syntax, missing build stages, failing build commands, image pulls
 and daemon availability are checked during image work. The platform applies
-the remote [service](../resources/service/overview.md),
-[exposure](../resources/service/networking.md) and
+the remote [service](../resources/service.md),
+[exposure](../resources/service.md#networking-and-endpoints) and
 [storage](../resources/volume.md) constraints when the deployment is submitted.
 
 When the target has a project name, registration returns a task ID and the

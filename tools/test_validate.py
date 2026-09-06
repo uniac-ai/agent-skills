@@ -116,15 +116,15 @@ class MarkdownLinksTest(unittest.TestCase):
     def test_overview_composition_and_resources_allow_contextual_links_in_both_directions(self):
         self.assertEqual(self.validate_skills({
             "uniac/SKILL.md": "[system](references/overview.md) [cli](references/cli/overview.md)",
-            "uniac/references/overview.md": "[yaml](composition/yaml.md) [service](resources/service/overview.md)",
-            "uniac/references/composition/yaml.md": "[system](../overview.md) [service](../resources/service/overview.md)",
-            "uniac/references/resources/service/overview.md": "[composition](../../composition/yaml.md) [networking](networking.md)",
-            "uniac/references/resources/service/networking.md": "[service](overview.md)",
-            "uniac/references/cli/overview.md": "[composition](../composition/yaml.md) [service](../resources/service/overview.md)",
+            "uniac/references/overview.md": "[yaml](composition/yaml.md) [service](resources/service.md)",
+            "uniac/references/composition/yaml.md": "[system](../overview.md) [service](../resources/service.md)",
+            "uniac/references/resources/service.md": "[composition](../composition/yaml.md) [volume](volume.md)",
+            "uniac/references/resources/volume.md": "[service](service.md)",
+            "uniac/references/cli/overview.md": "[composition](../composition/yaml.md) [service](../resources/service.md)",
         }), [])
 
     def test_overview_composition_and_resources_cannot_link_cli_or_skill_entrypoints(self):
-        for layer in ("", "composition", "resources", "resources/service"):
+        for layer in ("", "composition", "resources", "resources/nested"):
             parent = "../" * len(Path(layer).parts)
             targets = (
                 "https://github.com/uniac-ai/agent-skills/blob/main/skills/uniac/references/cli/overview.md#commands",
@@ -147,9 +147,9 @@ class MarkdownLinksTest(unittest.TestCase):
 
     def test_explanatory_crosslinks_still_require_existing_files(self):
         self.assertEqual(self.validate_skills({
-            "uniac/references/composition/yaml.md": "[service](../resources/service/overview.md)",
+            "uniac/references/composition/yaml.md": "[service](../resources/service.md)",
         }), [
-            "skills/uniac/references/composition/yaml.md: broken link '../resources/service/overview.md'"
+            "skills/uniac/references/composition/yaml.md: broken link '../resources/service.md'"
         ])
 
 

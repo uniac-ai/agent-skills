@@ -66,5 +66,5 @@ Deployment declarations select the instances to create or update.
 
 [Composition in YAML](composition/yaml.md) introduces the description file
 and combines these parts in an example. Detailed configuration and lifecycle information
-is available for [Service](resources/service/overview.md) and
+is available for [Service](resources/service.md) and
 [Volume](resources/volume.md).

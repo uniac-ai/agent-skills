@@ -56,5 +56,5 @@ defines these commands' requirements and completion behavior.
 
 The HTTP address in the service's `endpoint` row is this application's
 public URL. [Output and errors](https://github.com/uniac-ai/agent-skills/blob/main/skills/uniac/references/cli/output.md)
-describes the report; [Service](https://github.com/uniac-ai/agent-skills/blob/main/skills/uniac/references/resources/service/overview.md)
+describes the report; [Service](https://github.com/uniac-ai/agent-skills/blob/main/skills/uniac/references/resources/service.md)
 defines what the observed state establishes.

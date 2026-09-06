@@ -21,10 +21,8 @@ operation:
 
 | Topic | Detail |
 |---|---|
-| [Service](references/resources/service/overview.md) | Configuration fields, sources, replicas, deployment versions, and a YAML example. |
+| [Service](references/resources/service.md) | Configuration, sources, networking, environment references, replicas, deployment versions, and a YAML example. |
 | [Volume](references/resources/volume.md) | Required fields, persistence, attachment, deletion, and a YAML example. |
-| [Networking and endpoints](references/resources/service/networking.md) | Private addresses and public exposure. |
-| [Environment and references](references/resources/service/environment.md) | Values, reference scope, resolution, and updates. |
 
 ## CLI details
 
