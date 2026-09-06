@@ -36,7 +36,8 @@ In Claude Code the repository is also a plugin marketplace:
 ```
 skills/uniac/                 framework documentation
   SKILL.md                    reading path and topic map
-  references/composition/     system model, projects and YAML composition
+  references/overview.md      system model and projects
+  references/composition/     application description formats
   references/resources/       services, networking, environment and volumes
   references/cli/             commands, authentication, output and errors
 skills/uniac-quickstart/       a complete first-deployment example
@@ -84,13 +85,14 @@ knowledge is a prerequisite or side effect, and document that instead.
 Permission, communication, and execution policies belong to the agent's
 managing layer. Product confirmation controls are facts about the interface.
 
-The entrypoint gives a short reading path through the system model,
-composition, and CLI before offering detailed references. The introduction
+The entrypoint gives a short reading path through the top-level system
+overview, composition, and CLI before offering detailed references.
+Composition contains application description formats. The introduction
 explains how the parts work together in connected prose; a glossary or topic
 catalog does not establish those relationships. The path teaches the system,
-not an assumed command sequence. Composition and Resources describe the
-system independently of the CLI. Resource pages distinguish their required
-and optional configuration from examples in a particular composition language.
+not an assumed command sequence. The overview, Composition, and Resources
+describe the system independently of the CLI. Resource pages distinguish
+required and optional configuration from examples in a composition language.
 Brief restatement and cross-links between composition and resource examples
 are useful when they let each page be understood in context; full contracts
 still have one owner. Progressive disclosure controls loading, not which
@@ -98,9 +100,9 @@ knowledge is available, and the website publishes these same sources.
 Authentication owns credential acquisition, renewal, selection, and status
 semantics; commands that use credentials inherit that contract. Conditional
 requirements stay with the operation that needs them, rather than becoming
-default setup steps. CI checks that Composition and Resources do not link
-to CLI or skill entrypoints, while permitting contextual links within those
-subjects. Cycles among entrypoints, guides and operational references remain
+default setup steps. CI checks that the overview, Composition, and Resources
+do not link to CLI or skill entrypoints, while permitting contextual links
+within those subjects. Cycles among entrypoints, guides and operational references remain
 invalid; checks use Markdown links without a separate graph to maintain.
 Cross-skill references use canonical HTTPS URLs because skills can be
 installed individually. Quickstart links to shared references rather than

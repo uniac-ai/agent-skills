@@ -10,7 +10,7 @@ description: Define, deploy, and operate applications on Uniac, including connec
 The introduction develops the system model before its description format and
 operation:
 
-1. [How Uniac works](references/composition/overview.md) — accounts and projects,
+1. [How Uniac works](references/overview.md) — accounts and projects,
    applications, service identities, replicas, and persistent state.
 2. [Composition in YAML](references/composition/yaml.md) — `uniac.yaml`, resource
    definitions, named instances, and a connected application example.

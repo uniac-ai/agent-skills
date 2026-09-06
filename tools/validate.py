@@ -13,8 +13,8 @@ Checks, per skills/<name>/SKILL.md:
   - name matches the directory;
   - every relative Markdown link resolves to a file inside the skill;
   - canonical repository URLs resolve to files in this checkout;
-  - Composition and Resources can link to each other, but not to CLI pages
-    or skill entrypoints;
+  - the overview, Composition, and Resources can link to each other, but not
+    to CLI pages or skill entrypoints;
   - links among the remaining entry, guide, and CLI pages are acyclic.
 
 Exits non-zero on any failure, printing one line per defect.
@@ -94,7 +94,7 @@ def validate_links(skills: list[Path], root: Path) -> list[str]:
     explanatory_roots = [references / "composition", references / "resources"]
 
     def explanatory(path: Path) -> bool:
-        return any(directory in path.parents for directory in explanatory_roots)
+        return path == references / "overview.md" or any(directory in path.parents for directory in explanatory_roots)
 
     graph = {source: set() for source in owners if not explanatory(source)}
     for source in owners:
@@ -118,7 +118,7 @@ def validate_links(skills: list[Path], root: Path) -> list[str]:
                 defects.append(f"{source.relative_to(root)}: link {target!r} escapes the {scope_name}")
             elif explanatory(source) and (resolved.name == "SKILL.md" or references / "cli" in resolved.parents):
                 defects.append(
-                    f"{source.relative_to(root)}: Composition and Resources cannot link "
+                    f"{source.relative_to(root)}: Overview, Composition, and Resources cannot link "
                     f"to CLI pages or skill entrypoints: {target!r}"
                 )
             elif source in graph and resolved in graph and not (resolved == source and anchor):

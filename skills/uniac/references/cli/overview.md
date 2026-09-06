@@ -41,7 +41,7 @@ package. Initialization creates no remote project or directory binding.
 ## Project selection
 
 Deployment addresses an existing
-[remote project](../composition/overview.md#accounts-projects-and-applications).
+[remote project](../overview.md#accounts-projects-and-applications).
 `project create <name>` creates one on the authenticated account and prints
 its name and assigned slug. It does not prompt or write local files, and
 requires neither `uniac.yaml` nor Docker. The name must match

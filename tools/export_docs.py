@@ -10,7 +10,7 @@ from urllib.parse import quote, unquote, urlsplit, urlunsplit
 ROOT = Path(__file__).resolve().parent.parent
 REPOSITORY = "https://github.com/uniac-ai/agent-skills/blob/main/"
 REFERENCES = Path("skills/uniac/references")
-HOME_PAGE = "composition/overview"
+HOME_PAGE = "overview"
 GUIDES = {"agents/agents.md": "setup", "skills/uniac-quickstart/SKILL.md": "quickstart"}
 FRONTMATTER = re.compile(r"\A---\r?\n.*?\r?\n---\r?\n", re.S)
 HEADING = re.compile(r"\A\s*# ([^\r\n]+)\r?\n")

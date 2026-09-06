@@ -17,7 +17,7 @@ class ExportDocsTest(unittest.TestCase):
             "agents/agents.md": "# Setup\n\nInstall the CLI.\n",
             "skills/uniac-quickstart/SKILL.md": "---\nname: uniac-quickstart\ndescription: Skill routing.\n---\n\n# Quickstart\n\nDeploy an app.\n",
             "skills/uniac/SKILL.md": "# Agent entry\n",
-            "skills/uniac/references/composition/overview.md": "# How Uniac works\n\nServices run in a project.\n",
+            "skills/uniac/references/overview.md": "# How Uniac works\n\nServices run in a project.\n",
             "skills/uniac/references/composition/yaml.md": "# Composition in YAML\n\nDescribe the application.\n",
             "skills/uniac/references/cli/overview.md": "# CLI\n\nRun commands.\n",
         }
@@ -32,7 +32,7 @@ class ExportDocsTest(unittest.TestCase):
     def test_routes_links_queries_fragments_and_unpublished_skill_entry(self):
         result = self.render(
             "[composition](../composition/yaml.md?view=all#selection) "
-            "[`system`](../composition/overview.md) [section](#commands)\n"
+            "[`system`](../overview.md) [section](#commands)\n"
             "[setup](https://github.com/uniac-ai/agent-skills/blob/main/agents/agents.md#account)\n"
             "[quickstart](https://github.com/uniac-ai/agent-skills/blob/main/skills/uniac-quickstart/SKILL.md)\n"
             "[skill](../../SKILL.md) [external](https://example.com/page.md)\n"
@@ -65,7 +65,7 @@ class ExportDocsTest(unittest.TestCase):
         home = (self.output / "index.mdx").read_text()
         self.assertIn('title: "How Uniac works"', home)
         self.assertNotIn("sidebarTitle", home)
-        self.assertFalse((self.output / "composition/overview.mdx").exists())
+        self.assertFalse((self.output / "overview.mdx").exists())
 
     def test_metadata_uses_the_first_paragraph_starting_with_inline_code(self):
         result = self.render("`npm install -g @uniac/cli` installs the command.\n\nLater paragraph.\n")
