@@ -33,8 +33,8 @@ integrations are listed in the installer's
 
 | Installed skill | Purpose |
 |---|---|
-| [uniac-quickstart](https://github.com/uniac-ai/agent-skills/blob/main/skills/uniac-quickstart/SKILL.md) | First deployment: a complete example connecting the application, manifest, remote project, and public endpoint. |
-| [uniac](https://github.com/uniac-ai/agent-skills/blob/main/skills/uniac/SKILL.md) | Framework knowledge: system composition, application definition, CLI, and platform behavior. |
+| [uniac](https://github.com/uniac-ai/agent-skills/blob/main/skills/uniac/SKILL.md) | Framework documentation: concepts, projects, services, volumes, networking, and CLI operation. |
+| [uniac-quickstart](https://github.com/uniac-ai/agent-skills/blob/main/skills/uniac-quickstart/SKILL.md) | A complete first-deployment example. |
 
 ## CLI
 
@@ -53,7 +53,7 @@ uniac auth login
 Sign-in requires the user's browser interaction, with account creation
 available there. Credential storage, renewal, and platform selection are
 described in the
-[CLI reference](https://github.com/uniac-ai/agent-skills/blob/main/skills/uniac/references/cli.md#authentication).
+[authentication reference](https://github.com/uniac-ai/agent-skills/blob/main/skills/uniac/references/cli/authentication.md).
 
 ## Setup state
 

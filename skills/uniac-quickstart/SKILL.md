@@ -1,20 +1,17 @@
 ---
 name: uniac-quickstart
-description: First deployment of an application on Uniac, connecting its manifest, remote project, directory binding, and public endpoint through a complete example.
+description: First deployment of an application on Uniac through a complete example of its description, remote project, directory binding, and public endpoint.
 ---
 
 # Uniac quickstart
-
-Deployment connects a manifest declaration to a remote project. This example
-selects the project through a directory binding. Manifest authoring and
-project creation are independent.
 
 ## Example application
 
 This example starts with an application whose root `Dockerfile` builds a
 service listening on `0.0.0.0:8080`. The machine has the Uniac CLI, a running
-Docker daemon, and [account access](https://github.com/uniac-ai/agent-skills/blob/main/skills/uniac/references/cli.md#authentication).
-It uses a new project named `my-app` and supplies its manifest directly.
+Docker daemon, and [account access](https://github.com/uniac-ai/agent-skills/blob/main/skills/uniac/references/cli/authentication.md).
+It uses a new project named `my-app`, supplies its application description
+directly, and selects the project through a directory binding.
 
 The following `uniac.yaml` declares one service and exposes its HTTP port:
 
@@ -33,8 +30,8 @@ resources:
         public_ports: [{ port: 8080, type: http }]
 ```
 
-[Application definition](https://github.com/uniac-ai/agent-skills/blob/main/skills/uniac/references/application.md)
-describes services, storage, exposure, and cross-service references.
+[Resource composition](https://github.com/uniac-ai/agent-skills/blob/main/skills/uniac/references/resources/overview.md)
+defines the relationship between `api`, its definition, and `main`.
 
 ## Destination and deployment
 
@@ -49,16 +46,17 @@ uniac status
 ```
 
 An existing project can be linked by name or slug instead of creating one.
-The [project-selection contract](https://github.com/uniac-ai/agent-skills/blob/main/skills/uniac/references/cli.md#project-selection)
+The [project-selection contract](https://github.com/uniac-ai/agent-skills/blob/main/skills/uniac/references/cli/overview.md#project-selection)
 also describes selection during deployment and target overrides.
 
 `plan` previews the declaration locally. `deploy` builds the application
 image and submits the deployment; `status` reads the resulting project state.
-Their [planning and deployment contract](https://github.com/uniac-ai/agent-skills/blob/main/skills/uniac/references/cli.md#planning-and-deployment)
+Their [planning and deployment contract](https://github.com/uniac-ai/agent-skills/blob/main/skills/uniac/references/cli/overview.md#planning-and-deployment)
 defines requirements and completion behavior.
 
 ## Application address
 
-The service's `endpoint` row gives the public URL for exercising the
-application. [Platform behavior](https://github.com/uniac-ai/agent-skills/blob/main/skills/uniac/references/platform.md)
-defines networking and what the reported service state establishes.
+The HTTP address in the service's `endpoint` row is this application's
+public URL. [Output and errors](https://github.com/uniac-ai/agent-skills/blob/main/skills/uniac/references/cli/output.md)
+describes the report; [Service](https://github.com/uniac-ai/agent-skills/blob/main/skills/uniac/references/resources/service/overview.md)
+defines what the observed state establishes.

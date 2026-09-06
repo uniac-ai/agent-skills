@@ -34,15 +34,17 @@ In Claude Code the repository is also a plugin marketplace:
 ## Layout
 
 ```
-skills/uniac/                 framework orientation and knowledge
-  SKILL.md                    platform goal, system composition, reference map
-  references/application.md   application definition, resources and uniac.yaml
-  references/cli.md           commands, authentication, project selection,
-                              output and exit codes
-  references/platform.md      runtime, networking, storage and removal
+skills/uniac/                 framework documentation
+  SKILL.md                    entrypoint and topic map
+  references/concepts.md      platform purpose and system composition
+  references/project.md       remote identity, scope and lifecycle
+  references/resources/       composition, services, networking,
+                              environment references and volumes
+  references/cli/             commands, authentication, output and errors
 skills/uniac-quickstart/       a complete first-deployment example
 agents/agents.md              machine setup: skills, CLI and account access
 tools/validate.py             frontmatter, links, and reference-cycle checks
+tools/export_docs.py          website pages generated from these sources
 tools/generate_manifests.py   the plugin name, release, blurb, licence and
                               links, and everything rendered from them
 .claude-plugin/               Claude Code marketplace + plugin manifest
@@ -56,11 +58,11 @@ Plugin manifests are generated from shared metadata in
 Installers load the skill source directories. Distribution artifacts need
 a supported consumer and a verified installation path.
 
-`uniac` separates the platform's goal, system composition, static declaration,
-and live operation. It routes first-deployment tasks to `uniac-quickstart`,
-whose worked example links to the shared references. `agents/agents.md` owns
-machine setup and introduces both skills. The website quickstart is the human
-walkthrough; its documentation index exposes the page inventory.
+The references, setup document, and quickstart are the authored documentation.
+`tools/export_docs.py` generates their website pages with the same content,
+adapting frontmatter and links for Mintlify. UniacDocs records the source
+commit and checks the generated pages against it. Website navigation and
+`SKILL.md` expose the same subjects; neither maintains a second explanation.
 
 ## Content
 
@@ -85,14 +87,13 @@ Permission, communication, and execution policies belong to the agent's
 managing layer. Product confirmation controls are facts about the interface.
 
 Organize knowledge from the platform's goal to its components, how an
-application is defined, then CLI and platform operation. Name each reference
-for its subject; explain concepts and relationships before file formats.
-This order expresses levels of explanation, not steps to execute.
-The entrypoint explains the goal and core system model; references own
-substantial, distinct subjects. Layers organize concepts without requiring
-a file per layer. Keep syntax, tooling, and runtime mechanisms below the
-system model, and keep field semantics together with their declarations.
-Links lead to more detailed contracts; shared detail has one owner.
+application is defined, then CLI operation. Concepts and relationships
+precede file formats. Each major component has a named reference containing
+its definition, fields, runtime behavior, and lifecycle; separate pages own
+substantial configuration topics. The installed references contain the full
+public contracts, and the website publishes those same sources. Progressive
+disclosure controls loading, not which knowledge is available. Links express
+knowledge dependencies, not a required execution sequence.
 Authentication owns credential acquisition, renewal, selection, and status
 semantics; commands that use credentials inherit that contract. Conditional
 requirements stay with the operation that needs them, rather than becoming
@@ -115,9 +116,9 @@ contracts remain in this skill rather than copied into customer `AGENTS.md`.
 - Setup verification runs the installer on the documented Node version in
   an isolated environment. Existing global binaries or agent directories
   must not supply a prerequisite or result the setup itself fails to produce.
-- Keep output contracts independent of display layout. Command help owns
-  the flag inventory; the reference retains parsing hazards that make
-  discovery unsafe. Document actual release behavior in one place, including
+- Keep output contracts independent of display layout. CLI documentation owns
+  command arguments, flags, defaults, and parsing rules. Document actual
+  release behavior in one place, including
   reserved codes and limitations, rather than a general rule followed by
   contradictory exceptions.
 - The verification stamp is `VERSION` in `tools/generate_manifests.py`. It is

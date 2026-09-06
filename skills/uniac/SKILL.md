@@ -5,30 +5,37 @@ description: Define, deploy, and operate applications on Uniac, including connec
 
 # Uniac
 
-Uniac is a cloud platform for building and operating systems of connected
-services.
+[Concepts](references/concepts.md) introduces Uniac's purpose, system
+composition, and the relationship between an application description and
+running resources.
 
-## System composition
+[Project](references/project.md) defines the remote destination, identity,
+scope, and lifecycle.
 
-| Component | Meaning |
-|---|---|
-| Project | The remote scope containing services and volumes, with a shared private network. |
-| Service | An application component named within its project. |
-| Volume | Durable storage with its own identity and lifetime, attached to a service or retained unattached. |
-| Public endpoint | A service's public address for incoming traffic. |
+## Resources
 
-## Defining an application
+- [Overview and composition](references/resources/overview.md) — definitions,
+  service instances, deployment declarations, and their representation in `uniac.yaml`.
+- [Service](references/resources/service/overview.md) — sources, configuration,
+  service types, deployment versions, replicas, and lifecycle.
+- [Networking and endpoints](references/resources/service/networking.md) —
+  private addressing and public exposure.
+- [Environment and references](references/resources/service/environment.md) —
+  values, reference scope, resolution, and updates.
+- [Volume](references/resources/volume.md) — definition, attachment,
+  persistence, reuse, and deletion.
 
-[Application definition](references/application.md) — service definitions,
-named instances, deployment declarations, their relationship to a project,
-and how `uniac.yaml` describes them.
+## Uniac CLI
 
-## CLI and platform
+- [Overview and commands](references/cli/overview.md) — invocation, prerequisites,
+  project selection, planning, deployment, and observation.
+- [Authentication](references/cli/authentication.md) — sign-in, credentials,
+  platform selection, and session lifetime.
+- [Output and errors](references/cli/output.md) — reports, partial results,
+  streams, and exit codes.
 
-- [Quickstart](https://github.com/uniac-ai/agent-skills/blob/main/skills/uniac-quickstart/SKILL.md)
-  — a complete first-deployment example connecting the application,
-  manifest, project, and public endpoint.
-- [CLI](references/cli.md) — command behavior, authentication, project
-  selection, and output.
-- [Platform](references/platform.md) — how deployed services run, communicate,
-  retain data, change, and are removed; what observed state establishes.
+## Example
+
+[Quickstart](https://github.com/uniac-ai/agent-skills/blob/main/skills/uniac-quickstart/SKILL.md)
+connects an application description, a remote project, and a public endpoint
+in one first-deployment example.
