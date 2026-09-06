@@ -20,7 +20,7 @@ same command to update. Installation examples use `uniac-ai/agent-skills`;
 the ecosystem leaderboard counts installs per repository slug.
 
 The installer is pinned for Node 18 compatibility; it fetches this repository's
-current skill. CI checks installer discovery on Node 18.
+current skills. CI checks installer discovery on Node 18.
 
 In Claude Code the repository is also a plugin marketplace:
 
@@ -48,14 +48,13 @@ tools/generate_manifests.py   the plugin name, release, blurb, licence and
 .claude-plugin/               Claude Code marketplace + plugin manifest
 .codex-plugin/plugin.json     Codex plugin manifest
 plugin.json                   agent-plugins.org manifest (Cursor imports it)
-.well-known/agent-skills/     the discovery index and the skill archive
-                              it points at
 LICENSE                       MIT — required by the Cursor marketplace
 ```
 
-Plugin manifests, the discovery index, and the skill archive are generated.
-`tools/generate_manifests.py` holds their shared metadata; CI runs it with
-`--check` to verify that the committed files match their sources.
+Plugin manifests are generated from shared metadata in
+`tools/generate_manifests.py`; CI checks that committed files match.
+Installers load the skill source directories. Distribution artifacts need
+a supported consumer and a verified installation path.
 
 `uniac` separates the platform's goal, system composition, static declaration,
 and live operation. It routes first-deployment tasks to `uniac-quickstart`,
@@ -99,8 +98,8 @@ semantics; commands that use credentials inherit that contract. Conditional
 requirements stay with the operation that needs them, rather than becoming
 default setup steps. References must not form cycles. CI checks cycles from
 the Markdown links themselves, without a separate graph to maintain.
-Cross-skill references use canonical HTTPS URLs: each skill also ships as an
-independent archive. Quickstart links to shared reference files rather than
+Cross-skill references use canonical HTTPS URLs because skills can be
+installed individually. Quickstart links to shared references rather than
 back to the framework entrypoint.
 
 Use actual field names and established terms, defining Uniac concepts once.

@@ -104,7 +104,7 @@ class MarkdownLinksTest(unittest.TestCase):
             "uniac-quickstart/SKILL.md": f"[missing]({target})",
         }), [f"skills/uniac-quickstart/SKILL.md: broken link {target!r}"])
 
-    def test_relative_sibling_link_still_escapes_its_archive(self):
+    def test_relative_sibling_link_escapes_the_skill_directory(self):
         self.assertEqual(self.validate_skills({
             "uniac/SKILL.md": "Knowledge.",
             "uniac-quickstart/SKILL.md": "[knowledge](../uniac/SKILL.md)",
