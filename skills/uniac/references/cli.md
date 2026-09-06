@@ -4,6 +4,8 @@
 Alternatively, `npx -y @uniac/cli …` runs any `uniac …` invocation without
 a global installation.
 
+Commands that take a local directory default to the current directory.
+
 For commands accepting positional arguments, parsing stops at the first
 positional argument; trailing flags are ignored. `uniac -h` lists commands
 and `uniac <command> -h` lists flags.
@@ -12,11 +14,11 @@ and `uniac <command> -h` lists flags.
 
 | Command | Effect |
 |---|---|
-| `init` | Writes a starter `uniac.yaml` with one prebuilt-image service and its deployment. Offline; takes defaults when unattended. `npm create @uniac@latest` invokes it. |
-| `plan [deployment]` | Resolves a manifest deployment. Requires no credentials, network, or Docker. |
-| `project create <name>` | Creates a remote project. |
-| `link [name-or-slug]` | Creates or replaces a directory's binding to an existing project. The directory must contain `uniac.yaml`. Omitting the argument opens a project picker. |
-| `deploy [deployment]` | Requests deployment of the selected manifest declaration. |
+| `init` | Creates a [starter manifest](#planning-and-deployment). |
+| `plan [deployment]` | Previews a [manifest deployment](#planning-and-deployment). |
+| `project create <name>` | Creates a [remote project](#project-selection). |
+| `link [name-or-slug]` | Creates or replaces a [directory's project binding](#project-selection). |
+| `deploy [deployment]` | Requests [deployment](#planning-and-deployment) of the selected manifest declaration. |
 | `status [service]` | Reads current state for a linked project, including services absent from the local manifest, or one named service. |
 | `auth <login\|status\|token\|logout>` | Manages account credentials; see [Authentication](#authentication). |
 | `version` | Prints the installed version. |
@@ -48,6 +50,11 @@ locally stored platform sessions.
 
 ## Project selection
 
+Deployment targets an existing remote project. `project create <name>` creates
+one without writing local files. `link [name-or-slug]` associates a local
+directory containing `uniac.yaml` with an existing project; omitting the
+argument opens a project picker.
+
 `link` writes `.uniac/deploy.json`, containing
 `{project_slug, project_name, gateway_url, platform_url}`: `project_name` is
 the name given at `project create`, unique within the account; `project_slug`
@@ -68,14 +75,22 @@ An unattended invocation fails if selection requires interaction.
 
 ## Planning and deployment
 
-`plan` and `deploy` read `uniac.yaml` from the selected project directory.
+`init` writes a starter `uniac.yaml` in a local directory without one. It
+declares a prebuilt-image service and its deployment. It runs offline and
+takes defaults when unattended; `npm create @uniac@latest` invokes it.
+
+`plan` and `deploy` read `uniac.yaml` from the selected local directory.
 They select the explicitly named deployment, otherwise `default`, otherwise
 the manifest's sole deployment; failure to select a deployment is an error.
+
+`plan` requires no credentials, network, or Docker. `deploy` additionally
+requires an [existing remote project](#project-selection),
+[credentials for its platform](#authentication), and a local Docker daemon
+for either `image:` or `build:`.
 
 A deploy target must contain exactly one entry in `services`. Deployment
 performs local planning before any remote action.
 
-Deploying either `image:` or `build:` requires the local Docker daemon.
 Prebuilt images are pulled with local Docker credentials. Images target `linux/amd64`.
 Builds use the current working tree; the context directory's `.dockerignore`
 filters build input, while `.gitignore` does not. Builds run on each

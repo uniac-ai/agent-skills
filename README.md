@@ -72,9 +72,11 @@ explain one concern coherently, with the context needed to understand it.
 Judge each document against the outcome promised where readers enter it.
 Then check its sentences, tables, and examples for directives and information
 derivable from retained facts. Remove repeated explanations and constructed
-procedures while preserving their independently useful premises. A quickstart
-example states its starting conditions and connects inputs to results; its
-command order applies to that example, not to every task.
+procedures while preserving their independently useful premises. Operations
+state their required inputs and effects, referencing the concepts that own
+those inputs. A quickstart illustrates these contracts; missing prerequisites
+or relationships are repaired in their owning reference. Its example order
+applies to its stated starting conditions, not to every task.
 
 Describe what commands, files, and the platform do. A directive is justified
 only by an essential user-experience requirement that the agent cannot infer
