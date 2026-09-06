@@ -1,35 +1,19 @@
-# `uniac.yaml`
+# Defining an application
 
-In `uniac.yaml`, a **service definition** describes reusable application
-configuration; a **manifest deployment** selects definitions and gives them
-**instance names** that identify the services in a project. Manifest
-deployments do not create remote service groups or environments.
+A **service definition** describes reusable application configuration.
+A **deployment declaration** maps **instance names** to service definitions.
+Each instance name identifies a service in a remote Uniac project; the
+[CLI selects that project](cli.md#project-selection) independently of the
+application description.
 
-Unknown fields are rejected at every level. The tables below describe all
-supported fields. The platform's distinct live deployment lifecycle and
-runtime behavior are in [platform.md](platform.md).
-
-## Top level
-
-| Field | Meaning |
-|---|---|
-| `runtime` | Optional; `yaml` is the default and only supported value. |
-| `default` | Optional name of a deployment resource. |
-| `resources` | Required, nonempty mapping of names to resource definitions. Each resource requires `type: service`, `type: stateful`, or `type: deployment`. |
-
-Resource names are lowercase letters and digits, with runs separated by
-one or two underscores or by dashes, and are unique within the file. A
-service instance name (a key under a deployment's `services`) is one DNS
-label: lowercase letters, digits and dashes, starting and ending with a
-letter or digit, at most 63 characters — it becomes the service's hostname
-and the label of its `<name>.internal` address, and `uniac plan` rejects
-any other shape. Target selection is described in
-[planning and deployment](cli.md#planning-and-deployment).
+`uniac.yaml` represents this description as named resources.
 
 ## Service definitions
 
-`type: service` and `type: stateful` share these fields. Exactly one of
-`image` or `build` is required; an empty `image: ""` counts as absent.
+`type: service` permits multiple running containers per service;
+`type: stateful` limits each service to at most one. Both types share these
+fields. Exactly one of `image` or `build` is required; an empty `image: ""`
+counts as absent.
 
 | Field | Meaning |
 |---|---|
@@ -56,7 +40,7 @@ invalid.
 | `target` | Dockerfile stage name | Last stage |
 
 Paths are relative and checked lexically: `root` must stay within the
-project directory, and `context` and `dockerfile` within the root.
+directory containing `uniac.yaml`, and `context` and `dockerfile` within the root.
 
 Build execution and Docker requirements are in
 [CLI planning and deployment](cli.md#planning-and-deployment).
@@ -76,18 +60,20 @@ The resulting name `<instance>.<name>` is limited to 127 characters.
 A null `volumes` value declares no volume. Persistence, reuse, and deletion
 are described under [storage](platform.md#storage).
 
-## Deployments
+## Deployment declarations
 
-`type: deployment` accepts:
+A `type: deployment` declaration creates no remote service group or environment.
 
 | Field | Meaning |
 |---|---|
 | `services` | Required, nonempty mapping of instance names to definitions and exposure. |
-| `services.<instance>.from` | Required name of an existing `service` or `stateful` definition in this manifest. |
+| `services.<instance>.from` | Required name of an existing `service` or `stateful` definition in this file. |
 | `services.<instance>.public_ports` | Optional list of public exposure requests, described below. |
 
-Execution limits are in
-[CLI planning and deployment](cli.md#planning-and-deployment).
+An instance name is one DNS label: lowercase letters, digits and dashes,
+starting and ending with a letter or digit, at most 63 characters.
+Execution limits are in [CLI planning and deployment](cli.md#planning-and-deployment);
+live deployment versions and their lifecycle are in [platform.md](platform.md).
 
 ### Public exposure
 
@@ -131,11 +117,25 @@ resolution, even if another deployment in the file defines it. Runtime
 resolution and missing-variable behavior are in
 [platform.md](platform.md#environment).
 
+## Description file
+
+The top-level fields of `uniac.yaml` are:
+
+| Field | Meaning |
+|---|---|
+| `runtime` | Optional; `yaml` is the default and only supported value. |
+| `default` | Optional deployment resource name; see [selection precedence](cli.md#planning-and-deployment). |
+| `resources` | Required, nonempty mapping of names to definitions with `type: service`, `type: stateful`, or `type: deployment`. |
+
+Resource names are lowercase letters and digits, with runs separated by
+one or two underscores or by dashes, and are unique within the file.
+Unknown fields are rejected at every level.
+
 ## Validation and generated description
 
 Local validation checks:
 
-- The whole manifest's schema, names, individual service declarations,
+- The whole file's schema, names, individual service declarations,
   `from` references, and default target.
 - For the selected deployment, the existence of build roots, contexts, and
   Dockerfiles, composed volume names, referenced variables within the

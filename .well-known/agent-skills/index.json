@@ -4,16 +4,16 @@
     {
       "name": "uniac",
       "type": "archive",
-      "description": "Uniac system composition, uniac.yaml, CLI commands, and platform behavior for developing and operating applications.",
+      "description": "Define, deploy, and operate applications on Uniac, including connected services, storage, networking, and CLI operations.",
       "url": "uniac.tar.gz",
-      "digest": "sha256:9bed473291c5f93bae8454ab259fab8ef0d7441677a7c52ed922b9286f67d1d4"
+      "digest": "sha256:5c8422460f0c7e966290b0e66101143b8db044debf617af96e6ac524c5d7e1c5"
     },
     {
       "name": "uniac-quickstart",
       "type": "archive",
       "description": "First deployment of an application on Uniac, connecting its manifest, remote project, directory binding, and public endpoint through a complete example.",
       "url": "uniac-quickstart.tar.gz",
-      "digest": "sha256:4109859017f122cedc7833b1bcccfeceaeb6d866df1267b151265000535438a4"
+      "digest": "sha256:cbaf22cbd168aa6aff8bdc0a65784e21120f25e3f01b40db79066d71d77f47b8"
     }
   ]
 }

@@ -33,8 +33,8 @@ resources:
         public_ports: [{ port: 8080, type: http }]
 ```
 
-The [manifest reference](https://github.com/uniac-ai/agent-skills/blob/main/skills/uniac/references/manifest.md)
-defines image sources, additional services, storage, and cross-service references.
+[Application definition](https://github.com/uniac-ai/agent-skills/blob/main/skills/uniac/references/application.md)
+describes services, storage, exposure, and cross-service references.
 
 ## Destination and deployment
 

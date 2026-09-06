@@ -10,13 +10,11 @@ the manifest.
 Uniac runs the application's container image without adding an SDK or runtime
 dependency.
 
-`type: stateful` limits each service to at most one running container.
-`type: service` permits multiple running containers. Redeploying a service
-with a different type is rejected.
+Redeploying a service with a different type is rejected.
 
 ## Networking
 
-Services are addressable by their instance names within the project.
+Services are addressable as `<instance>.internal` within their project.
 Internal communication does not require port declarations. Without public
 exposure, a service is directly reachable only within its project.
 Uniac does not automatically supply a `PORT` variable or configure the

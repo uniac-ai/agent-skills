@@ -36,7 +36,7 @@ In Claude Code the repository is also a plugin marketplace:
 ```
 skills/uniac/                 framework orientation and knowledge
   SKILL.md                    platform goal, system composition, reference map
-  references/manifest.md      uniac.yaml schema and local validation
+  references/application.md   application definition, resources and uniac.yaml
   references/cli.md           commands, authentication, project selection,
                               output and exit codes
   references/platform.md      runtime, networking, storage and removal
@@ -85,9 +85,10 @@ knowledge is a prerequisite or side effect, and document that instead.
 Permission, communication, and execution policies belong to the agent's
 managing layer. Product confirmation controls are facts about the interface.
 
-Organize knowledge from the platform's goal to its components and their
-relationships, then the manifest that declares them, then CLI and platform
-operation. This order expresses levels of explanation, not steps to execute.
+Organize knowledge from the platform's goal to its components, how an
+application is defined, then CLI and platform operation. Name each reference
+for its subject; explain concepts and relationships before file formats.
+This order expresses levels of explanation, not steps to execute.
 The entrypoint explains the goal and core system model; references own
 substantial, distinct subjects. Layers organize concepts without requiring
 a file per layer. Keep syntax, tooling, and runtime mechanisms below the

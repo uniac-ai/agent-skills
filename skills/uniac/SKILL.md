@@ -1,6 +1,6 @@
 ---
 name: uniac
-description: Uniac system composition, uniac.yaml, CLI commands, and platform behavior for developing and operating applications.
+description: Define, deploy, and operate applications on Uniac, including connected services, storage, networking, and CLI operations.
 ---
 
 # Uniac
@@ -17,11 +17,11 @@ services.
 | Volume | Durable storage with its own identity and lifetime, attached to a service or retained unattached. |
 | Public endpoint | A service's public address for incoming traffic. |
 
-## Manifest
+## Defining an application
 
-[Manifest](references/manifest.md) — expressing the system in `uniac.yaml`:
-reusable definitions, named service instances, deployment declarations,
-fields, references, and local validation.
+[Application definition](references/application.md) — service definitions,
+named instances, deployment declarations, their relationship to a project,
+and how `uniac.yaml` describes them.
 
 ## CLI and platform
 

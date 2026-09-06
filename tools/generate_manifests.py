@@ -55,8 +55,8 @@ KEYWORDS = ["uniac", "deployment", "cloud", "devops"]
 # an agent load the skill at the right moment — so the two do not share
 # a source.
 BLURB = (
-    "Deploy and run applications on Uniac, the cloud deployment platform "
-    "— the uniac.yaml manifest, the uniac CLI, and the platform contract."
+    "Define, deploy, and operate applications on Uniac "
+    "with connected services, storage, and public endpoints."
 )
 MARKETPLACE_BLURB = (
     "The official agent knowledge for Uniac, a cloud deployment platform."

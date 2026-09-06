@@ -34,7 +34,7 @@ integrations are listed in the installer's
 | Installed skill | Purpose |
 |---|---|
 | [uniac-quickstart](https://github.com/uniac-ai/agent-skills/blob/main/skills/uniac-quickstart/SKILL.md) | First deployment: a complete example connecting the application, manifest, remote project, and public endpoint. |
-| [uniac](https://github.com/uniac-ai/agent-skills/blob/main/skills/uniac/SKILL.md) | Framework knowledge: system composition, manifest, CLI, and platform behavior. |
+| [uniac](https://github.com/uniac-ai/agent-skills/blob/main/skills/uniac/SKILL.md) | Framework knowledge: system composition, application definition, CLI, and platform behavior. |
 
 ## CLI
 

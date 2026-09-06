@@ -15,10 +15,10 @@ and `uniac <command> -h` lists flags.
 | Command | Effect |
 |---|---|
 | `init` | Creates a [starter manifest](#planning-and-deployment). |
-| `plan [deployment]` | Previews a [manifest deployment](#planning-and-deployment). |
+| `plan [deployment]` | Previews a [deployment declaration](#planning-and-deployment). |
 | `project create <name>` | Creates a [remote project](#project-selection). |
 | `link [name-or-slug]` | Creates or replaces a [directory's project binding](#project-selection). |
-| `deploy [deployment]` | Requests [deployment](#planning-and-deployment) of the selected manifest declaration. |
+| `deploy [deployment]` | Requests [deployment](#planning-and-deployment) of the selected declaration. |
 | `status [service]` | Reads current state for a linked project, including services absent from the local manifest, or one named service. |
 | `auth <login\|status\|token\|logout>` | Manages account credentials; see [Authentication](#authentication). |
 | `version` | Prints the installed version. |
