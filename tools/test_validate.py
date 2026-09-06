@@ -70,13 +70,13 @@ class MarkdownLinksTest(unittest.TestCase):
         self.assertEqual(self.validate_skills({
             "uniac/SKILL.md": (
                 "[quickstart](https://github.com/uniac-ai/agent-skills/blob/main/"
-                "skills/uniac-quickstart/SKILL.md) [cli](references/cli.md)"
+                "skills/uniac-quickstart/SKILL.md) [cli](references/cli/overview.md)"
             ),
             "uniac-quickstart/SKILL.md": (
                 "[cli](https://github.com/uniac-ai/agent-skills/blob/main/"
-                "skills/uniac/references/cli.md#commands)"
+                "skills/uniac/references/cli/overview.md#commands)"
             ),
-            "uniac/references/cli.md": "# Commands",
+            "uniac/references/cli/overview.md": "# Commands",
         }), [])
 
     def test_canonical_cross_skill_cycle_reports_the_closed_path(self):
@@ -111,6 +111,45 @@ class MarkdownLinksTest(unittest.TestCase):
         }), [
             "skills/uniac-quickstart/SKILL.md: "
             "link '../uniac/SKILL.md' escapes the skill"
+        ])
+
+    def test_composition_and_resources_allow_contextual_links_in_both_directions(self):
+        self.assertEqual(self.validate_skills({
+            "uniac/SKILL.md": "[system](references/composition/overview.md) [cli](references/cli/overview.md)",
+            "uniac/references/composition/overview.md": "[yaml](yaml.md) [service](../resources/service/overview.md)",
+            "uniac/references/composition/yaml.md": "[system](overview.md) [service](../resources/service/overview.md)",
+            "uniac/references/resources/service/overview.md": "[composition](../../composition/yaml.md) [networking](networking.md)",
+            "uniac/references/resources/service/networking.md": "[service](overview.md)",
+            "uniac/references/cli/overview.md": "[composition](../composition/yaml.md) [service](../resources/service/overview.md)",
+        }), [])
+
+    def test_composition_and_resources_cannot_link_cli_or_skill_entrypoints(self):
+        for layer in ("composition", "resources", "resources/service"):
+            parent = "../" * len(layer.split("/"))
+            targets = (
+                "https://github.com/uniac-ai/agent-skills/blob/main/skills/uniac/references/cli/overview.md#commands",
+                parent + "cli/overview.md#commands",
+                parent + "../SKILL.md",
+                "https://github.com/uniac-ai/agent-skills/blob/main/skills/uniac-quickstart/SKILL.md",
+            )
+            for target in targets:
+                with self.subTest(layer=layer, target=target):
+                    source = f"uniac/references/{layer}/overview.md"
+                    self.assertEqual(self.validate_skills({
+                        "uniac/SKILL.md": "# Uniac",
+                        "uniac-quickstart/SKILL.md": "# Quickstart",
+                        "uniac/references/cli/overview.md": "# CLI",
+                        source: f"[operation]({target})",
+                    }), [
+                        f"skills/{source}: Composition and Resources cannot link "
+                        f"to CLI pages or skill entrypoints: {target!r}"
+                    ])
+
+    def test_explanatory_crosslinks_still_require_existing_files(self):
+        self.assertEqual(self.validate_skills({
+            "uniac/references/composition/yaml.md": "[service](../resources/service/overview.md)",
+        }), [
+            "skills/uniac/references/composition/yaml.md: broken link '../resources/service/overview.md'"
         ])
 
 

@@ -9,16 +9,31 @@ a `PORT` variable or configure the application to match a public endpoint.
 
 ## Public endpoints
 
-`services.<instance>.public_ports` in a deployment declaration specifies
-public exposure for that instance. Each entry is a mapping with two required
-fields:
+A public endpoint forwards incoming traffic to the application's listen port.
 
-| Field | Meaning |
+| Type | Allocated endpoint |
 |---|---|
-| `port` | The application's listen port, as a YAML number truncated toward zero. |
-| `type` | `http` or `tcp`. |
+| `http` | An address at `https://<hostname>` on the shared HTTP edge, routing to the application's specified port. |
+| `tcp` | A public hostname and port, forwarding raw TCP to the application's specified port. The public port is allocated independently of the listen port. |
 
-The list has three meanings on deployment:
+## Required and optional configuration
+
+Public exposure is optional. Each requested endpoint specifies:
+
+| Field | Required | Meaning |
+|---|---|---|
+| `port` | Yes | The application's listen port, as a number truncated toward zero. |
+| `type` | Yes | `http` or `tcp`. |
+
+The platform accepts ports 1–65535 and at most one exposure of each type per
+service. These limits are enforced during deployment, beyond local schema
+validation.
+
+## YAML composition example
+
+In [YAML composition](../../composition/yaml.md),
+`services.<instance>.public_ports` is an optional list of mappings, each with
+`port` and `type`. Its presence has three meanings on deployment:
 
 | Value | Result |
 |---|---|
@@ -26,11 +41,22 @@ The list has three meanings on deployment:
 | `[]` | Removes all public exposure. |
 | Nonempty list | Replaces public exposure with exactly this list. |
 
-The platform accepts ports 1–65535 and at most one exposure of each type per
-service. These limits are enforced during deployment, beyond local schema
-validation.
+This service's port 8080 receives traffic through both an HTTPS endpoint and
+a separately allocated raw TCP endpoint.
 
-| Type | Allocated endpoint |
-|---|---|
-| `http` | An address at `https://<hostname>` on the shared HTTP edge, routing to the application's specified port. |
-| `tcp` | A public hostname and port, forwarding raw TCP to the application's specified port. The public port is allocated independently of the listen port. |
+```yaml
+resources:
+  echo:
+    type: service
+    image: mendhak/http-https-echo:31
+  application:
+    type: deployment
+    services:
+      web:
+        from: echo
+        public_ports:
+          - port: 8080
+            type: http
+          - port: 8080
+            type: tcp
+```

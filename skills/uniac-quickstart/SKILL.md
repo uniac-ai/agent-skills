@@ -30,7 +30,7 @@ resources:
         public_ports: [{ port: 8080, type: http }]
 ```
 
-[Resource composition](https://github.com/uniac-ai/agent-skills/blob/main/skills/uniac/references/resources/overview.md)
+[Composition in YAML](https://github.com/uniac-ai/agent-skills/blob/main/skills/uniac/references/composition/yaml.md)
 defines the relationship between `api`, its definition, and `main`.
 
 ## Destination and deployment

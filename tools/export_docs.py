@@ -10,6 +10,7 @@ from urllib.parse import quote, unquote, urlsplit, urlunsplit
 ROOT = Path(__file__).resolve().parent.parent
 REPOSITORY = "https://github.com/uniac-ai/agent-skills/blob/main/"
 REFERENCES = Path("skills/uniac/references")
+HOME_PAGE = "composition/overview"
 GUIDES = {"agents/agents.md": "setup", "skills/uniac-quickstart/SKILL.md": "quickstart"}
 FRONTMATTER = re.compile(r"\A---\r?\n.*?\r?\n---\r?\n", re.S)
 HEADING = re.compile(r"\A\s*# ([^\r\n]+)\r?\n")
@@ -23,9 +24,9 @@ def pages(source: Path) -> dict[str, str]:
     result = dict(GUIDES)
     for path in sorted((source / REFERENCES).rglob("*.md")):
         relative = path.relative_to(source / REFERENCES).with_suffix("").as_posix()
-        result[path.relative_to(source).as_posix()] = "index" if relative == "concepts" else relative
-    if "skills/uniac/references/concepts.md" not in result:
-        raise ValueError("missing canonical reference: skills/uniac/references/concepts.md")
+        result[path.relative_to(source).as_posix()] = "index" if relative == HOME_PAGE else relative
+    if f"{REFERENCES}/{HOME_PAGE}.md" not in result:
+        raise ValueError(f"missing canonical reference: {REFERENCES}/{HOME_PAGE}.md")
     if len(set(result.values())) != len(result):
         raise ValueError("multiple source pages map to the same website route")
     return result
@@ -102,8 +103,6 @@ def render(text: str, current: str, routes: dict[str, str], source: Path) -> str
     description = re.sub(r"\[([^\]]+)\]\([^)]+\)", r"\1", description)
     description = " ".join(description.replace("`", "").replace("**", "").split())
     metadata = {"title": title, "description": description}
-    if routes[current] == "index":
-        metadata["sidebarTitle"] = "Concepts"
     frontmatter = "\n".join(f"{key}: {json.dumps(value, ensure_ascii=False)}" for key, value in metadata.items())
     notice = f"{{/* Generated from uniac-ai/agent-skills: {current} */}}"
     return f"---\n{frontmatter}\n---\n\n{notice}\n" + outside_code(body, prose)

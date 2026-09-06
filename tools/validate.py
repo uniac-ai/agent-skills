@@ -13,7 +13,9 @@ Checks, per skills/<name>/SKILL.md:
   - name matches the directory;
   - every relative Markdown link resolves to a file inside the skill;
   - canonical repository URLs resolve to files in this checkout;
-  - links between all skills' Markdown files form a directed acyclic graph.
+  - Composition and Resources can link to each other, but not to CLI pages
+    or skill entrypoints;
+  - links among the remaining entry, guide, and CLI pages are acyclic.
 
 Exits non-zero on any failure, printing one line per defect.
 """
@@ -88,8 +90,14 @@ def validate_links(skills: list[Path], root: Path) -> list[str]:
         for skill in skills
         for f in sorted(skill.rglob("*.md"))
     }
-    graph = {source: set() for source in owners}
-    for source in graph:
+    references = root.resolve() / "skills/uniac/references"
+    explanatory_roots = [references / "composition", references / "resources"]
+
+    def explanatory(path: Path) -> bool:
+        return any(directory in path.parents for directory in explanatory_roots)
+
+    graph = {source: set() for source in owners if not explanatory(source)}
+    for source in owners:
         for target in LINK_RE.findall(prose_of(source.read_text(encoding="utf-8"))):
             if target.startswith(REPOSITORY_URL):
                 path = unquote(urlsplit(target).path[len(REPOSITORY_PATH):])
@@ -108,7 +116,12 @@ def validate_links(skills: list[Path], root: Path) -> list[str]:
                 defects.append(f"{source.relative_to(root)}: broken link {target!r}")
             elif scope not in resolved.parents:
                 defects.append(f"{source.relative_to(root)}: link {target!r} escapes the {scope_name}")
-            elif resolved in graph and not (resolved == source and anchor):
+            elif explanatory(source) and (resolved.name == "SKILL.md" or references / "cli" in resolved.parents):
+                defects.append(
+                    f"{source.relative_to(root)}: Composition and Resources cannot link "
+                    f"to CLI pages or skill entrypoints: {target!r}"
+                )
+            elif source in graph and resolved in graph and not (resolved == source and anchor):
                 graph[source].add(resolved)
 
     visited = set()

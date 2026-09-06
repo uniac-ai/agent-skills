@@ -1,5 +1,8 @@
 # Uniac CLI
 
+The `uniac` CLI connects a local application composition to a remote project.
+Its commands prepare descriptions, deploy services, and read live state.
+
 `npm install -g @uniac/cli` installs the `uniac` command with Node 18+.
 `npx -y @uniac/cli …` runs the same command without a global installation.
 
@@ -37,10 +40,12 @@ package. Initialization creates no remote project or directory binding.
 
 ## Project selection
 
-Deployment addresses an existing [remote project](../project.md).
+Deployment addresses an existing
+[remote project](../composition/overview.md#accounts-projects-and-applications).
 `project create <name>` creates one on the authenticated account and prints
 its name and assigned slug. It does not prompt or write local files, and
-requires neither `uniac.yaml` nor Docker. Project creation and linking use the
+requires neither `uniac.yaml` nor Docker. The name must match
+`^[a-z][a-z0-9-]{0,62}$`. Project creation and linking use the
 platform selected by `UNIAC_PLATFORM_URL`, whose default and credential
 selection are described in [Authentication](authentication.md).
 
@@ -88,7 +93,7 @@ named deployment declaration, otherwise `default`, otherwise the file's sole
 deployment. Failure to select a deployment is an error. This selection is
 independent of the remote project binding.
 
-`plan` performs [description validation](../resources/overview.md) offline,
+`plan` performs [description validation](../composition/yaml.md#validation) offline,
 without credentials or Docker. It decodes the whole file and composes the
 selected declaration, including checking that its build paths exist. It
 does not run Docker builds or check remote project state. `--full` expands the

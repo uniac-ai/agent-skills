@@ -35,15 +35,13 @@ In Claude Code the repository is also a plugin marketplace:
 
 ```
 skills/uniac/                 framework documentation
-  SKILL.md                    entrypoint and topic map
-  references/concepts.md      platform purpose and system composition
-  references/project.md       remote identity, scope and lifecycle
-  references/resources/       composition, services, networking,
-                              environment references and volumes
+  SKILL.md                    reading path and topic map
+  references/composition/     system model, projects and YAML composition
+  references/resources/       services, networking, environment and volumes
   references/cli/             commands, authentication, output and errors
 skills/uniac-quickstart/       a complete first-deployment example
 agents/agents.md              machine setup: skills, CLI and account access
-tools/validate.py             frontmatter, links, and reference-cycle checks
+tools/validate.py             frontmatter, links and knowledge boundaries
 tools/export_docs.py          website pages generated from these sources
 tools/generate_manifests.py   the plugin name, release, blurb, licence and
                               links, and everything rendered from them
@@ -86,25 +84,30 @@ knowledge is a prerequisite or side effect, and document that instead.
 Permission, communication, and execution policies belong to the agent's
 managing layer. Product confirmation controls are facts about the interface.
 
-Organize knowledge from the platform's goal to its components, how an
-application is defined, then CLI operation. Concepts and relationships
-precede file formats. Each major component has a named reference containing
-its definition, fields, runtime behavior, and lifecycle; separate pages own
-substantial configuration topics. The installed references contain the full
-public contracts, and the website publishes those same sources. Progressive
-disclosure controls loading, not which knowledge is available. Links express
-knowledge dependencies, not a required execution sequence.
+The entrypoint gives a short reading path through the system model,
+composition, and CLI before offering detailed references. The introduction
+explains how the parts work together in connected prose; a glossary or topic
+catalog does not establish those relationships. The path teaches the system,
+not an assumed command sequence. Composition and Resources describe the
+system independently of the CLI. Resource pages distinguish their required
+and optional configuration from examples in a particular composition language.
+Brief restatement and cross-links between composition and resource examples
+are useful when they let each page be understood in context; full contracts
+still have one owner. Progressive disclosure controls loading, not which
+knowledge is available, and the website publishes these same sources.
 Authentication owns credential acquisition, renewal, selection, and status
 semantics; commands that use credentials inherit that contract. Conditional
 requirements stay with the operation that needs them, rather than becoming
-default setup steps. References must not form cycles. CI checks cycles from
-the Markdown links themselves, without a separate graph to maintain.
+default setup steps. CI checks that Composition and Resources do not link
+to CLI or skill entrypoints, while permitting contextual links within those
+subjects. Cycles among entrypoints, guides and operational references remain
+invalid; checks use Markdown links without a separate graph to maintain.
 Cross-skill references use canonical HTTPS URLs because skills can be
 installed individually. Quickstart links to shared references rather than
 back to the framework entrypoint.
 
-Use actual field names and established terms, defining Uniac concepts once.
-Remove generic advice, invented labels, failure stories, and repeated facts.
+Use actual field names and established terms. Remove generic advice, invented
+labels, failure stories, and repetition that does not help understanding.
 Project-specific instructions belong in the customer's project; public
 contracts remain in this skill rather than copied into customer `AGENTS.md`.
 
@@ -129,6 +132,6 @@ contracts remain in this skill rather than copied into customer `AGENTS.md`.
   provenance and rollback; nothing installs from them. `main` is the release
   channel — it is what `npx skills add` resolves, and what uniac.ai takes
   `agents.md` from, so merging to it is the release.
-- Before pushing: `python3 -B tools/test_validate.py`, `python3 tools/validate.py`, and
+- Before pushing: `python3 -B -m unittest discover -s tools -p 'test_*.py'`, `python3 tools/validate.py`, and
   `python3 tools/generate_manifests.py`; CI runs these plus a live resolve
   through the ecosystem installer (`npx -y skills@1.5.15 add . --list`).

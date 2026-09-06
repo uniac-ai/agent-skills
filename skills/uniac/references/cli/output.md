@@ -27,7 +27,7 @@ definition's name when it differs from the service name.
 `plan --json` emits `{resource, digest, deployable}`. `resource` names the
 selected declaration; `deployable` is the generated service description.
 Environment and start-command fields are included whether or not `--full`
-is supplied. [Resources](../resources/overview.md) defines the generated
+is supplied. [Composition in YAML](../composition/yaml.md#generated-description) defines the generated
 description and what its digest identifies.
 
 ## Deployment record

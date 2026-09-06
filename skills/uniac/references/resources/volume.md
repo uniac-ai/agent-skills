@@ -3,26 +3,53 @@
 A volume is durable storage with a project-scoped identity. Its data and
 lifetime are independent of the service holding it.
 
-## Declaration
+## Required and optional configuration
 
-A service definition may declare at most one entry in `volumes`; a nonempty
-list is allowed only with `type: stateful`. Omitting `volumes`, setting it to
-`null`, or using `[]` declares no volume.
+Volume attachment is optional and available only to stateful services, with
+at most one volume per service. An attachment requires:
 
-Each entry is a mapping with three required fields:
-
-| Field | Meaning |
-|---|---|
-| `name` | Local volume name matching `^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?$`. |
-| `size_gb` | YAML number whose value, after truncation toward zero, is at least 1. |
-| `mount_path` | Normalized absolute path other than `/`. |
+| Field | Required | Meaning |
+|---|---|---|
+| `name` | Yes | Local volume name matching `^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?$`. |
+| `size_gb` | Yes | Number whose value, after truncation toward zero, is at least 1. |
+| `mount_path` | Yes | Absolute path other than `/`, with no `.` or `..` segments, repeated slashes, or trailing slash. |
 
 The resulting project-scoped name is `<instance>.<name>`, limited to 127
-characters. In the generated description, the declaration is one `volume`
-object with that scoped name, `size_gb`, and `mount_path`.
+characters.
 
 At deployment, the platform limits `size_gb` to 4096 and rejects mount paths
 at or below `/proc`, `/sys`, and `/dev`, and the path `/etc/resolv.conf`.
+
+## YAML composition example
+
+In [YAML composition](../composition/yaml.md), a volume declaration is a
+mapping with `name`, `size_gb`, and `mount_path` inside the service definition's
+optional `volumes` list. Omitting `volumes`, setting it to `null`, or using
+`[]` declares no volume.
+
+The stateful `cache` service mounts `cache.data` at `/data`. Redis writes its
+append-only persistence files there, and the volume retains them across
+container replacement.
+
+```yaml
+resources:
+  cache-code:
+    type: stateful
+    image: redis:7-alpine
+    start_command: redis-server --appendonly yes
+    volumes:
+      - name: data
+        size_gb: 1
+        mount_path: /data
+  application:
+    type: deployment
+    services:
+      cache:
+        from: cache-code
+```
+
+In the generated description, the declaration is one `volume` object with
+the scoped name, `size_gb`, and `mount_path`.
 
 ## Lifecycle
 

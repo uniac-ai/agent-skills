@@ -1,49 +1,73 @@
 # Service
 
-A service runs an application's container image under an instance name in
-its project. Its reusable definition supplies the image source and runtime
-configuration.
+A service is a named application component within a project. It runs
+containers from a reusable definition that supplies the image source and
+runtime configuration. The service keeps its identity across container
+replacements and deployment versions.
 
-## Definition
+Stateless services can run multiple container replicas behind the same
+service identity. Stateful services run at most one container and can attach
+a [volume](../volume.md) whose data survives container replacement.
 
-`type: service` permits multiple running containers per service;
-`type: stateful` limits each service to at most one. Both types share these
-fields. Exactly one of `image` or `build` is required; an empty `image: ""`
-counts as absent.
+## Required and optional configuration
 
-| Field | Meaning |
-|---|---|
-| `image` | OCI image reference. |
-| `build` | Dockerfile build source, described below. |
-| `env` | Optional mapping of [environment values and references](environment.md). |
-| `start_command` | Optional string overriding the image CMD at runtime; the image is unchanged. |
-| `volumes` | Optional list of [durable volume declarations](../volume.md). |
+| Information | Required | Meaning |
+|---|---|---|
+| Execution type | Yes | Stateless or stateful. |
+| Container source | Exactly one | An OCI image reference or a Dockerfile build source. |
+| Environment variables | No | [Environment values and references](environment.md). |
+| Start command | No | Overrides the image CMD at runtime; the image is unchanged. |
+| Volume attachment | No | [Durable storage](../volume.md) for a stateful service. |
 
 [Public endpoints](networking.md) are declared on an instance in a deployment,
 independently of the reusable service definition.
 
-The generated description uses `container.source.ref` for `image` and
-`container.source.build` for `build`. `type: stateful` adds `kind: stateful`,
-while `type: service` omits `kind`.
-
 ### Build source
 
-A string `build` value names the build root. An object accepts these optional
-fields. An empty string selects the default build root; `build: null` is
-invalid.
+A build source identifies the source tree, build context, Dockerfile, and
+target stage. Each setting has a default:
 
-| Field | Meaning | Default |
-|---|---|---|
-| `root` | Path relative to the directory containing `uniac.yaml` | `.` |
-| `context` | Path relative to the build root | The root itself |
-| `dockerfile` | Path relative to the build root | `Dockerfile` |
-| `target` | Dockerfile stage name | Last stage |
+| Field | Required | Meaning | Default |
+|---|---|---|---|
+| `root` | No | Path relative to the application directory | `.` |
+| `context` | No | Path relative to the build root | The root itself |
+| `dockerfile` | No | Path relative to the build root | `Dockerfile` |
+| `target` | No | Dockerfile stage name | Last stage |
 
 Paths are relative and checked lexically: `root` must stay within the
-directory containing `uniac.yaml`, and `context` and `dockerfile` within the
-root.
+application directory, and `context` and `dockerfile` within the root.
 
-In the generated description, build paths are normalized and omitted at
+## YAML composition example
+
+In [YAML composition](../../composition/yaml.md), `type: service` selects
+stateless execution and `type: stateful` selects stateful execution. Exactly
+one of `image` or `build` supplies the container source; `image: ""` counts
+as absent. Optional configuration uses `env`, the `start_command` string,
+and the `volumes` list.
+
+`build` accepts a string naming the build root or an object containing the
+build fields above. An empty string selects the default root; `build: null`
+is invalid. The application directory is the directory containing
+`uniac.yaml`.
+
+The `api-code` definition supplies the container configuration; the deployment
+instantiates it as the service `api` in the selected project.
+
+```yaml
+resources:
+  api-code:
+    type: service
+    image: mendhak/http-https-echo:31
+  application:
+    type: deployment
+    services:
+      api:
+        from: api-code
+```
+
+The generated description uses `container.source.ref` for `image` and
+`container.source.build` for `build`. `type: stateful` adds `kind: stateful`,
+while `type: service` omits `kind`. Build paths are normalized and omitted at
 their defaults; an all-defaults build is `{}`.
 
 ## Runtime and deployment versions

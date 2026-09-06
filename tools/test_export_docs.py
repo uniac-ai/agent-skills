@@ -17,8 +17,8 @@ class ExportDocsTest(unittest.TestCase):
             "agents/agents.md": "# Setup\n\nInstall the CLI.\n",
             "skills/uniac-quickstart/SKILL.md": "---\nname: uniac-quickstart\ndescription: Skill routing.\n---\n\n# Quickstart\n\nDeploy an app.\n",
             "skills/uniac/SKILL.md": "# Agent entry\n",
-            "skills/uniac/references/concepts.md": "# Concepts\n\nServices run in a project.\n",
-            "skills/uniac/references/project.md": "# Project\n\nThe remote destination.\n",
+            "skills/uniac/references/composition/overview.md": "# How Uniac works\n\nServices run in a project.\n",
+            "skills/uniac/references/composition/yaml.md": "# Composition in YAML\n\nDescribe the application.\n",
             "skills/uniac/references/cli/overview.md": "# CLI\n\nRun commands.\n",
         }
         for name, content in self.files.items():
@@ -31,17 +31,17 @@ class ExportDocsTest(unittest.TestCase):
 
     def test_routes_links_queries_fragments_and_unpublished_skill_entry(self):
         result = self.render(
-            "[project](../project.md?view=all#selection) "
-            "[`concepts`](../concepts.md) [section](#commands)\n"
+            "[composition](../composition/yaml.md?view=all#selection) "
+            "[`system`](../composition/overview.md) [section](#commands)\n"
             "[setup](https://github.com/uniac-ai/agent-skills/blob/main/agents/agents.md#account)\n"
             "[quickstart](https://github.com/uniac-ai/agent-skills/blob/main/skills/uniac-quickstart/SKILL.md)\n"
             "[skill](../../SKILL.md) [external](https://example.com/page.md)\n"
-            "[target]: ../project.md#binding\n"
+            "[target]: ../composition/yaml.md#declarations\n"
         )
-        for link in ["[project](/project?view=all#selection)", "[`concepts`](/)", "[section](#commands)",
+        for link in ["[composition](/composition/yaml?view=all#selection)", "[`system`](/)", "[section](#commands)",
                      "[setup](/setup#account)", "[quickstart](/quickstart)",
                      "[skill](https://github.com/uniac-ai/agent-skills/blob/main/skills/uniac/SKILL.md)",
-                     "[external](https://example.com/page.md)", "[target]: /project#binding"]:
+                     "[external](https://example.com/page.md)", "[target]: /composition/yaml#declarations"]:
             self.assertIn(link, result)
 
     def test_code_is_byte_for_byte_while_prose_is_mdx_safe(self):
@@ -62,7 +62,10 @@ class ExportDocsTest(unittest.TestCase):
         self.assertIn('title: "Quickstart"\ndescription: "Deploy an app."', quickstart)
         self.assertNotIn("Skill routing", quickstart)
         self.assertNotIn("# Quickstart", quickstart)
-        self.assertIn('sidebarTitle: "Concepts"', (self.output / "index.mdx").read_text())
+        home = (self.output / "index.mdx").read_text()
+        self.assertIn('title: "How Uniac works"', home)
+        self.assertNotIn("sidebarTitle", home)
+        self.assertFalse((self.output / "composition/overview.mdx").exists())
 
     def test_metadata_uses_the_first_paragraph_starting_with_inline_code(self):
         result = self.render("`npm install -g @uniac/cli` installs the command.\n\nLater paragraph.\n")
@@ -83,18 +86,18 @@ class ExportDocsTest(unittest.TestCase):
     def test_check_detects_content_missing_and_extra_pages_without_writing(self):
         export(self.source, self.output)
         self.assertEqual(export(self.source, self.output, check=True), [])
-        (self.output / "project.mdx").write_text("Manual drift")
+        (self.output / "composition/yaml.mdx").write_text("Manual drift")
         (self.output / "setup.mdx").unlink()
         (self.output / "obsolete.mdx").write_text("Old content")
         before = {p: p.read_bytes() for p in self.output.rglob("*.mdx")}
-        self.assertEqual(set(export(self.source, self.output, check=True)), {"project.mdx", "setup.mdx", "obsolete.mdx"})
+        self.assertEqual(set(export(self.source, self.output, check=True)), {"composition/yaml.mdx", "setup.mdx", "obsolete.mdx"})
         self.assertEqual(before, {p: p.read_bytes() for p in self.output.rglob("*.mdx")})
         export(self.source, self.output)
         self.assertEqual(export(self.source, self.output, check=True), [])
         self.assertFalse((self.output / "obsolete.mdx").exists())
 
     def test_broken_links_fail_before_any_page_is_written(self):
-        (self.source / "skills/uniac/references/project.md").write_text("# Project\n\n[bad](missing.md)\n")
+        (self.source / "skills/uniac/references/composition/yaml.md").write_text("# Composition in YAML\n\n[bad](missing.md)\n")
         with self.assertRaisesRegex(ValueError, "link target does not exist"):
             export(self.source, self.output)
         self.assertFalse(self.output.exists())
