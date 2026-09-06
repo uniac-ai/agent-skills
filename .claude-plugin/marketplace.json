@@ -10,8 +10,8 @@
     {
       "name": "uniac",
       "source": "./",
-      "description": "Deploy and run applications on Uniac, the cloud deployment platform — the uniac.yaml manifest, the uniac CLI, and the platform contract.",
-      "version": "0.3.16",
+      "description": "Define, deploy, and operate applications on Uniac with connected services, storage, and public endpoints.",
+      "version": "0.3.17",
       "homepage": "https://uniac.ai",
       "repository": "https://github.com/uniac-ai/agent-skills",
       "license": "MIT",

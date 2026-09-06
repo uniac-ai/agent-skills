@@ -1,7 +1,7 @@
 {
   "name": "uniac",
-  "version": "0.3.16",
-  "description": "Deploy and run applications on Uniac, the cloud deployment platform — the uniac.yaml manifest, the uniac CLI, and the platform contract.",
+  "version": "0.3.17",
+  "description": "Define, deploy, and operate applications on Uniac with connected services, storage, and public endpoints.",
   "author": {
     "name": "Uniac",
     "url": "https://uniac.ai"
