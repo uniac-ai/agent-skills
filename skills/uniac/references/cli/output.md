@@ -78,6 +78,9 @@ show retained unattached volumes.
 
 ### Partial observations and warnings
 
+HTTP 401 or 403 from the platform or project API fails the command. The
+following observation fallbacks apply to other errors.
+
 A failed service-detail read during whole-project `status` leaves that
 service's name and summary status but omits its additional details. A failed
 volume read omits the volume section. Either can occur with exit 0. Missing
@@ -106,8 +109,8 @@ The following exit codes apply to `deploy` and `status`:
 |---|---|---|
 | 0 | — | The command succeeded. |
 | 2 | `usage` | Invalid invocation; no deployment attempted and no code printed on stdout. |
-| 3 | `auth` | No locally usable credential, or `status` has no project name. |
-| 4 | `not_linked` | Binding/platform conflict, or deployment's picker found no projects. |
+| 3 | `auth` | No locally usable credential, platform/project API HTTP 401, or `status` has no project name. |
+| 4 | `not_linked` | Project absent or mismatched with the binding, binding/platform conflict, or deployment's picker found no projects. |
 | 5 | `manifest` | Description validation or deployment-shape failure. |
 | 6 | `build` | Docker daemon, image-pull or build failure. |
 | 7 | `push` | Image upload failure. |
@@ -122,18 +125,19 @@ name does not describe the whole cause:
 - `status` without a binding or target override exits 70 when a credential is
   available; without a usable credential it exits 3. A target with no project
   name, including `UNIAC_PROJECT_URL`, exits 3.
-- Deployment's project picker can report transport, rejected-credential or
-  unanswered-input failures as 70. No projects produces 4.
+- Deployment's project picker reports unanswered-input failures as 70;
+  no projects produces 4.
 - Missing build directories or Dockerfiles produce 5 during planning;
   Dockerfile or daemon failures during image work produce 6.
-- A rejected platform credential can produce 7 during upload, 8 during a
-  deployment request or status read, or 70 during project selection.
+- Platform/project API HTTP 401 produces 3; HTTP 403 during project checks,
+  registration or observation produces 8. Docker registry credential
+  rejection remains a push failure (7).
 - A deployment observation deadline produces 8 while the accepted work
   continues. After a successful first task read, later task-read failures
-  also produce 8, including transport failures.
-- Status reads and deployment push/request operations classify transport
-  errors and HTTP 502, 503, 504, 521, 522, 523 and 530 as unreachable (9).
-  Other refused status reads, including 401 and 403, produce 8.
+  fail the command using these classifications.
+- Project checks, status reads and deployment push/request operations
+  classify transport errors and HTTP 502, 503, 504, 521, 522, 523 and 530 as
+  unreachable (9). Other refused API reads, including HTTP 500, produce 8.
 
 Other commands use 0 for success, 1 for command failure and 2 for invalid
 invocation. A description failure produces 1 under `plan` and 5 under
