@@ -23,7 +23,7 @@ ROOT = Path(__file__).resolve().parent.parent
 # The CLI release whose contracts the skills here are verified against.
 # Every manifest carries it as the plugin version, and the repository is
 # tagged v<VERSION> at that release.
-VERSION = "0.3.16"
+VERSION = "0.3.17"
 
 NAME = "uniac"
 OWNER = "Uniac"
