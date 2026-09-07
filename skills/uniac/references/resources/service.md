@@ -216,10 +216,7 @@ lifecycle and running containers. Redeploying an existing instance updates
 that service. Redeploying with a different service type is rejected.
 
 The platform observes container-process liveness. It performs no application
-health or readiness probes. When a replica's process exits, the platform
-starts a new container from the image in its place; memory and
-container-local files start empty, for either execution type, and only an
-attached volume carries data across.
+health or readiness probes.
 
 ### Observed state
 
