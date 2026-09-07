@@ -107,8 +107,12 @@ establish that this deployment limit is satisfied.
 
 Deployment additionally requires credentials for the target project's
 platform and a reachable local Docker daemon for either `image:` or `build:`.
-A saved binding is optional because deployment can select an existing project
-interactively.
+Before Docker or image work, deployment checks the credential with the
+platform. For linked or interactively selected projects, it looks up the
+slug and requires the returned name, slug and gateway to match the binding.
+`UNIAC_PROJECT_URL` instead uses an authenticated account-level project
+listing for this check. A saved binding is optional because deployment can
+select an existing project interactively.
 
 For [service sources](../resources/service.md#required-and-optional-configuration), deployment pulls
 prebuilt images using local Docker credentials or builds from the current
@@ -127,10 +131,10 @@ the remote [service](../resources/service.md),
 
 When the target has a project name, registration returns a task ID and the
 initial task read succeeds, the CLI polls every two seconds until the task
-finishes or a five-minute observation deadline passes. Without those
-conditions it can return success after registration without observing task
-completion. Interrupting the CLI or reaching the deadline does not cancel
-work already accepted by the platform.
+finishes or a five-minute observation deadline passes. Authentication or
+access denial fails the command. Other missing observation conditions can
+leave a successful registration unobserved. Interrupting the CLI or reaching
+the deadline does not cancel work already accepted by the platform.
 
 After a successful release, the CLI writes a local release record under
 `~/.uniac/store`; `UNIAC_STORE_DIR` selects another directory.

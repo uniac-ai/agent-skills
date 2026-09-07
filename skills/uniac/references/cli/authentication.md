@@ -33,9 +33,17 @@ not validate the token with the platform API before storing it.
 ## Credential selection and renewal
 
 `project create`, `link`, `deploy`, `status` and `auth token` use a nonempty
-`UNIAC_ACCESS_TOKEN` first, otherwise the stored session for the platform they
-address. The environment override receives no local expiry check. A stored
-token becomes unusable 60 seconds before its recorded expiry.
+`UNIAC_ACCESS_TOKEN` first, otherwise the stored session for the addressed
+platform. Linked `deploy` and `status` use the binding's platform origin;
+`auth token` uses `UNIAC_PLATFORM_URL`, independently of the directory binding.
+The override receives no local expiry check. A stored token becomes unusable
+60 seconds before its recorded expiry. Without an override, missing or
+expired stored credentials stop deployment before a network call.
+
+Deployment checks the selected credential with the platform before image
+work and uses that credential throughout the operation. Local selection
+alone does not establish server acceptance; `auth status` and `auth token`
+perform no such check.
 
 The CLI does not refresh tokens automatically. Another `auth login` obtains
 and stores the token returned by sign-in; it does not guarantee a different
@@ -49,10 +57,9 @@ token or a later expiry.
 | `uniac auth token` | Print the selected credential; fail when none is locally usable. |
 | `uniac auth logout` | Remove all locally stored platform sessions. |
 
-`auth status` reads local storage only. Its `Logged in.` message means stored
-sessions exist; it neither checks them with the platform nor inspects
-`UNIAC_ACCESS_TOKEN`. Logout does not clear that environment variable or
-revoke tokens at the platform.
+`auth status`'s `Logged in.` message means stored sessions exist; it does not
+inspect `UNIAC_ACCESS_TOKEN`. Logout does not clear that variable or revoke
+tokens at the platform.
 
 `uniac auth -h` lists subcommands; each subcommand's `-h` prints its usage.
 `status`, `token` and `logout` accept no flags or arguments. Help and invalid
