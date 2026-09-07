@@ -18,10 +18,12 @@ running containers. Its identity persists across replica replacements and
 deployment versions.
 
 Stateless services can run multiple container replicas behind the same
-service identity. A singleton service permits at most one running replica
-per service in a project. During replacement, the previous replica stops
-before its successor starts. Persistent local storage requires an attached
-[volume](volume.md); singleton execution alone does not preserve data.
+service identity; today the platform runs one replica per service, and the
+composition does not set the count. A singleton service permits at most one
+running replica per service in a project. During replacement, the previous
+replica stops before its successor starts. Persistent local storage requires
+an attached [volume](volume.md); singleton execution alone does not preserve
+data.
 
 ## Required and optional configuration
 
