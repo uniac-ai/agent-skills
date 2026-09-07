@@ -11,7 +11,7 @@
       "name": "uniac",
       "source": "./",
       "description": "Define, deploy, and operate applications on Uniac with connected services, storage, and public endpoints.",
-      "version": "0.3.18",
+      "version": "0.3.19",
       "homepage": "https://uniac.ai",
       "repository": "https://github.com/uniac-ai/agent-skills",
       "license": "MIT",

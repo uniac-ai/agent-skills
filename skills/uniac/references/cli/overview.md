@@ -8,9 +8,10 @@ Its commands prepare descriptions, deploy services, and read live state.
 
 ## Invocation
 
-Local directory options default to the current directory. Flag parsing stops
-at the first positional argument; flags after it are not parsed as options.
-`uniac -h` lists commands, and a command's `-h` prints its usage.
+Local directory options default to the current directory. Flags may appear
+before or after a command's positional argument; a surplus argument is a
+usage error. `uniac -h` lists commands, and a command's `-h` prints its
+usage.
 
 | Invocation | Purpose |
 |---|---|
