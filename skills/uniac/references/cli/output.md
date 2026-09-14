@@ -18,24 +18,30 @@ errors to stderr. A failure to render a status report can also write stderr.
 
 ## Plan output
 
-The text preview names the selected deployment and the digest of its generated
-description, then shows image work under `Building` and named services under
+The text preview names the local project and root directory, its optional
+description, and the digest of its complete generated description. It then
+shows shared image work under `Building` and named services under
 `Deploying`. Service rows include sources, declared public exposure and
-volumes. `--full` adds environment values, the start command and the source
-definition's name when it differs from the service name.
+volumes, grouped by package for a workspace. `--full` adds environment values,
+the start command, deployment declaration, and source definition's name when
+it differs from the service name.
 
-`plan --json` emits `{resource, digest, deployable}`. `resource` names the
-selected declaration; `deployable` is the generated service description.
+`plan --json` emits `{project, digest, deployable, declarations}`. `project`
+contains `root_dir`, `name`, optional `description`, and `packages` with each
+package's relative `path`. The root package is `.`. `declarations` associates
+each concrete `service` with its `package`, `deployment`, and `from` definition.
+`deployable` is the complete generated service description.
 Environment and start-command fields are included whether or not `--full`
 is supplied. [Composition in YAML](../composition/yaml.md#generated-description) defines the generated
 description and what its digest identifies.
 
 ## Deployment record
 
-The root line names the selected deployment. Its children report `plan`,
-`link`, `build`, `push <service>` and `deploy <service>`. They include the
-digest of the generated description, project slug, image count, pushed image digest
-and observed status when available. Displayed digests are shortened; the
+The root line names the local project. Its children report `plan`,
+`link`, `build`, `push <service>`, `submit <service>`, and `observe <service>`.
+They include the digest of the generated description, project slug, image
+count, pushed image digest and observed status when available. Displayed
+digests are shortened; the
 state section contains no image reference or digest.
 
 `✓` marks completion and `✗` marks failure. On failure, the root line carries
@@ -43,6 +49,24 @@ an error code and the failed stage includes its retained progress and error
 message. A deployment report has no separate `error` block. An interruption
 is classified under the stage in flight, and a nonzero exit can still leave
 a report and project or service rows.
+
+### Per-service release outcomes
+
+Each `release` block identifies the concrete service and its package and
+deployment declaration. It records whether the image was pushed, the
+submission outcome, returned deployment and task IDs, whether service state
+was read, and any failure phase or warnings.
+
+| Submission | Established fact |
+|---|---|
+| `not attempted` | No registration was initiated for this service. |
+| `accepted` | The server acknowledged registration; observed state is reported separately. |
+| `rejected` | Registration received an explicit client-error refusal. |
+| `acceptance unconfirmed` | Registration was attempted without a conclusive response; the server may have accepted it. |
+
+Failures retain earlier receipts and identify later unattempted work. An
+image push, accepted request, or cancellation does not establish the state
+of the running service. Releasing again starts a new operation.
 
 ## State rows
 
@@ -55,6 +79,7 @@ storage state in [Volume lifecycle](../resources/volume.md#lifecycle).
 |---|---|
 | `project` | The linked project's name; deployment falls back to its slug. |
 | `platform` | The platform API origin, shown only when it differs from production. |
+| `root` | The resolved local project directory, included in deployment reports. |
 | `service` | A service name, followed by `v<N>` when a serving version was read. |
 | `status` | Reported status, with `(observed/effective)` when replica observation is available. |
 | `kind` | Reported service kind, omitted when unavailable. |
@@ -90,8 +115,10 @@ absent.
 When deployment otherwise succeeds but cannot read a service's final state,
 it reports `state unread` as a warning. A failed local release-record write produces
 `release record not written: <error>`; the remote deployment remains in place.
-These warnings do not make the command fail. A name-only service row can also
-appear after registration fails and does not establish a running service.
+These warnings do not make the command fail. A name-only service row means
+registration was accepted but service state was not read; it does not
+establish a running service. Rejected and unattempted submissions appear in
+release outcomes without an invented service-state row.
 
 Platform warnings are passed through, including unresolved
 [environment references](../resources/service.md#environment-and-references).
@@ -110,8 +137,8 @@ The following exit codes apply to `deploy` and `status`:
 | 0 | — | The command succeeded. |
 | 2 | `usage` | Invalid invocation; no deployment attempted and no code printed on stdout. |
 | 3 | `auth` | No locally usable credential, platform/project API HTTP 401, or `status` has no project name. |
-| 4 | `not_linked` | Project absent or mismatched with the binding, binding/platform conflict, or deployment's picker found no projects. |
-| 5 | `manifest` | Description validation or deployment-shape failure. |
+| 4 | `not_linked` | Missing binding after credential selection, project absent or mismatched with the binding, binding/platform conflict, or deployment's picker found no projects. |
+| 5 | `manifest` | Local project ownership, description validation or deployment-shape failure. |
 | 6 | `build` | Docker daemon, image-pull or build failure. |
 | 7 | `push` | Image upload failure. |
 | 8 | `deploy_failed` | Deployment request/task failure, observation deadline expiry or a refused platform read. |
@@ -122,7 +149,7 @@ The following exit codes apply to `deploy` and `status`:
 Exit 1 is unassigned for these two commands. Some conditions use a code whose
 name does not describe the whole cause:
 
-- `status` without a binding or target override exits 70 when a credential is
+- `status` without a binding or target override exits 4 when a credential is
   available; without a usable credential it exits 3. A target with no project
   name, including `UNIAC_PROJECT_URL`, exits 3.
 - Deployment's project picker reports unanswered-input failures as 70;
