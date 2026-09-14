@@ -10,8 +10,8 @@ to the application.
 
 A **service definition** supplies reusable image and runtime configuration.
 A **deployment declaration** instantiates it under a service name in the
-target project. A definition alone creates no remote service; deploying a
-declaration creates or updates the service instances it names.
+target project. A definition alone creates no remote service. Deploying the
+project includes the instances from every deployment declaration.
 
 A **service instance** is the named remote service; its **replicas** are the
 running containers. Its identity persists across replica replacements and
@@ -46,13 +46,15 @@ target stage. Each setting has a default:
 
 | Field | Required | Meaning | Default |
 |---|---|---|---|
-| `root` | No | Path relative to the application directory | `.` |
+| `root` | No | Path relative to the defining manifest's directory | `.` |
 | `context` | No | Path relative to the build root | The root itself |
 | `dockerfile` | No | Path relative to the build root | `Dockerfile` |
 | `target` | No | Dockerfile stage name | Last stage |
 
 Paths are relative and checked lexically: `root` must stay within the
-application directory, and `context` and `dockerfile` within the root.
+defining package directory, and `context` and `dockerfile` within the root.
+In a workspace, each included manifest keeps its own source directory;
+including a package does not expand its build context to the workspace root.
 
 ## Networking and endpoints
 
@@ -89,7 +91,7 @@ validation.
 
 Environment variables provide runtime configuration to a service's containers.
 Their values can refer to the service's own configuration or to another
-service in the same project. The platform resolves declared values at
+service declared in the same package. The platform resolves declared values at
 deployment time and injects them at container start. Other environment
 defaults are the image's own.
 
@@ -119,20 +121,19 @@ opener must form a valid reference.
 ### Resolution
 
 References to `self` must name a builtin or a declared variable. Composition
-of a deployment checks references to other instances in that deployment
-against their declared variables and builtins, and rejects reference cycles.
-
-A name outside the selected deployment passes through for remote resolution,
-even if another deployment in the file defines it. Remote references resolve
-within the target project.
+checks other instances across all deployment declarations in the package
+against their declared variables and builtins. Unknown names, cross-package
+references, and ungrounded value-reference cycles fail locally. Workspace
+inclusion does not establish a reference dependency between packages.
 
 Remote references use services with a serving deployment. For those services,
 `host` supplies the internal hostname without requiring a running replica;
 a custom-variable reference requires that variable in the service's resolved
 environment.
 
-An unresolved reference omits the affected variable from Uniac's injected
-values and produces a warning; it does not fail the deployment. After a
+While another declared service is not yet serving, an unresolved reference
+omits the affected variable from Uniac's injected values and produces a
+warning; it does not fail the deployment. After a
 successful deployment, the platform re-resolves the project's other services
 and recreates those whose injected values changed. Uniac provides no
 dependency ordering or readiness coordination.
@@ -147,8 +148,8 @@ and the `volumes` list. `env` maps variable names to string values.
 
 `build` accepts a string naming the build root or an object containing the
 build fields above. An empty string selects the default root; `build: null`
-is invalid. The application directory is the directory containing
-`uniac.yaml`.
+is invalid. Each build root is relative to the directory containing its
+definition's `uniac.yaml`.
 
 `services.<instance>.public_ports` is an optional list of mappings, each with
 `port` and `type`. Its presence has three meanings on deployment:
@@ -159,9 +160,9 @@ is invalid. The application directory is the directory containing
 | `[]` | Removes all public exposure. |
 | Nonempty list | Replaces public exposure with exactly this list. |
 
-The `web-code` and `cache-code` resources are definitions. Deploying
-`web-deployment` instantiates only `web`; `cache-deployment` instantiates
-`cache`. The `from` field connects each instance to its definition.
+The `web-code` and `cache-code` resources are definitions. The project deploys
+both `web` from `web-deployment` and `cache` from `cache-deployment`. The
+`from` field connects each instance to its definition in this package.
 
 The stateless `web` service receives the URL declared by `cache`, which uses
 `cache`'s own internal hostname. The `web` service's port 8080 is exposed through
@@ -169,7 +170,6 @@ HTTPS and a separately allocated raw TCP endpoint. The singleton `cache` service
 Redis with append-only persistence on a 1 GB volume mounted at `/data`.
 
 ```yaml
-default: web-deployment
 resources:
   web-code:
     type: service

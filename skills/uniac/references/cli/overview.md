@@ -16,10 +16,10 @@ usage.
 | Invocation | Purpose |
 |---|---|
 | `uniac init` | Create a starter `uniac.yaml` in the current directory. |
-| `uniac plan [--json] [--full] [--dir <path>] [deployment]` | Validate and preview a deployment declaration. |
+| `uniac plan [--json] [--full] [--dir <path>]` | Validate and preview every deployment in the owning project. |
 | `uniac project create <name>` | Create a remote project. |
-| `uniac link [-C <path>] [name-or-slug]` | Create or replace a directory's project binding. |
-| `uniac deploy [--dir <path>] [deployment]` | Build and deploy the selected declaration. |
+| `uniac link [-C <path>] [name-or-slug]` | Create or replace the owning project's remote binding. |
+| `uniac deploy [--dir <path>]` | Build and deploy every declaration in the owning project. |
 | `uniac status [--dir <path>] [service]` | Read a linked project's state, or one named service. |
 | `uniac auth <login\|status\|token\|logout>` | Manage [authentication](authentication.md). |
 | `uniac version` | Print the installed binary's version, commit and build time. |
@@ -37,7 +37,20 @@ name, with `app` as the fallback when it cannot be used. An existing
 `uniac.yaml` prevents initialization.
 
 `npm create @uniac@latest` invokes `uniac init` through the `@uniac/create`
-package. Initialization creates no remote project or directory binding.
+package. Initialization creates no remote project or binding.
+
+## Local project ownership
+
+`plan`, `deploy`, `link`, and `status` resolve the owning local project from
+their starting directory. A containing [workspace](../composition/yaml.md#workspaces-and-packages)
+owns its included packages. Without a workspace, the nearest ancestor
+`uniac.yaml` owns the standalone project. Starting from a member or its
+subdirectory selects the same project as starting from the root.
+
+All four commands validate manifest structure and workspace membership.
+An unlisted manifest below a workspace and a nested workspace are errors.
+`link` and `status` do not require deployable workloads, source paths to be
+buildable, or Docker.
 
 ## Project selection
 
@@ -50,14 +63,13 @@ requires neither `uniac.yaml` nor Docker. The name must match
 platform selected by `UNIAC_PLATFORM_URL`, whose default and credential
 selection are described in [Authentication](authentication.md).
 
-`link` requires a directory containing `uniac.yaml`; it checks that the file
-exists without validating its contents. An exact project slug or a uniquely
+`link` resolves the local project first. An exact project slug or a uniquely
 matching name selects the project without a prompt. No argument opens the
 project picker, even when the account has only one project; multiple matching
 names also require selection. No match, no projects or unanswered required
 input causes failure.
 
-Linking writes or replaces `.uniac/deploy.json` in the selected directory:
+Linking writes or replaces `.uniac/deploy.json` at the owning project root:
 
 | Field | Meaning |
 |---|---|
@@ -66,9 +78,12 @@ Linking writes or replaces `.uniac/deploy.json` in the selected directory:
 | `gateway_url` | The project gateway used for image uploads and deployment requests. |
 | `platform_url` | The platform API origin used for credentials and observations. |
 
-The binding belongs to the local directory. Different directories can select
-the same project, and replacing a binding does not move or recreate remote
-services.
+All workspace packages share this binding. A binding found in a member or
+along the inspected path below the root is an error, even when it matches
+the root binding. It is not inherited or silently replaced. Relinking from
+any member changes the owner's binding for subsequent operations. Each
+operation uses one captured destination; concurrent relinking cannot change
+its target. Replacing a binding does not move or recreate remote services.
 
 `deploy` and `status` select their destination as follows:
 
@@ -83,28 +98,26 @@ services.
   the selected binding. `status` does not open a picker.
 
 `status` requires a project name from the binding, so a target supplied only
-by `UNIAC_PROJECT_URL` cannot support it. Its local directory needs no
-`uniac.yaml` or Docker. The command reads services even when they are absent
-from the local description; whole-project status also reads volumes.
+by `UNIAC_PROJECT_URL` cannot support it. The command reads services even when
+they are absent from the local description; whole-project status also reads
+volumes.
 
 ## Planning and deployment
 
-`plan` and `deploy` read `uniac.yaml` from `--dir`. They select the explicitly
-named deployment declaration, otherwise `default`, otherwise the file's sole
-deployment. Failure to select a deployment is an error. This selection is
-independent of the remote project binding.
+`plan` and `deploy` collect every deployment declaration in the resolved
+project's root and included packages. They accept no deployment selector.
+Planning requires at least one declared deployment; unused service
+definitions do not become deployed instances.
 
 `plan` performs [description validation](../composition/yaml.md#validation) offline,
-without credentials or Docker. It decodes the whole file and composes the
-selected declaration, including checking that its build paths exist. It
-does not run Docker builds or check remote project state. `--full` expands the
+without credentials or Docker. It composes the complete graph, including
+checking that its build paths exist. It does not run Docker builds or check
+remote project state. `--full` expands the
 text preview; `--json` returns the generated description, as specified in
 [Output](output.md#plan-output).
 
-`deploy` repeats this planning before authentication or remote activity, then
-requires exactly one entry in the selected declaration's `services` mapping.
-`plan` accepts declarations with multiple entries; a successful plan does not
-establish that this deployment limit is satisfied.
+`deploy` repeats this planning before authentication or remote activity.
+Single-service and multi-service projects use the same deployment path.
 
 Deployment additionally requires credentials for the target project's
 platform and a reachable local Docker daemon for either `image:` or `build:`.
@@ -121,7 +134,9 @@ working tree. Both target `linux/amd64`. The build context's `.dockerignore`
 filters input; `.gitignore` does not. Builds run on every deployment, use
 Docker's layer cache and receive no injected build arguments. The resulting
 image is pushed to the project registry and registered with the service
-description.
+description. Sources remain relative to their defining package. Within one
+run, instances sharing a source and target platform share image work;
+different packages' `build: .` sources remain distinct.
 
 Missing build directories or Dockerfiles fail during local planning.
 Dockerfile syntax, missing build stages, failing build commands, image pulls
@@ -130,14 +145,24 @@ the remote [service](../resources/service.md),
 [exposure](../resources/service.md#networking-and-endpoints) and
 [storage](../resources/volume.md) constraints when the deployment is submitted.
 
+All service images are checked before the first push. The CLI registers all
+services before waiting for any deployment to settle, so one service's
+readiness cannot prevent a later service from being registered.
+
 When the target has a project name, registration returns a task ID and the
 initial task read succeeds, the CLI polls every two seconds until the task
 finishes or a five-minute observation deadline passes. Authentication or
 access denial fails the command. Other missing observation conditions can
-leave a successful registration unobserved. Interrupting the CLI or reaching
-the deadline does not cancel work already accepted by the platform.
+leave a successful registration unobserved.
 
-After a successful release, the CLI writes a local release record under
+Failure or interruption stops new local work and returns partial results.
+Accepted remote deployments continue; there is no rollback or atomic
+workspace transaction. An interrupted or lost registration response leaves
+acceptance unconfirmed. A later deploy is a new operation, not a continuation
+of the previous one.
+
+After a release attempt, including a partial failure, the CLI writes a local
+record of image digests, submission outcomes and receipts under
 `~/.uniac/store`; `UNIAC_STORE_DIR` selects another directory.
 [Output](output.md#partial-observations-and-warnings) describes recording
 failures.

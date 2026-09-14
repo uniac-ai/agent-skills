@@ -1,6 +1,6 @@
 ---
 name: uniac-quickstart
-description: First deployment of an application on Uniac through a complete example of its description, remote project, directory binding, and public endpoint.
+description: First deployment of an application on Uniac through a complete example of its description, remote project, project binding, and public endpoint.
 ---
 
 # Uniac quickstart
@@ -11,13 +11,12 @@ This example starts with an application whose root `Dockerfile` builds a
 service listening on `0.0.0.0:8080`. The machine has the Uniac CLI, a running
 Docker daemon, and [account access](https://github.com/uniac-ai/agent-skills/blob/main/skills/uniac/references/cli/authentication.md).
 It uses a new project named `my-app`, supplies its application description
-directly, and selects the project through a directory binding.
+directly, and binds the local project to that remote destination.
 
 The following `uniac.yaml` declares one service and exposes its HTTP port:
 
 ```yaml
 runtime: yaml
-default: main
 resources:
   api_definition:
     type: service

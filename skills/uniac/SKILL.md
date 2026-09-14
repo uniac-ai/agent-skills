@@ -13,7 +13,7 @@ operation:
 1. [How Uniac works](references/overview.md) — accounts and projects,
    applications, service identities, replicas, and persistent state.
 2. [Composition in YAML](references/composition/yaml.md) — `uniac.yaml`, resource
-   definitions, named instances, and a connected application example.
+   workspace composition, package scopes, named instances, and a connected application example.
 3. [Uniac CLI](references/cli/overview.md) — deploying that composition to a
    project, selecting the destination, and observing the result.
 

@@ -35,7 +35,7 @@ not validate the token with the platform API before storing it.
 `project create`, `link`, `deploy`, `status` and `auth token` use a nonempty
 `UNIAC_ACCESS_TOKEN` first, otherwise the stored session for the addressed
 platform. Linked `deploy` and `status` use the binding's platform origin;
-`auth token` uses `UNIAC_PLATFORM_URL`, independently of the directory binding.
+`auth token` uses `UNIAC_PLATFORM_URL`, independently of the project binding.
 The override receives no local expiry check. A stored token becomes unusable
 60 seconds before its recorded expiry. Without an override, missing or
 expired stored credentials stop deployment before a network call.

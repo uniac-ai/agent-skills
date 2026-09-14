@@ -11,9 +11,11 @@ with its own services, volumes, and private network. Project names are unique
 within an account; the platform also assigns each project a slug.
 
 An application is made up of resources that run together in a target project.
-Its description is separate from that destination: the same application can
-be deployed to different projects, and a project's services can be added or
-updated independently.
+Its local description belongs to one project root with one remote project
+binding. A standalone description can contain one or several services. A
+workspace combines descriptions from included package directories under the
+same owner and destination. The workspace's optional name describes the local
+system; it does not select the remote project.
 
 ## Services and communication
 
@@ -62,8 +64,15 @@ A **composition** describes the resources making up an application and how
 they connect. A **service definition** supplies reusable image and runtime
 configuration. A **deployment declaration** instantiates definitions under
 service names in a target project. A definition alone creates no running
-service; deploying a declaration creates or updates its named service
-instances. Each instance can run the replicas permitted by its execution type.
+service. Deploying the project creates or updates the service instances from
+every deployment declaration in its packages. Each instance can run the
+replicas permitted by its execution type.
+
+A package is a directory containing a description. Each package keeps its
+own resource and reference scope. Workspace inclusion combines their
+deployment contributions; it does not grant access to another package's
+definitions or environment references. Concrete service names remain unique
+across the project.
 
 [Composition in YAML](composition/yaml.md) introduces the description file
 and combines these parts in an example. Detailed configuration and lifecycle

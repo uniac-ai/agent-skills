@@ -1,8 +1,8 @@
 # Composition in YAML
 
-`uniac.yaml` is the entrypoint for an application composition. It describes
-one or more named resources in YAML: reusable service definitions and the
-deployment declarations that instantiate them. YAML is the currently
+`uniac.yaml` declares infrastructure objects in YAML. A `workspace` combines
+package directories; `resources` declares reusable service definitions and
+the deployment declarations that instantiate them. YAML is the currently
 supported composition format.
 
 ## File format
@@ -11,13 +11,52 @@ The document is a mapping with these top-level fields:
 
 | Field | Required | Meaning |
 |---|---|---|
-| `resources` | Yes | Nonempty mapping of resource names to typed definitions. |
+| `resources` | Unless `workspace` is present | Mapping of resource names to typed definitions; may be empty in a workspace document. |
+| `workspace` | No | Workspace metadata and included package directories. |
 | `runtime` | No | Composition format: `yaml`, the default and only supported value. |
-| `default` | No | Deployment resource selected when no target is named explicitly. |
 
 Resource names match `^[a-z0-9]+(?:(?:__?|-+)[a-z0-9]+)*$` and are unique
 within the file. Every resource requires `type`; unknown fields are rejected
 at every level.
+
+## Workspaces and packages
+
+A workspace owns its containing directory and subtree. Its root resources
+and each included directory's `uniac.yaml` contribute to one local project.
+A directory containing `uniac.yaml` is a **package**; the root's resources
+have their own package scope.
+
+```yaml
+workspace:
+  name: payments
+  description: Payments API and background processing
+  includes:
+    - ./api
+    - ./jobs
+```
+
+| Workspace field | Required | Meaning |
+|---|---|---|
+| `name` | No | Display name for the local system; defaults to the root directory name. |
+| `description` | No | Description of the system. |
+| `includes` | No | Array of literal relative directory paths, each containing `uniac.yaml`; defaults to an empty array. |
+
+Paths are relative to the workspace root and must name directories below it.
+Missing manifests, duplicate canonical directories, paths escaping the root,
+globs, and nested workspaces are rejected. Inclusion loads exactly the listed
+manifests; it does not recursively discover packages. Root-local `resources`
+can accompany `workspace` without including the root itself.
+
+A manifest outside any workspace owns a standalone project. Inside a
+workspace, a package must be explicitly included to participate; an unlisted
+manifest does not establish a separate project.
+
+Resource names and `from` lookups are local to each package. Different
+packages may reuse definition names, but the concrete services instantiated
+across the project must have unique names. Environment references can address
+instances from any deployment in their own package. Cross-package references,
+including references to root-local resources, are unsupported. Inclusion
+declares composition, not a package dependency.
 
 ## Definitions and service instances
 
@@ -29,9 +68,8 @@ in [Service](../resources/service.md) and [Volume](../resources/volume.md).
 
 A `type: deployment` resource **instantiates** definitions: its `services`
 mapping gives each instance a service name and a definition to instantiate.
-The selected declaration contributes its named instances to the deployment
-description; unreferenced definitions and other deployment declarations in
-the file are not included.
+Every declaration contributes its named instances to the project's deployment
+description. Unreferenced service definitions remain uninstantiated.
 
 | Field | Required | Meaning |
 |---|---|---|
@@ -46,8 +84,9 @@ identity in the target project. An instance name is one DNS label: lowercase
 letters, digits and dashes, starting and ending with a letter or digit, at
 most 63 characters.
 
-Only a deployment declaration is a selectable target. It creates no remote
-service group or environment; each resulting service has its own
+Deploying a project includes every deployment declaration in its root and
+included packages. A declaration creates no remote service group or
+environment; each resulting service has its own
 [deployment versions](../resources/service.md#runtime-and-deployment-versions).
 The target project's identity is supplied separately from this file.
 
@@ -59,7 +98,6 @@ uses `CACHE_URL` to connect to Redis.
 
 ```yaml
 runtime: yaml
-default: api-deployment
 resources:
   api_definition:
     type: service
@@ -89,26 +127,26 @@ resources:
 ```
 
 `api-deployment` instantiates `api_definition` as the service `api`;
-`cache-deployment` instantiates `cache_definition` as `cache`. Selecting
-`api-deployment` includes only `api` in the deployment description. Its
-reference to `cache` does not instantiate that service; `cache-deployment`
-is a separate target.
+`cache-deployment` instantiates `cache_definition` as `cache`. Both services
+are included in the project deployment. The API can reference `cache`
+because both declarations belong to this package.
 
 The reference names the `cache` instance, and that instance gives its volume
 the project-scoped name `cache.data`. The API is publicly exposed; Redis is
 reachable within the project's private network.
 
 [Environment and references](../resources/service.md#environment-and-references) explains
-resolution between services, including services outside a selected
-declaration.
+resolution between service instances in the same package.
 
 ## Validation
 
-Local validation checks the whole file's schema, resource names, individual
-service declarations, `from` references, and default target. Composition of
-the selected declaration additionally checks instance names, build-source
-paths on disk, composed volume names, referenced variables within that
-declaration, and reference cycles.
+Local validation checks ownership, included manifests, each file's schema,
+resource names, service declarations, and package-local `from` references.
+Composition checks all instantiated service names, build-source paths on
+disk, composed volume names, reference visibility, referenced variables,
+and ungrounded value-reference cycles. Unknown or cross-package service
+references fail locally. At least one deployment is required to produce a
+deployable description.
 
 ## Generated description
 
@@ -116,9 +154,14 @@ The generated description is JSON with `kind: deployable` and a `services`
 array. Each entry contains an instance name, normalized source declaration,
 environment templates, and runtime configuration. It contains no remote
 project binding, and environment values remain templates until deployment.
+Build paths are authored relative to the defining manifest's directory and
+normalized relative to the project root in the generated description. Thus
+`build: .` in `api/uniac.yaml` and `jobs/uniac.yaml` describes distinct sources.
 
 The digest identifies that description. Equivalent path spellings, omitted
 build defaults, YAML formatting, and mapping or exposure-list ordering do not
-change it. An explicit build `target` remains part of the description even
-when it names the Dockerfile's last stage. The digest excludes source-file
-and image contents and remotely resolved environment values.
+change it. Reordering workspace includes or moving an identical checkout to
+another absolute path also preserves the digest. An explicit build `target`
+remains part of the description even when it names the Dockerfile's last
+stage. The digest excludes source-file and image contents and remotely
+resolved environment values.
