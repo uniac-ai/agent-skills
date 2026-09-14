@@ -54,9 +54,8 @@ Removing a service from that description does not delete the running service.
 
 The [dashboard](https://uniac.ai) opens an account's projects and their
 services without a local application description. A project's **Settings**
-offers **Delete project**, confirmed by typing its name. This removes its
-services and endpoints. Volume data is retained, but those volumes can no
-longer be inspected or managed through the deleted project.
+offers **Delete project**, confirmed by typing its name. Deletion destroys its
+services, endpoints, and every volume and its data, including detached volumes.
 
 ## Describing the application
 
