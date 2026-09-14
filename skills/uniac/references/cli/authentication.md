@@ -12,7 +12,8 @@ uniac auth login [--no-browser] [--manual] [--host <host>]
 
 `login` obtains a token through browser sign-in, where account creation is
 also available. Sign-in requires user interaction. The CLI prints the sign-in
-URL and reports the browser-launch attempt.
+URL before opening the browser. Login continues independently of the browser
+helper; the printed URL remains available to open manually.
 
 | Option | Effect |
 |---|---|
