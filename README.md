@@ -162,5 +162,6 @@ contracts remain in this skill rather than copied into customer `AGENTS.md`.
 - Before pushing: `python3 -B -m unittest discover -s tools -p 'test_*.py'`,
   `python3 tools/generate_skills.py`, `python3 tools/generate_manifests.py`,
   `python3 tools/validate.py`, and in `docs/`: `mint validate` and
-  `mint broken-links` (`npm install -g mint`). CI runs these plus a live
-  resolve through the ecosystem installer (`npx -y skills@1.5.15 add . --list`).
+  `mint broken-links` (`npm install -g mint`; mint needs Node 20.17+). CI
+  runs these plus a live resolve through the ecosystem installer
+  (`npx -y skills@1.5.15 add . --list`) on Node 18.

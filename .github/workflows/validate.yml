@@ -19,13 +19,17 @@ jobs:
         run: python3 tools/validate.py
       - uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          node-version: '20'
       - name: Documentation builds without broken links
+        # mint refuses Node below 20.17 at run time.
         run: |
           npm install -g mint
           cd docs
           mint validate
           mint broken-links
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '18'
       - name: Skills resolve through the ecosystem installer
         # Strip colour escapes before matching the discovered skill count
         # and names against the source directories.
