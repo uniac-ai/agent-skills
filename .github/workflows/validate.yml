@@ -5,19 +5,27 @@ on:
   pull_request:
 
 jobs:
-  skills:
+  checks:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Test references and documentation export
+      - name: Test the generators and the validator
         run: python3 -B -m unittest discover -s tools -p 'test_*.py'
+      - name: Generated files are current
+        run: |
+          python3 tools/generate_skills.py --check
+          python3 tools/generate_manifests.py --check
       - name: Validate skill frontmatter and links
         run: python3 tools/validate.py
-      - name: Generated plugin manifests are current
-        run: python3 tools/generate_manifests.py --check
       - uses: actions/setup-node@v4
         with:
           node-version: '18'
+      - name: Documentation builds without broken links
+        run: |
+          npm install -g mint
+          cd docs
+          mint validate
+          mint broken-links
       - name: Skills resolve through the ecosystem installer
         # Strip colour escapes before matching the discovered skill count
         # and names against the source directories.

@@ -1,0 +1,171 @@
+---
+title: "Composition in YAML"
+description: "uniac.yaml declares infrastructure objects in YAML. A workspace combines package directories; resources declares reusable service definitions and the deployment declarations that instantiate them. YAML is the currently supported composition format."
+---
+
+
+`uniac.yaml` declares infrastructure objects in YAML. A `workspace` combines
+package directories; `resources` declares reusable service definitions and
+the deployment declarations that instantiate them. YAML is the currently
+supported composition format.
+
+## File format
+
+The document is a mapping with these top-level fields:
+
+| Field | Required | Meaning |
+|---|---|---|
+| `resources` | Unless `workspace` is present | Mapping of resource names to typed definitions; may be empty in a workspace document. |
+| `workspace` | No | Workspace metadata and included package directories. |
+| `runtime` | No | Composition format: `yaml`, the default and only supported value. |
+
+Resource names match `^[a-z0-9]+(?:(?:__?|-+)[a-z0-9]+)*$` and are unique
+within the file. Every resource requires `type`; unknown fields are rejected
+at every level.
+
+## Workspaces and packages
+
+A workspace owns its containing directory and subtree. Its root resources
+and each included directory's `uniac.yaml` contribute to one local project.
+A directory containing `uniac.yaml` is a **package**; the root's resources
+have their own package scope.
+
+```yaml
+workspace:
+  name: payments
+  description: Payments API and background processing
+  includes:
+    - ./api
+    - ./jobs
+```
+
+| Workspace field | Required | Meaning |
+|---|---|---|
+| `name` | No | Display name for the local system; defaults to the root directory name. |
+| `description` | No | Description of the system. |
+| `includes` | No | Array of literal relative directory paths, each containing `uniac.yaml`; defaults to an empty array. |
+
+Paths are relative to the workspace root and must name directories below it.
+Missing manifests, duplicate canonical directories, paths escaping the root,
+globs, and nested workspaces are rejected. Inclusion loads exactly the listed
+manifests; it does not recursively discover packages. Root-local `resources`
+can accompany `workspace` without including the root itself.
+
+A manifest outside any workspace owns a standalone project. Inside a
+workspace, a package must be explicitly included to participate; an unlisted
+manifest does not establish a separate project.
+
+Resource names and `from` lookups are local to each package. Different
+packages may reuse definition names, but the concrete services instantiated
+across the project must have unique names. Environment references can address
+instances from any deployment in their own package. Cross-package references,
+including references to root-local resources, are unsupported. Inclusion
+declares composition, not a package dependency.
+
+## Definitions and service instances
+
+`type: service` and `type: singleton` create reusable **service definitions**
+for stateless and singleton execution. A definition holds the OCI image or
+Dockerfile build source, environment, startup command, and storage needs.
+Declaring it alone creates no remote service. Complete field contracts are
+in [Service](/resources/service) and [Volume](/resources/volume).
+
+A `type: deployment` resource **instantiates** definitions: its `services`
+mapping gives each instance a service name and a definition to instantiate.
+Every declaration contributes its named instances to the project's deployment
+description. Unreferenced service definitions remain uninstantiated.
+
+| Field | Required | Meaning |
+|---|---|---|
+| `services` | Yes | Nonempty mapping of instance names to definitions and public exposure. |
+| `services.<instance>.from` | Yes | Name of a `service` or `singleton` definition in this file. |
+| `services.<instance>.public_ports` | No | [Public endpoint declarations](/resources/service#public-endpoints). |
+
+The **service instance** is the named remote service, not an individual
+container replica. Multiple instances can reuse one definition. The
+definition's name is a local label; the instance name supplies the service's
+identity in the target project. An instance name is one DNS label: lowercase
+letters, digits and dashes, starting and ending with a letter or digit, at
+most 63 characters.
+
+Deploying a project includes every deployment declaration in its root and
+included packages. A declaration creates no remote service group or
+environment; each resulting service has its own
+[deployment versions](/resources/service#runtime-and-deployment-versions).
+The target project's identity is supplied separately from this file.
+
+## Example composition
+
+This application has an API and a private Redis service with durable storage.
+It assumes `api/Dockerfile` builds an application listening on port 8080 that
+uses `CACHE_URL` to connect to Redis.
+
+```yaml
+runtime: yaml
+resources:
+  api_definition:
+    type: service
+    build: ./api
+    env:
+      CACHE_URL: "redis://${{cache.host}}:6379"
+  cache_definition:
+    type: singleton
+    image: redis:7-alpine
+    start_command: "redis-server --appendonly yes"
+    volumes:
+      - name: data
+        size_gb: 1
+        mount_path: /data
+  api-deployment:
+    type: deployment
+    services:
+      api:
+        from: api_definition
+        public_ports: [{port: 8080, type: http}]
+  cache-deployment:
+    type: deployment
+    services:
+      cache:
+        from: cache_definition
+        public_ports: []
+```
+
+`api-deployment` instantiates `api_definition` as the service `api`;
+`cache-deployment` instantiates `cache_definition` as `cache`. Both services
+are included in the project deployment. The API can reference `cache`
+because both declarations belong to this package.
+
+The reference names the `cache` instance, and that instance gives its volume
+the project-scoped name `cache.data`. The API is publicly exposed; Redis is
+reachable within the project's private network.
+
+[Environment and references](/resources/service#environment-and-references) explains
+resolution between service instances in the same package.
+
+## Validation
+
+Local validation checks ownership, included manifests, each file's schema,
+resource names, service declarations, and package-local `from` references.
+Composition checks all instantiated service names, build-source paths on
+disk, composed volume names, reference visibility, referenced variables,
+and ungrounded value-reference cycles. Unknown or cross-package service
+references fail locally. At least one deployment is required to produce a
+deployable description.
+
+## Generated description
+
+The generated description is JSON with `kind: deployable` and a `services`
+array. Each entry contains an instance name, normalized source declaration,
+environment templates, and runtime configuration. It contains no remote
+project binding, and environment values remain templates until deployment.
+Build paths are authored relative to the defining manifest's directory and
+normalized relative to the project root in the generated description. Thus
+`build: .` in `api/uniac.yaml` and `jobs/uniac.yaml` describes distinct sources.
+
+The digest identifies that description. Equivalent path spellings, omitted
+build defaults, YAML formatting, and mapping or exposure-list ordering do not
+change it. Reordering workspace includes or moving an identical checkout to
+another absolute path also preserves the digest. An explicit build `target`
+remains part of the description even when it names the Dockerfile's last
+stage. The digest excludes source-file and image contents and remotely
+resolved environment values.

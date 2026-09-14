@@ -20,11 +20,9 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 
-# The CLI release whose contracts the skills here are verified against.
-# Every manifest carries it as the plugin version, and the repository is
-# tagged v<VERSION> at that release.
-VERSION = "0.3.21"
-
+# No manifest carries a version: consumers that version plugins then use
+# the commit they resolved, so every merge to main reaches them. The CLI
+# release the content describes is stated in the CLI reference.
 NAME = "uniac"
 OWNER = "Uniac"
 HOMEPAGE = "https://uniac.ai"
@@ -60,7 +58,6 @@ def claude_plugin() -> dict:
     return {
         "$schema": CLAUDE_PLUGIN_SCHEMA,
         "name": NAME,
-        "version": VERSION,
         "description": BLURB,
         "author": {"name": OWNER, "url": HOMEPAGE},
         "homepage": HOMEPAGE,
@@ -89,7 +86,6 @@ def claude_marketplace() -> dict:
                 "name": NAME,
                 "source": "./",
                 "description": BLURB,
-                "version": VERSION,
                 "homepage": HOMEPAGE,
                 "repository": REPOSITORY,
                 "license": LICENSE,
@@ -110,7 +106,6 @@ def codex_plugin() -> dict:
     """
     return {
         "name": NAME,
-        "version": VERSION,
         "description": BLURB,
         "author": {"name": OWNER, "url": HOMEPAGE},
         "skills": "./skills/",
@@ -131,7 +126,6 @@ def agent_plugins_manifest() -> dict:
     return {
         "$schema": AGENT_PLUGINS_SCHEMA,
         "name": NAME,
-        "version": VERSION,
         "description": BLURB,
         "author": {"name": OWNER, "url": HOMEPAGE},
         "homepage": HOMEPAGE,

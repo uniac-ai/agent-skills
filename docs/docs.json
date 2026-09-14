@@ -1,0 +1,122 @@
+{
+  "$schema": "https://mintlify.com/docs.json",
+  "theme": "maple",
+  "name": "Uniac",
+  "description": "Uniac composition, resources, and CLI documentation.",
+  "colors": {
+    "primary": "#0A0A0A",
+    "light": "#FAFAFA",
+    "dark": "#171717"
+  },
+  "fonts": {
+    "heading": {
+      "family": "Space Grotesk",
+      "weight": 700
+    },
+    "body": {
+      "family": "Space Grotesk",
+      "weight": 400
+    }
+  },
+  "background": {
+    "color": {
+      "light": "#FAF6EF",
+      "dark": "#0A0A0A"
+    }
+  },
+  "appearance": {
+    "default": "light",
+    "strict": false
+  },
+  "favicon": "/favicon.png",
+  "navigation": {
+    "groups": [
+      {
+        "group": "Uniac",
+        "pages": [
+          "index",
+          {
+            "group": "Composition",
+            "pages": [
+              "composition/yaml"
+            ]
+          },
+          {
+            "group": "Resources",
+            "pages": [
+              "resources/service",
+              "resources/volume"
+            ]
+          },
+          {
+            "group": "Uniac CLI",
+            "root": "cli/overview",
+            "pages": [
+              "cli/authentication",
+              "cli/output"
+            ]
+          }
+        ]
+      },
+      {
+        "group": "Guides",
+        "pages": [
+          "setup",
+          "quickstart"
+        ]
+      }
+    ],
+    "global": {
+      "anchors": [
+        {
+          "anchor": "Dashboard",
+          "href": "https://uniac.ai",
+          "icon": "gauge"
+        }
+      ]
+    }
+  },
+  "redirects": [
+    { "source": "/concepts/model", "destination": "/" },
+    { "source": "/concepts/manifest", "destination": "/composition/yaml" },
+    { "source": "/cli/exit-codes", "destination": "/cli/output" }
+  ],
+  "logo": {
+    "light": "/logo/light.png",
+    "dark": "/logo/dark.png"
+  },
+  "navbar": {
+    "links": [
+      {
+        "label": "Pricing",
+        "href": "https://uniac.ai/pricing"
+      },
+      {
+        "label": "Support",
+        "href": "mailto:support@uniac.ai"
+      }
+    ],
+    "primary": {
+      "type": "button",
+      "label": "Dashboard",
+      "href": "https://uniac.ai"
+    }
+  },
+  "contextual": {
+    "options": [
+      "copy",
+      "view",
+      "chatgpt",
+      "claude",
+      "perplexity",
+      "mcp",
+      "cursor",
+      "vscode"
+    ]
+  },
+  "footer": {
+    "socials": {
+      "x": "https://x.com/uniac"
+    }
+  }
+}

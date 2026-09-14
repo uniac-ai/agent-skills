@@ -1,4 +1,8 @@
-# Uniac CLI
+---
+title: "Uniac CLI"
+description: "The uniac CLI connects a local application composition to a remote project. Its commands prepare descriptions, deploy services, and read live state."
+---
+
 
 The `uniac` CLI connects a local application composition to a remote project.
 Its commands prepare descriptions, deploy services, and read live state.
@@ -22,11 +26,11 @@ usage.
 | `uniac link [-C <path>] [name-or-slug]` | Create or replace the owning project's remote binding. |
 | `uniac deploy [--dir <path>]` | Build and deploy every declaration in the owning project. |
 | `uniac status [--dir <path>] [service]` | Read a linked project's state, or one named service. |
-| `uniac auth <login\|status\|token\|logout>` | Manage [authentication](authentication.md). |
+| `uniac auth <login\|status\|token\|logout>` | Manage [authentication](/cli/authentication). |
 | `uniac version` | Print the installed binary's version, commit and build time. |
 
 `--version` and `-v` are aliases for `version`. The CLI has no removal command.
-[Output](output.md) describes result formats, progress and exit codes.
+[Output](/cli/output) describes result formats, progress and exit codes.
 
 ## Local initialization
 
@@ -43,7 +47,7 @@ package. Initialization creates no remote project or binding.
 ## Local project ownership
 
 `plan`, `deploy`, `link`, and `status` resolve the owning local project from
-their starting directory. A containing [workspace](../composition/yaml.md#workspaces-and-packages)
+their starting directory. A containing [workspace](/composition/yaml#workspaces-and-packages)
 owns its included packages. Without a workspace, the nearest ancestor
 `uniac.yaml` owns the standalone project. Starting from a member or its
 subdirectory selects the same project as starting from the root.
@@ -56,13 +60,13 @@ buildable, or Docker.
 ## Project selection
 
 Deployment addresses an existing
-[remote project](../overview.md#accounts-projects-and-applications).
+[remote project](/#accounts-projects-and-applications).
 `project create <name>` creates one on the authenticated account and prints
 its name and assigned slug. It does not prompt or write local files, and
 requires neither `uniac.yaml` nor Docker. The name must match
 `^[a-z][a-z0-9-]{0,62}$`. Project creation and linking use the
 platform selected by `UNIAC_PLATFORM_URL`, whose default and credential
-selection are described in [Authentication](authentication.md).
+selection are described in [Authentication](/cli/authentication).
 
 `link` resolves the local project first. An exact project slug or a uniquely
 matching name selects the project without a prompt. No argument opens the
@@ -110,12 +114,12 @@ project's root and included packages. They accept no deployment selector.
 Planning requires at least one declared deployment; unused service
 definitions do not become deployed instances.
 
-`plan` performs [description validation](../composition/yaml.md#validation) offline,
+`plan` performs [description validation](/composition/yaml#validation) offline,
 without credentials or Docker. It composes the complete graph, including
 checking that its build paths exist. It does not run Docker builds or check
 remote project state. `--full` expands the
 text preview; `--json` returns the generated description, as specified in
-[Output](output.md#plan-output).
+[Output](/cli/output#plan-output).
 
 `deploy` repeats this planning before authentication or remote activity.
 Single-service and multi-service projects use the same deployment path.
@@ -129,7 +133,7 @@ slug and requires the returned name, slug and gateway to match the binding.
 listing for this check. A saved binding is optional because deployment can
 select an existing project interactively.
 
-For [service sources](../resources/service.md#required-and-optional-configuration), deployment pulls
+For [service sources](/resources/service#required-and-optional-configuration), deployment pulls
 prebuilt images using local Docker credentials or builds from the current
 working tree. Both target `linux/amd64`. The build context's `.dockerignore`
 filters input; `.gitignore` does not. Builds run on every deployment, use
@@ -142,9 +146,9 @@ different packages' `build: .` sources remain distinct.
 Missing build directories or Dockerfiles fail during local planning.
 Dockerfile syntax, missing build stages, failing build commands, image pulls
 and daemon availability are checked during image work. The platform applies
-the remote [service](../resources/service.md),
-[exposure](../resources/service.md#networking-and-endpoints) and
-[storage](../resources/volume.md) constraints when the deployment is submitted.
+the remote [service](/resources/service),
+[exposure](/resources/service#networking-and-endpoints) and
+[storage](/resources/volume) constraints when the deployment is submitted.
 
 All service images are checked before the first push. The CLI registers all
 services before waiting for any deployment to settle, so one service's
@@ -165,5 +169,5 @@ of the previous one.
 After a release attempt, including a partial failure, the CLI writes a local
 record of image digests, submission outcomes and receipts under
 `~/.uniac/store`; `UNIAC_STORE_DIR` selects another directory.
-[Output](output.md#partial-observations-and-warnings) describes recording
+[Output](/cli/output#partial-observations-and-warnings) describes recording
 failures.

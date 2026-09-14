@@ -1,0 +1,87 @@
+/* Neo-brutalist skin. Palette and type live in docs.json. */
+
+:root {
+  --nb-ink: #0a0a0a;
+}
+
+html.dark {
+  --nb-ink: #ececec;
+}
+
+/* Cards: flat face, hard border, offset shadow, square corners. */
+#content-area .card,
+.card {
+  border-radius: 0 !important;
+  border: 2px solid var(--nb-ink) !important;
+  box-shadow: 5px 5px 0 0 var(--nb-ink);
+  transition: transform 120ms ease, box-shadow 120ms ease;
+}
+
+.card:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: 8px 8px 0 0 var(--nb-ink);
+}
+
+/* Code blocks. */
+.code-block {
+  border-radius: 0 !important;
+  border: 2px solid var(--nb-ink) !important;
+  box-shadow: 5px 5px 0 0 var(--nb-ink);
+}
+
+.code-block * {
+  border-radius: 0 !important;
+}
+
+/* Callouts (Note/Info/Warning), if a page uses one. */
+.callout {
+  border-radius: 0 !important;
+  border: 2px solid var(--nb-ink) !important;
+  box-shadow: 4px 4px 0 0 var(--nb-ink);
+}
+
+/* Prose tables: full grid, no soft edges. */
+#content-area table {
+  border: 2px solid var(--nb-ink);
+  border-collapse: collapse;
+}
+
+#content-area th,
+#content-area td {
+  border: 1px solid var(--nb-ink);
+}
+
+#content-area thead th {
+  border-bottom: 2px solid var(--nb-ink);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-size: 0.72rem;
+}
+
+/* Search field. */
+#search-bar-entry {
+  border-radius: 0 !important;
+  border: 2px solid var(--nb-ink) !important;
+  box-shadow: 3px 3px 0 0 var(--nb-ink);
+}
+
+/* Inline code: chip with a visible edge. */
+#content-area :not(pre) > code {
+  border-radius: 0;
+  border: 1px solid var(--nb-ink);
+  padding: 0.05em 0.3em;
+}
+
+/* Headings carry the weight; h1 gets the poster treatment. */
+#content-area h1 {
+  text-transform: uppercase;
+  letter-spacing: 0.01em;
+}
+
+/* Monochrome palette: prose links keep their affordance by underline,
+   not hue. */
+#content-area a:not(:has(.card)) {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-thickness: 2px;
+}

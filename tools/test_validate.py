@@ -41,6 +41,7 @@ class MarkdownLinksTest(unittest.TestCase):
                 "[local](#detail) [same file](./SKILL.md#detail) "
                 "[web](https://example.com/missing.md) "
                 "[relative web](//example.com/missing.md) "
+                "[index](https://docs.uniac.ai/llms.txt) "
                 "[mail](mailto:help@example.com) "
                 "`[inline](missing.md)`\n```md\n[fenced](missing.md)\n```"
             ),
@@ -66,43 +67,44 @@ class MarkdownLinksTest(unittest.TestCase):
             "skill/SKILL.md: link '../outside.md' escapes the skill",
         ])
 
-    def test_canonical_cross_skill_links_form_one_acyclic_graph(self):
+    def test_site_markdown_urls_form_one_acyclic_graph_with_the_generated_files(self):
         self.assertEqual(self.validate_skills({
-            "uniac/SKILL.md": (
-                "[quickstart](https://github.com/uniac-ai/agent-skills/blob/main/"
-                "skills/uniac-quickstart/SKILL.md) [cli](references/cli/overview.md)"
-            ),
+            "uniac/SKILL.md": "[quickstart](https://docs.uniac.ai/quickstart.md) [cli](references/cli/overview.md)",
             "uniac-quickstart/SKILL.md": (
-                "[cli](https://github.com/uniac-ai/agent-skills/blob/main/"
-                "skills/uniac/references/cli/overview.md#commands)"
+                "[cli](https://docs.uniac.ai/cli/overview.md#commands) "
+                "[system](https://docs.uniac.ai/index.md) [setup](https://docs.uniac.ai/setup.md)"
             ),
+            "uniac/references/overview.md": "# System",
             "uniac/references/cli/overview.md": "# Commands",
+            "../agents/agents.md": "# Setup",
         }), [])
 
-    def test_canonical_cross_skill_cycle_reports_the_closed_path(self):
+    def test_site_url_cycle_reports_the_closed_path(self):
         defects = self.validate_skills({
-            "uniac/SKILL.md": (
-                "[quickstart](https://github.com/uniac-ai/agent-skills/blob/main/"
-                "skills/uniac-quickstart/SKILL.md)"
-            ),
-            "uniac-quickstart/SKILL.md": (
-                "[knowledge](https://github.com/uniac-ai/agent-skills/blob/main/"
-                "skills/uniac/SKILL.md)"
-            ),
+            "uniac/SKILL.md": "[quickstart](https://docs.uniac.ai/quickstart.md)",
+            "uniac-quickstart/SKILL.md": "[cli](https://docs.uniac.ai/cli/overview.md)",
+            "uniac/references/cli/overview.md": "[example](https://docs.uniac.ai/quickstart.md)",
         })
         self.assertEqual(defects, [
-            "cyclic Markdown links: skills/uniac/SKILL.md -> "
-            "skills/uniac-quickstart/SKILL.md -> skills/uniac/SKILL.md"
+            "cyclic Markdown links: skills/uniac-quickstart/SKILL.md -> "
+            "skills/uniac/references/cli/overview.md -> skills/uniac-quickstart/SKILL.md"
         ])
 
-    def test_missing_canonical_repository_file_fails(self):
-        target = (
-            "https://github.com/uniac-ai/agent-skills/blob/main/"
-            "skills/uniac/references/missing.md#detail"
-        )
+    def test_site_url_without_a_generated_file_fails(self):
+        target = "https://docs.uniac.ai/cli/missing.md#detail"
         self.assertEqual(self.validate_skills({
             "uniac-quickstart/SKILL.md": f"[missing]({target})",
         }), [f"skills/uniac-quickstart/SKILL.md: broken link {target!r}"])
+
+    def test_links_into_this_repository_on_github_are_rejected(self):
+        target = "https://github.com/uniac-ai/agent-skills/blob/main/skills/uniac/references/cli/overview.md"
+        self.assertEqual(self.validate_skills({
+            "uniac-quickstart/SKILL.md": f"[cli]({target})",
+            "uniac/references/cli/overview.md": "# Commands",
+        }), [
+            f"skills/uniac-quickstart/SKILL.md: link {target!r} reads this repository's main; "
+            "link the docs.uniac.ai Markdown page"
+        ])
 
     def test_relative_sibling_link_escapes_the_skill_directory(self):
         self.assertEqual(self.validate_skills({
@@ -123,14 +125,15 @@ class MarkdownLinksTest(unittest.TestCase):
             "uniac/references/cli/overview.md": "[composition](../composition/yaml.md) [service](../resources/service.md)",
         }), [])
 
-    def test_overview_composition_and_resources_cannot_link_cli_or_skill_entrypoints(self):
+    def test_overview_composition_and_resources_link_only_to_each_other(self):
         for layer in ("", "composition", "resources", "resources/nested"):
             parent = "../" * len(Path(layer).parts)
             targets = (
-                "https://github.com/uniac-ai/agent-skills/blob/main/skills/uniac/references/cli/overview.md#commands",
+                "https://docs.uniac.ai/cli/overview.md#commands",
                 parent + "cli/overview.md#commands",
                 parent + "../SKILL.md",
-                "https://github.com/uniac-ai/agent-skills/blob/main/skills/uniac-quickstart/SKILL.md",
+                "https://docs.uniac.ai/quickstart.md",
+                "https://docs.uniac.ai/setup.md",
             )
             for target in targets:
                 with self.subTest(layer=layer, target=target):
@@ -139,10 +142,11 @@ class MarkdownLinksTest(unittest.TestCase):
                         "uniac/SKILL.md": "# Uniac",
                         "uniac-quickstart/SKILL.md": "# Quickstart",
                         "uniac/references/cli/overview.md": "# CLI",
+                        "../agents/agents.md": "# Setup",
                         source: f"[operation]({target})",
                     }), [
-                        f"skills/{source}: Overview, Composition, and Resources cannot link "
-                        f"to CLI pages or skill entrypoints: {target!r}"
+                        f"skills/{source}: Overview, Composition, and Resources link "
+                        f"only to each other: {target!r}"
                     ])
 
     def test_explanatory_crosslinks_still_require_existing_files(self):

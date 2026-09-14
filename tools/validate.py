@@ -12,9 +12,11 @@ Checks, per skills/<name>/SKILL.md:
     string values;
   - name matches the directory;
   - every relative Markdown link resolves to a file inside the skill;
-  - canonical repository URLs resolve to files in this checkout;
-  - the overview, Composition, and Resources can link to each other, but not
-    to CLI pages or skill entrypoints;
+  - every docs.uniac.ai Markdown URL resolves to the file generated from
+    that page, so a skill installed alone reads the same content online;
+  - links into this repository on GitHub are rejected: they would read
+    whatever main holds rather than the installed revision;
+  - the overview, Composition, and Resources link only to each other;
   - links among the remaining entry, guide, and CLI pages are acyclic.
 
 Exits non-zero on any failure, printing one line per defect.
@@ -25,8 +27,11 @@ import sys
 from pathlib import Path
 from urllib.parse import unquote, urlsplit
 
+from generate_skills import REFERENCES, SITE, output_path
+
 ROOT = Path(__file__).resolve().parent.parent
 SKILLS = ROOT / "skills"
+REPOSITORY = "https://github.com/uniac-ai/agent-skills/"
 
 # Strict plain-scalar rule: a mid-scalar ": " (or a value starting with
 # characters YAML reserves) must be quoted. We parse with a tiny strict
@@ -73,8 +78,6 @@ def parse_frontmatter(text: str, defects: list, where: str):
 LINK_RE = re.compile(r"\]\(([^)\s]+)\)")
 SCHEME_RE = re.compile(r"^[A-Za-z][A-Za-z0-9+.-]*:")
 CODE_RE = re.compile(r"```.*?```|`[^`\n]*`", re.S)
-REPOSITORY_URL = "https://github.com/uniac-ai/agent-skills/blob/main/"
-REPOSITORY_PATH = urlsplit(REPOSITORY_URL).path
 
 
 def prose_of(text: str) -> str:
@@ -90,7 +93,7 @@ def validate_links(skills: list[Path], root: Path) -> list[str]:
         for skill in skills
         for f in sorted(skill.rglob("*.md"))
     }
-    references = root.resolve() / "skills/uniac/references"
+    references = (root / REFERENCES).resolve()
     explanatory_roots = [references / "composition", references / "resources"]
 
     def explanatory(path: Path) -> bool:
@@ -99,11 +102,17 @@ def validate_links(skills: list[Path], root: Path) -> list[str]:
     graph = {source: set() for source in owners if not explanatory(source)}
     for source in owners:
         for target in LINK_RE.findall(prose_of(source.read_text(encoding="utf-8"))):
-            if target.startswith(REPOSITORY_URL):
-                path = unquote(urlsplit(target).path[len(REPOSITORY_PATH):])
-                resolved = (root / path).resolve()
+            parsed = urlsplit(target)
+            if target.startswith(SITE) and parsed.path.endswith(".md"):
+                resolved = (root / output_path(unquote(parsed.path)[1:-3])).resolve()
                 scope, scope_name = root.resolve(), "repository"
-                anchor = "#" in target
+                anchor = bool(parsed.fragment)
+            elif target.startswith(REPOSITORY):
+                defects.append(
+                    f"{source.relative_to(root)}: link {target!r} reads this repository's main; "
+                    "link the docs.uniac.ai Markdown page"
+                )
+                continue
             elif SCHEME_RE.match(target) or target.startswith("//"):
                 continue
             else:
@@ -116,10 +125,10 @@ def validate_links(skills: list[Path], root: Path) -> list[str]:
                 defects.append(f"{source.relative_to(root)}: broken link {target!r}")
             elif scope not in resolved.parents:
                 defects.append(f"{source.relative_to(root)}: link {target!r} escapes the {scope_name}")
-            elif explanatory(source) and (resolved.name == "SKILL.md" or references / "cli" in resolved.parents):
+            elif explanatory(source) and not explanatory(resolved):
                 defects.append(
-                    f"{source.relative_to(root)}: Overview, Composition, and Resources cannot link "
-                    f"to CLI pages or skill entrypoints: {target!r}"
+                    f"{source.relative_to(root)}: Overview, Composition, and Resources link "
+                    f"only to each other: {target!r}"
                 )
             elif source in graph and resolved in graph and not (resolved == source and anchor):
                 graph[source].add(resolved)

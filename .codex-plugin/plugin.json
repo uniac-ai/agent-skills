@@ -1,6 +1,5 @@
 {
   "name": "uniac",
-  "version": "0.3.21",
   "description": "Define, deploy, and operate applications on Uniac with connected services, storage, and public endpoints.",
   "author": {
     "name": "Uniac",
