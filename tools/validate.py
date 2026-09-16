@@ -1,0 +1,137 @@
+#!/usr/bin/env python3
+"""Validate every skill against what its consumers require.
+
+Installers parse SKILL.md frontmatter with strict YAML; a skill that a
+forgiving loader accepts can still be silently dropped by them (a plain
+scalar containing ": " is the classic case). This gate runs in CI and
+before publishing, and fails loudly instead.
+
+Checks, per skills/<name>/SKILL.md:
+  - frontmatter exists, is strict-YAML-parseable, and contains the keys the
+    spec requires (name, description) with non-empty string values;
+  - name matches the directory;
+  - every relative Markdown link resolves to a file inside the skill;
+  - no site-route link (`/page`) remains: the skill is read as files;
+  - every docs.uniac.ai Markdown URL answers HTTP 200 (`--offline` skips).
+
+Exits non-zero on any failure, printing one line per defect.
+"""
+
+import re
+import sys
+from pathlib import Path
+from urllib.error import HTTPError, URLError
+from urllib.request import Request, urlopen
+
+ROOT = Path(__file__).resolve().parent.parent
+SKILLS = ROOT / "skills"
+SITE = "https://docs.uniac.ai/"
+FRONTMATTER_RE = re.compile(r"\A---\n(.*?)\n---\n", re.S)
+KEY_RE = re.compile(r"\A([A-Za-z][A-Za-z0-9_-]*):[ ](.*)\Z")
+LINK_RE = re.compile(r"\]\(([^)\s]+)\)")
+SCHEME_RE = re.compile(r"^[A-Za-z][A-Za-z0-9+.-]*:")
+CODE_RE = re.compile(r"```.*?```|`[^`\n]*`", re.S)
+
+
+def parse_frontmatter(text: str, defects: list, where: str) -> dict:
+    m = FRONTMATTER_RE.match(text)
+    if not m:
+        defects.append(f"{where}: no frontmatter block")
+        return {}
+    fields = {}
+    for line in m.group(1).splitlines():
+        if not line.strip():
+            continue
+        km = KEY_RE.match(line)
+        if not km:
+            defects.append(f"{where}: unparseable frontmatter line: {line!r}")
+            continue
+        key, value = km.group(1), km.group(2).strip()
+        if value.startswith(("'", '"')):
+            quote = value[0]
+            if not (len(value) >= 2 and value.endswith(quote)):
+                defects.append(f"{where}: unterminated quoted scalar for {key}")
+                continue
+            value = value[1:-1]
+        else:
+            if ": " in value:
+                defects.append(
+                    f"{where}: {key} is a plain scalar containing ': ' — "
+                    "strict parsers reject this; rephrase or quote the value"
+                )
+            if value and value[0] in "[{&*!|>%@`":
+                defects.append(f"{where}: {key} starts with YAML-reserved {value[0]!r} — quote it")
+        fields[key] = value
+    return fields
+
+
+def prose_of(text: str) -> str:
+    """Markdown with code fences and inline code removed, so link
+    checking never trips over `](...)` sequences inside code."""
+    return CODE_RE.sub("", text)
+
+
+def answers(url: str) -> bool:
+    try:
+        with urlopen(Request(url, method="HEAD", headers={"User-Agent": "uniac-agent-skills-validate"})) as response:
+            return response.status == 200
+    except (HTTPError, URLError):
+        return False
+
+
+def validate_links(skills: list[Path], root: Path, offline: bool = False) -> list[str]:
+    defects, checked = [], {}
+    for skill in skills:
+        for source in sorted(skill.rglob("*.md")):
+            where = source.relative_to(root).as_posix()
+            for target in LINK_RE.findall(prose_of(source.read_text(encoding="utf-8"))):
+                if target.startswith(SITE):
+                    url = target.split("#")[0]
+                    if not url.endswith(".md") and not url.endswith(".txt"):
+                        defects.append(f"{where}: {target!r} is a page URL; link the page's Markdown (.md)")
+                    elif not offline:
+                        if url not in checked:
+                            checked[url] = answers(url)
+                        if not checked[url]:
+                            defects.append(f"{where}: {target!r} does not answer")
+                elif target.startswith("/"):
+                    defects.append(f"{where}: site route {target!r}; skills are read as files")
+                elif SCHEME_RE.match(target) or target.startswith(("#", "//")):
+                    continue
+                else:
+                    resolved = (source.parent / target.partition("#")[0]).resolve()
+                    if not resolved.is_file():
+                        defects.append(f"{where}: broken link {target!r}")
+                    elif skill.resolve() not in resolved.parents:
+                        defects.append(f"{where}: link {target!r} escapes the skill")
+    return defects
+
+
+def main() -> int:
+    offline = "--offline" in sys.argv[1:]
+    defects: list[str] = []
+    skill_dirs = sorted(p for p in SKILLS.iterdir() if p.is_dir())
+    if not skill_dirs:
+        defects.append("skills/: no skills found")
+    for d in skill_dirs:
+        md = d / "SKILL.md"
+        where = md.relative_to(ROOT).as_posix()
+        if not md.exists():
+            defects.append(f"{d.relative_to(ROOT)}: missing SKILL.md")
+            continue
+        fields = parse_frontmatter(md.read_text(encoding="utf-8"), defects, where)
+        if fields:
+            if fields.get("name") != d.name:
+                defects.append(f"{where}: name {fields.get('name')!r} != directory {d.name!r}")
+            if not fields.get("description"):
+                defects.append(f"{where}: empty or missing description")
+    defects.extend(validate_links(skill_dirs, ROOT, offline))
+    for line in defects:
+        print(f"FAIL {line}")
+    if not defects:
+        print(f"ok: {len(skill_dirs)} skill(s) valid")
+    return 1 if defects else 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
