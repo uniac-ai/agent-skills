@@ -1,5 +1,7 @@
 # Volume
 
+> A volume is durable storage with a project-scoped identity. Its data and lifetime are independent of the service holding it.
+
 A volume is durable storage with a project-scoped identity. Its data and
 lifetime are independent of the service holding it.
 
@@ -8,11 +10,11 @@ lifetime are independent of the service holding it.
 Volume attachment is optional and available only to singleton services, with
 at most one volume per service. An attachment requires:
 
-| Field | Required | Meaning |
-|---|---|---|
-| `name` | Yes | Local volume name matching `^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?$`. |
-| `size_gb` | Yes | Number whose value, after truncation toward zero, is at least 1. |
-| `mount_path` | Yes | Absolute path other than `/`, with no `.` or `..` segments, repeated slashes, or trailing slash. |
+| Field        | Required | Meaning                                                                                          |
+| ------------ | -------- | ------------------------------------------------------------------------------------------------ |
+| `name`       | Yes      | Local volume name matching `^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?$`.                               |
+| `size_gb`    | Yes      | Number whose value, after truncation toward zero, is at least 1.                                 |
+| `mount_path` | Yes      | Absolute path other than `/`, with no `.` or `..` segments, repeated slashes, or trailing slash. |
 
 The resulting project-scoped name is `<instance>.<name>`, limited to 127
 characters.
@@ -22,7 +24,7 @@ at or below `/proc`, `/sys`, and `/dev`, and the path `/etc/resolv.conf`.
 
 ## YAML composition example
 
-In [YAML composition](../composition/yaml.md), a volume declaration is a
+In [YAML composition](https://docs.uniac.ai/composition/yaml.md), a volume declaration is a
 mapping with `name`, `size_gb`, and `mount_path` inside the service definition's
 optional `volumes` list. Omitting `volumes`, setting it to `null`, or using
 `[]` declares no volume.
@@ -31,7 +33,7 @@ The singleton `cache` service mounts `cache.data` at `/data`. Redis writes its
 append-only persistence files there, and the volume retains them across
 container replacement.
 
-```yaml
+```yaml theme={null}
 resources:
   cache-code:
     type: singleton

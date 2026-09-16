@@ -1,5 +1,7 @@
 # Service
 
+> A service is a named application component within a project. Each replica runs a container from an OCI (Open Container Initiative) image, which supplies the application and its runtime dependencies. The image can be supplied directly or built from a Dockerfile. Uniac adds no SDK or runtime dependency to the application.
+
 A service is a named application component within a project. Each replica
 runs a container from an OCI (Open Container Initiative) image, which supplies
 the application and its runtime dependencies. The image can be supplied
@@ -21,18 +23,18 @@ Stateless services can run multiple container replicas behind the same
 service identity. A singleton service permits at most one running replica per
 service in a project. During replacement, the previous replica stops before
 its successor starts. Persistent local storage requires an attached
-[volume](volume.md); singleton execution alone does not preserve data.
+[volume](https://docs.uniac.ai/resources/volume.md); singleton execution alone does not preserve data.
 
 ## Required and optional configuration
 
-| Information | Required | Meaning |
-|---|---|---|
-| Execution type | Yes | Stateless or singleton. |
-| Container source | Exactly one | An OCI image reference or a Dockerfile build source. |
-| Environment variables | No | [Environment values and references](#environment-and-references). |
-| Start command | No | Replaces the image's startup command (`ENTRYPOINT` and `CMD`) at runtime; the image is unchanged. |
-| Volume attachment | No | [Durable storage](volume.md) for a singleton service. |
-| Public exposure | No | [Public endpoints](#public-endpoints) on a service instance. |
+| Information           | Required    | Meaning                                                                                           |
+| --------------------- | ----------- | ------------------------------------------------------------------------------------------------- |
+| Execution type        | Yes         | Stateless or singleton.                                                                           |
+| Container source      | Exactly one | An OCI image reference or a Dockerfile build source.                                              |
+| Environment variables | No          | [Environment values and references](#environment-and-references).                                 |
+| Start command         | No          | Replaces the image's startup command (`ENTRYPOINT` and `CMD`) at runtime; the image is unchanged. |
+| Volume attachment     | No          | [Durable storage](https://docs.uniac.ai/resources/volume.md) for a singleton service.                                     |
+| Public exposure       | No          | [Public endpoints](#public-endpoints) on a service instance.                                      |
 
 A start command is split into arguments with shell-style quoting. A shell is
 not automatically invoked.
@@ -42,12 +44,12 @@ not automatically invoked.
 A build source identifies the source tree, build context, Dockerfile, and
 target stage. Each setting has a default:
 
-| Field | Required | Meaning | Default |
-|---|---|---|---|
-| `root` | No | Path relative to the defining manifest's directory | `.` |
-| `context` | No | Path relative to the build root | The root itself |
-| `dockerfile` | No | Path relative to the build root | `Dockerfile` |
-| `target` | No | Dockerfile stage name | Last stage |
+| Field        | Required | Meaning                                            | Default         |
+| ------------ | -------- | -------------------------------------------------- | --------------- |
+| `root`       | No       | Path relative to the defining manifest's directory | `.`             |
+| `context`    | No       | Path relative to the build root                    | The root itself |
+| `dockerfile` | No       | Path relative to the build root                    | `Dockerfile`    |
+| `target`     | No       | Dockerfile stage name                              | Last stage      |
 
 Paths are relative and checked lexically: `root` must stay within the
 defining package directory, and `context` and `dockerfile` within the root.
@@ -69,17 +71,17 @@ A public endpoint forwards incoming traffic to the application's listen port.
 Endpoints are declared on the service instance, independently of its reusable
 definition.
 
-| Type | Allocated endpoint |
-|---|---|
-| `http` | An address at `https://<hostname>` on the shared HTTP edge, routing to the application's specified port. |
-| `tcp` | A public hostname and port, forwarding raw TCP to the application's specified port. The public port is allocated independently of the listen port. |
+| Type   | Allocated endpoint                                                                                                                                 |
+| ------ | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `http` | An address at `https://<hostname>` on the shared HTTP edge, routing to the application's specified port.                                           |
+| `tcp`  | A public hostname and port, forwarding raw TCP to the application's specified port. The public port is allocated independently of the listen port. |
 
 Public exposure is optional. Each requested endpoint specifies:
 
-| Field | Required | Meaning |
-|---|---|---|
-| `port` | Yes | The application's listen port, as a number truncated toward zero. |
-| `type` | Yes | `http` or `tcp`. |
+| Field  | Required | Meaning                                                           |
+| ------ | -------- | ----------------------------------------------------------------- |
+| `port` | Yes      | The application's listen port, as a number truncated toward zero. |
+| `type` | Yes      | `http` or `tcp`.                                                  |
 
 The platform accepts ports 1–65535 and at most one exposure of each type per
 service. These limits are enforced during deployment, beyond local schema
@@ -108,7 +110,7 @@ hostname.
 
 References have this grammar:
 
-```text
+```text theme={null}
 \$\{\{\s*([a-z0-9][a-z0-9_-]*|self)\.([A-Za-z_][A-Za-z0-9_]*)\s*\}\}
 ```
 
@@ -138,7 +140,7 @@ dependency ordering or readiness coordination.
 
 ## YAML composition example
 
-In [YAML composition](../composition/yaml.md), `type: service` selects
+In [YAML composition](https://docs.uniac.ai/composition/yaml.md), `type: service` selects
 stateless execution and `type: singleton` selects singleton execution. Exactly
 one of `image` or `build` supplies the container source; `image: ""` counts
 as absent. Optional configuration uses `env`, the `start_command` string,
@@ -152,11 +154,11 @@ definition's `uniac.yaml`.
 `services.<instance>.public_ports` is an optional list of mappings, each with
 `port` and `type`. Its presence has three meanings on deployment:
 
-| Value | Result |
-|---|---|
-| Omitted or `null` | Keeps the service's existing public exposure. |
-| `[]` | Removes all public exposure. |
-| Nonempty list | Replaces public exposure with exactly this list. |
+| Value             | Result                                           |
+| ----------------- | ------------------------------------------------ |
+| Omitted or `null` | Keeps the service's existing public exposure.    |
+| `[]`              | Removes all public exposure.                     |
+| Nonempty list     | Replaces public exposure with exactly this list. |
 
 The `web-code` and `cache-code` resources are definitions. The project deploys
 both `web` from `web-deployment` and `cache` from `cache-deployment`. The
@@ -167,7 +169,7 @@ The stateless `web` service receives the URL declared by `cache`, which uses
 HTTPS and a separately allocated raw TCP endpoint. The singleton `cache` service starts
 Redis with append-only persistence on a 1 GB volume mounted at `/data`.
 
-```yaml
+```yaml theme={null}
 resources:
   web-code:
     type: service
@@ -218,19 +220,19 @@ health or readiness probes.
 
 ### Observed state
 
-| Fact | Meaning |
-|---|---|
-| Serving version | The service deployment currently serving, identified by its version number. |
-| Lifecycle | The deployment's phase: `preparing`, `active`, `retiring`, or `retired`. |
-| Requested replicas | The requested container count. |
-| Effective replicas | The container count after platform policy is applied. |
-| Observed replicas | The running container count reported by the platform; an observation may be unavailable. |
-| Deployment task | A deployment operation in flight, with its own state and current step. |
-| Hold | A platform-side reason the service is not converging. |
-| Warning | A non-fatal condition reported by the platform. |
+| Fact               | Meaning                                                                                  |
+| ------------------ | ---------------------------------------------------------------------------------------- |
+| Serving version    | The service deployment currently serving, identified by its version number.              |
+| Lifecycle          | The deployment's phase: `preparing`, `active`, `retiring`, or `retired`.                 |
+| Requested replicas | The requested container count.                                                           |
+| Effective replicas | The container count after platform policy is applied.                                    |
+| Observed replicas  | The running container count reported by the platform; an observation may be unavailable. |
+| Deployment task    | A deployment operation in flight, with its own state and current step.                   |
+| Hold               | A platform-side reason the service is not converging.                                    |
+| Warning            | A non-fatal condition reported by the platform.                                          |
 
 ### Dashboard and removal
 
 A service's dashboard page shows its state, public endpoints, and deployment
 activity, and offers **Delete service**. Its volume's retention and deletion
-are governed by the [volume lifecycle](volume.md#lifecycle).
+are governed by the [volume lifecycle](https://docs.uniac.ai/resources/volume.md#lifecycle).

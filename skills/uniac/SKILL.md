@@ -32,6 +32,6 @@ observations, and exit codes.
 
 ## Example
 
-[Quickstart](https://github.com/uniac-ai/agent-skills/blob/main/skills/uniac-quickstart/SKILL.md)
+[Quickstart](https://docs.uniac.ai/quickstart.md)
 connects an application description, a remote project, and a public endpoint
 in one first-deployment example.

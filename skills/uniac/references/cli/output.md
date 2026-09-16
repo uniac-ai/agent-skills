@@ -1,5 +1,7 @@
 # Output and errors
 
+> deploy prints one final text report to stdout, containing its execution record followed by the state it could report. status prints the state and, if its read fails, an error block. Neither command has a JSON mode. Help and argument-parsing errors go to stderr and leave stdout empty.
+
 ## Channels and formats
 
 `deploy` prints one final text report to stdout, containing its execution
@@ -32,7 +34,7 @@ package's relative `path`. The root package is `.`. `declarations` associates
 each concrete `service` with its `package`, `deployment`, and `from` definition.
 `deployable` is the complete generated service description.
 Environment and start-command fields are included whether or not `--full`
-is supplied. [Composition in YAML](../composition/yaml.md#generated-description) defines the generated
+is supplied. [Composition in YAML](https://docs.uniac.ai/composition/yaml.md#generated-description) defines the generated
 description and what its digest identifies.
 
 ## Deployment record
@@ -57,11 +59,11 @@ deployment declaration. It records whether the image was pushed, the
 submission outcome, returned deployment and task IDs, whether service state
 was read, and any failure phase or warnings.
 
-| Submission | Established fact |
-|---|---|
-| `not attempted` | No registration was initiated for this service. |
-| `accepted` | The server acknowledged registration; observed state is reported separately. |
-| `rejected` | Registration received an explicit client-error refusal. |
+| Submission               | Established fact                                                                           |
+| ------------------------ | ------------------------------------------------------------------------------------------ |
+| `not attempted`          | No registration was initiated for this service.                                            |
+| `accepted`               | The server acknowledged registration; observed state is reported separately.               |
+| `rejected`               | Registration received an explicit client-error refusal.                                    |
 | `acceptance unconfirmed` | Registration was attempted without a conclusive response; the server may have accepted it. |
 
 Failures retain earlier receipts and identify later unattempted work. An
@@ -71,25 +73,25 @@ of the running service. Releasing again starts a new operation.
 ## State rows
 
 Service state is explained in
-[Service observation](../resources/service.md#observed-state), public
-addresses in [Networking](../resources/service.md#networking-and-endpoints), and durable
-storage state in [Volume lifecycle](../resources/volume.md#lifecycle).
+[Service observation](https://docs.uniac.ai/resources/service.md#observed-state), public
+addresses in [Networking](https://docs.uniac.ai/resources/service.md#networking-and-endpoints), and durable
+storage state in [Volume lifecycle](https://docs.uniac.ai/resources/volume.md#lifecycle).
 
-| Row | Representation |
-|---|---|
-| `project` | The linked project's name; deployment falls back to its slug. |
-| `platform` | The platform API origin, shown only when it differs from production. |
-| `root` | The resolved local project directory, included in deployment reports. |
-| `service` | A service name, followed by `v<N>` when a serving version was read. |
-| `status` | Reported status, with `(observed/effective)` when replica observation is available. |
-| `kind` | Reported service kind, omitted when unavailable. |
-| `lifecycle` | Reported serving-deployment phase, omitted when empty or `active`. |
-| `deploying` | The in-flight task state and its current step when reported. |
-| `replicas` | `<N> requested`, shown when the requested and effective counts differ. |
-| `endpoint` | `<type> <address> → :<container-port>`; type and container port are omitted when unavailable. |
-| Indented `volume` | `<name> at <mount-path>` on a service. |
-| `hold` | A platform hold code. |
-| `warning` | A platform warning or a CLI observation/recording warning. |
+| Row               | Representation                                                                                |
+| ----------------- | --------------------------------------------------------------------------------------------- |
+| `project`         | The linked project's name; deployment falls back to its slug.                                 |
+| `platform`        | The platform API origin, shown only when it differs from production.                          |
+| `root`            | The resolved local project directory, included in deployment reports.                         |
+| `service`         | A service name, followed by `v<N>` when a serving version was read.                           |
+| `status`          | Reported status, with `(observed/effective)` when replica observation is available.           |
+| `kind`            | Reported service kind, omitted when unavailable.                                              |
+| `lifecycle`       | Reported serving-deployment phase, omitted when empty or `active`.                            |
+| `deploying`       | The in-flight task state and its current step when reported.                                  |
+| `replicas`        | `<N> requested`, shown when the requested and effective counts differ.                        |
+| `endpoint`        | `<type> <address> → :<container-port>`; type and container port are omitted when unavailable. |
+| Indented `volume` | `<name> at <mount-path>` on a service.                                                        |
+| `hold`            | A platform hold code.                                                                         |
+| `warning`         | A platform warning or a CLI observation/recording warning.                                    |
 
 The endpoint address is the complete address a client uses. A TCP address
 includes its allocated public port; the number after `→` is the container
@@ -121,7 +123,7 @@ establish a running service. Rejected and unattempted submissions appear in
 release outcomes without an invented service-state row.
 
 Platform warnings are passed through, including unresolved
-[environment references](../resources/service.md#environment-and-references).
+[environment references](https://docs.uniac.ai/resources/service.md#environment-and-references).
 
 ## Errors and exit codes
 
@@ -132,37 +134,37 @@ may succeed without changes; error messages are explanatory prose.
 
 The following exit codes apply to `deploy` and `status`:
 
-| Exit | Code | Condition |
-|---|---|---|
-| 0 | — | The command succeeded. |
-| 2 | `usage` | Invalid invocation; no deployment attempted and no code printed on stdout. |
-| 3 | `auth` | No locally usable credential, platform/project API HTTP 401, or `status` has no project name. |
-| 4 | `not_linked` | Missing binding after credential selection, project absent or mismatched with the binding, binding/platform conflict, or deployment's picker found no projects. |
-| 5 | `manifest` | Local project ownership, description validation or deployment-shape failure. |
-| 6 | `build` | Docker daemon, image-pull or build failure. |
-| 7 | `push` | Image upload failure. |
-| 8 | `deploy_failed` | Deployment request/task failure, observation deadline expiry or a refused platform read. |
-| 9 | `unreachable` | A platform request was classified as unreachable. |
-| 10 | `pending` | Reserved; currently not emitted. |
-| 70 | `internal` | Unclassified failure. |
+| Exit | Code            | Condition                                                                                                                                                       |
+| ---- | --------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 0    | —               | The command succeeded.                                                                                                                                          |
+| 2    | `usage`         | Invalid invocation; no deployment attempted and no code printed on stdout.                                                                                      |
+| 3    | `auth`          | No locally usable credential, platform/project API HTTP 401, or `status` has no project name.                                                                   |
+| 4    | `not_linked`    | Missing binding after credential selection, project absent or mismatched with the binding, binding/platform conflict, or deployment's picker found no projects. |
+| 5    | `manifest`      | Local project ownership, description validation or deployment-shape failure.                                                                                    |
+| 6    | `build`         | Docker daemon, image-pull or build failure.                                                                                                                     |
+| 7    | `push`          | Image upload failure.                                                                                                                                           |
+| 8    | `deploy_failed` | Deployment request/task failure, observation deadline expiry or a refused platform read.                                                                        |
+| 9    | `unreachable`   | A platform request was classified as unreachable.                                                                                                               |
+| 10   | `pending`       | Reserved; currently not emitted.                                                                                                                                |
+| 70   | `internal`      | Unclassified failure.                                                                                                                                           |
 
 Exit 1 is unassigned for these two commands. Some conditions use a code whose
 name does not describe the whole cause:
 
-- `status` without a binding or target override exits 4 when a credential is
+* `status` without a binding or target override exits 4 when a credential is
   available; without a usable credential it exits 3. A target with no project
   name, including `UNIAC_PROJECT_URL`, exits 3.
-- Deployment's project picker reports unanswered-input failures as 70;
+* Deployment's project picker reports unanswered-input failures as 70;
   no projects produces 4.
-- Missing build directories or Dockerfiles produce 5 during planning;
+* Missing build directories or Dockerfiles produce 5 during planning;
   Dockerfile or daemon failures during image work produce 6.
-- Platform/project API HTTP 401 produces 3; HTTP 403 during project checks,
+* Platform/project API HTTP 401 produces 3; HTTP 403 during project checks,
   registration or observation produces 8. Docker registry credential
   rejection remains a push failure (7).
-- A deployment observation deadline produces 8 while the accepted work
+* A deployment observation deadline produces 8 while the accepted work
   continues. After a successful first task read, later task-read failures
   fail the command using these classifications.
-- Project checks, status reads and deployment push/request operations
+* Project checks, status reads and deployment push/request operations
   classify transport errors and HTTP 502, 503, 504, 521, 522, 523 and 530 as
   unreachable (9). Other refused API reads, including HTTP 500, produce 8.
 

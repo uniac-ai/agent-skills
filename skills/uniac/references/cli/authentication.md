@@ -1,12 +1,14 @@
 # Authentication
 
+> Uniac credentials belong to an account and a platform. UNIAC_PLATFORM_URL selects the platform API origin for auth login and auth token, with https://api.uniac.ai as the default.
+
 Uniac credentials belong to an account and a platform. `UNIAC_PLATFORM_URL`
 selects the platform API origin for `auth login` and `auth token`, with
 `https://api.uniac.ai` as the default.
 
 ## Sign-in
 
-```text
+```text theme={null}
 uniac auth login [--no-browser] [--manual] [--host <host>]
 ```
 
@@ -15,11 +17,11 @@ also available. Sign-in requires user interaction. The CLI prints the sign-in
 URL before opening the browser. Login continues independently of the browser
 helper; the printed URL remains available to open manually.
 
-| Option | Effect |
-|---|---|
-| `--no-browser` | Print the sign-in URL without trying to open a browser. |
-| `--manual` | Skip the local callback listener and prompt for the complete redirected URL. This is independent of `--no-browser`. |
-| `--host <host>` | Select the website serving sign-in, overriding `UNIAC_AUTH_HOST`. |
+| Option          | Effect                                                                                                              |
+| --------------- | ------------------------------------------------------------------------------------------------------------------- |
+| `--no-browser`  | Print the sign-in URL without trying to open a browser.                                                             |
+| `--manual`      | Skip the local callback listener and prompt for the complete redirected URL. This is independent of `--no-browser`. |
+| `--host <host>` | Select the website serving sign-in, overriding `UNIAC_AUTH_HOST`.                                                   |
 
 Without `--manual`, login receives the redirect through a listener on a random
 localhost port and waits up to five minutes. The default platform uses
@@ -52,11 +54,11 @@ token or a later expiry.
 
 ## Stored sessions
 
-| Invocation | Result |
-|---|---|
+| Invocation          | Result                                                                                                              |
+| ------------------- | ------------------------------------------------------------------------------------------------------------------- |
 | `uniac auth status` | Print stored identities and expiry times for every platform, including expired sessions; fail when none are stored. |
-| `uniac auth token` | Print the selected credential; fail when none is locally usable. |
-| `uniac auth logout` | Remove all locally stored platform sessions. |
+| `uniac auth token`  | Print the selected credential; fail when none is locally usable.                                                    |
+| `uniac auth logout` | Remove all locally stored platform sessions.                                                                        |
 
 `auth status`'s `Logged in.` message means stored sessions exist; it does not
 inspect `UNIAC_ACCESS_TOKEN`. Logout does not clear that variable or revoke

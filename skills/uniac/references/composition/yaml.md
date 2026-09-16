@@ -1,5 +1,7 @@
 # Composition in YAML
 
+> uniac.yaml declares infrastructure objects in YAML. A workspace combines package directories; resources declares reusable service definitions and the deployment declarations that instantiate them. YAML is the currently supported composition format.
+
 `uniac.yaml` declares infrastructure objects in YAML. A `workspace` combines
 package directories; `resources` declares reusable service definitions and
 the deployment declarations that instantiate them. YAML is the currently
@@ -9,11 +11,11 @@ supported composition format.
 
 The document is a mapping with these top-level fields:
 
-| Field | Required | Meaning |
-|---|---|---|
+| Field       | Required                      | Meaning                                                                               |
+| ----------- | ----------------------------- | ------------------------------------------------------------------------------------- |
 | `resources` | Unless `workspace` is present | Mapping of resource names to typed definitions; may be empty in a workspace document. |
-| `workspace` | No | Workspace metadata and included package directories. |
-| `runtime` | No | Composition format: `yaml`, the default and only supported value. |
+| `workspace` | No                            | Workspace metadata and included package directories.                                  |
+| `runtime`   | No                            | Composition format: `yaml`, the default and only supported value.                     |
 
 Resource names match `^[a-z0-9]+(?:(?:__?|-+)[a-z0-9]+)*$` and are unique
 within the file. Every resource requires `type`; unknown fields are rejected
@@ -26,7 +28,7 @@ and each included directory's `uniac.yaml` contribute to one local project.
 A directory containing `uniac.yaml` is a **package**; the root's resources
 have their own package scope.
 
-```yaml
+```yaml theme={null}
 workspace:
   name: payments
   description: Payments API and background processing
@@ -35,11 +37,11 @@ workspace:
     - ./jobs
 ```
 
-| Workspace field | Required | Meaning |
-|---|---|---|
-| `name` | No | Display name for the local system; defaults to the root directory name. |
-| `description` | No | Description of the system. |
-| `includes` | No | Array of literal relative directory paths, each containing `uniac.yaml`; defaults to an empty array. |
+| Workspace field | Required | Meaning                                                                                              |
+| --------------- | -------- | ---------------------------------------------------------------------------------------------------- |
+| `name`          | No       | Display name for the local system; defaults to the root directory name.                              |
+| `description`   | No       | Description of the system.                                                                           |
+| `includes`      | No       | Array of literal relative directory paths, each containing `uniac.yaml`; defaults to an empty array. |
 
 Paths are relative to the workspace root and must name directories below it.
 Missing manifests, duplicate canonical directories, paths escaping the root,
@@ -64,18 +66,18 @@ declares composition, not a package dependency.
 for stateless and singleton execution. A definition holds the OCI image or
 Dockerfile build source, environment, startup command, and storage needs.
 Declaring it alone creates no remote service. Complete field contracts are
-in [Service](../resources/service.md) and [Volume](../resources/volume.md).
+in [Service](https://docs.uniac.ai/resources/service.md) and [Volume](https://docs.uniac.ai/resources/volume.md).
 
 A `type: deployment` resource **instantiates** definitions: its `services`
 mapping gives each instance a service name and a definition to instantiate.
 Every declaration contributes its named instances to the project's deployment
 description. Unreferenced service definitions remain uninstantiated.
 
-| Field | Required | Meaning |
-|---|---|---|
-| `services` | Yes | Nonempty mapping of instance names to definitions and public exposure. |
-| `services.<instance>.from` | Yes | Name of a `service` or `singleton` definition in this file. |
-| `services.<instance>.public_ports` | No | [Public endpoint declarations](../resources/service.md#public-endpoints). |
+| Field                              | Required | Meaning                                                                |
+| ---------------------------------- | -------- | ---------------------------------------------------------------------- |
+| `services`                         | Yes      | Nonempty mapping of instance names to definitions and public exposure. |
+| `services.<instance>.from`         | Yes      | Name of a `service` or `singleton` definition in this file.            |
+| `services.<instance>.public_ports` | No       | [Public endpoint declarations](https://docs.uniac.ai/resources/service.md#public-endpoints).   |
 
 The **service instance** is the named remote service, not an individual
 container replica. Multiple instances can reuse one definition. The
@@ -87,7 +89,7 @@ most 63 characters.
 Deploying a project includes every deployment declaration in its root and
 included packages. A declaration creates no remote service group or
 environment; each resulting service has its own
-[deployment versions](../resources/service.md#runtime-and-deployment-versions).
+[deployment versions](https://docs.uniac.ai/resources/service.md#runtime-and-deployment-versions).
 The target project's identity is supplied separately from this file.
 
 ## Example composition
@@ -96,7 +98,7 @@ This application has an API and a private Redis service with durable storage.
 It assumes `api/Dockerfile` builds an application listening on port 8080 that
 uses `CACHE_URL` to connect to Redis.
 
-```yaml
+```yaml theme={null}
 runtime: yaml
 resources:
   api_definition:
@@ -135,7 +137,7 @@ The reference names the `cache` instance, and that instance gives its volume
 the project-scoped name `cache.data`. The API is publicly exposed; Redis is
 reachable within the project's private network.
 
-[Environment and references](../resources/service.md#environment-and-references) explains
+[Environment and references](https://docs.uniac.ai/resources/service.md#environment-and-references) explains
 resolution between service instances in the same package.
 
 ## Validation

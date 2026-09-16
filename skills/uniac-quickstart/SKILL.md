@@ -1,21 +1,23 @@
 ---
 name: uniac-quickstart
-description: First deployment of an application on Uniac through a complete example of its description, remote project, project binding, and public endpoint.
+description: "This example starts with an application whose root Dockerfile builds a service listening on 0.0.0.0:8080. The machine has the Uniac CLI, a running Docker daemon, and account access. It uses a new project named my-app, supplies its application description directly, and binds the local project to that remote destination."
 ---
 
 # Uniac quickstart
+
+> This example starts with an application whose root Dockerfile builds a service listening on 0.0.0.0:8080. The machine has the Uniac CLI, a running Docker daemon, and account access. It uses a new project named my-app, supplies its application description directly, and binds the local project to that remote destination.
 
 ## Example application
 
 This example starts with an application whose root `Dockerfile` builds a
 service listening on `0.0.0.0:8080`. The machine has the Uniac CLI, a running
-Docker daemon, and [account access](https://github.com/uniac-ai/agent-skills/blob/main/skills/uniac/references/cli/authentication.md).
+Docker daemon, and [account access](https://docs.uniac.ai/cli/authentication.md).
 It uses a new project named `my-app`, supplies its application description
 directly, and binds the local project to that remote destination.
 
 The following `uniac.yaml` declares one service and exposes its HTTP port:
 
-```yaml
+```yaml theme={null}
 runtime: yaml
 resources:
   api_definition:
@@ -30,14 +32,14 @@ resources:
 ```
 
 The `main` deployment instantiates `api_definition` as the service `api`.
-[Composition in YAML](https://github.com/uniac-ai/agent-skills/blob/main/skills/uniac/references/composition/yaml.md)
+[Composition in YAML](https://docs.uniac.ai/composition/yaml.md)
 describes the file format and instantiation rules.
 
 ## Destination and deployment
 
 With that application and manifest in the current directory:
 
-```sh
+```sh theme={null}
 uniac plan
 uniac project create my-app
 uniac link my-app
@@ -46,15 +48,15 @@ uniac status
 ```
 
 An existing project can be linked by name or slug instead of creating one.
-The [project-selection contract](https://github.com/uniac-ai/agent-skills/blob/main/skills/uniac/references/cli/overview.md#project-selection)
+The [project-selection contract](https://docs.uniac.ai/cli/overview.md#project-selection)
 also describes selection during deployment and target overrides.
 
-The [CLI reference](https://github.com/uniac-ai/agent-skills/blob/main/skills/uniac/references/cli/overview.md#planning-and-deployment)
+The [CLI reference](https://docs.uniac.ai/cli/overview.md#planning-and-deployment)
 defines these commands' requirements and completion behavior.
 
 ## Application address
 
 The HTTP address in the service's `endpoint` row is this application's
-public URL. [Output and errors](https://github.com/uniac-ai/agent-skills/blob/main/skills/uniac/references/cli/output.md)
-describes the report; [Service](https://github.com/uniac-ai/agent-skills/blob/main/skills/uniac/references/resources/service.md)
+public URL. [Output and errors](https://docs.uniac.ai/cli/output.md)
+describes the report; [Service](https://docs.uniac.ai/resources/service.md)
 defines what the observed state establishes.

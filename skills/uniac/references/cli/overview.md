@@ -1,5 +1,7 @@
 # Uniac CLI
 
+> The uniac CLI connects a local application composition to a remote project. Its commands prepare descriptions, deploy services, and read live state.
+
 The `uniac` CLI connects a local application composition to a remote project.
 Its commands prepare descriptions, deploy services, and read live state.
 
@@ -13,19 +15,19 @@ before or after a command's positional argument; a surplus argument is a
 usage error. `uniac -h` lists commands, and a command's `-h` prints its
 usage.
 
-| Invocation | Purpose |
-|---|---|
-| `uniac init` | Create a starter `uniac.yaml` in the current directory. |
+| Invocation                                    | Purpose                                                      |
+| --------------------------------------------- | ------------------------------------------------------------ |
+| `uniac init`                                  | Create a starter `uniac.yaml` in the current directory.      |
 | `uniac plan [--json] [--full] [--dir <path>]` | Validate and preview every deployment in the owning project. |
-| `uniac project create <name>` | Create a remote project. |
-| `uniac link [-C <path>] [name-or-slug]` | Create or replace the owning project's remote binding. |
-| `uniac deploy [--dir <path>]` | Build and deploy every declaration in the owning project. |
-| `uniac status [--dir <path>] [service]` | Read a linked project's state, or one named service. |
-| `uniac auth <login\|status\|token\|logout>` | Manage [authentication](authentication.md). |
-| `uniac version` | Print the installed binary's version, commit and build time. |
+| `uniac project create <name>`                 | Create a remote project.                                     |
+| `uniac link [-C <path>] [name-or-slug]`       | Create or replace the owning project's remote binding.       |
+| `uniac deploy [--dir <path>]`                 | Build and deploy every declaration in the owning project.    |
+| `uniac status [--dir <path>] [service]`       | Read a linked project's state, or one named service.         |
+| `uniac auth <login\|status\|token\|logout>`   | Manage [authentication](https://docs.uniac.ai/cli/authentication.md).                |
+| `uniac version`                               | Print the installed binary's version, commit and build time. |
 
 `--version` and `-v` are aliases for `version`. The CLI has no removal command.
-[Output](output.md) describes result formats, progress and exit codes.
+[Output](https://docs.uniac.ai/cli/output.md) describes result formats, progress and exit codes.
 
 ## Local initialization
 
@@ -42,7 +44,7 @@ package. Initialization creates no remote project or binding.
 ## Local project ownership
 
 `plan`, `deploy`, `link`, and `status` resolve the owning local project from
-their starting directory. A containing [workspace](../composition/yaml.md#workspaces-and-packages)
+their starting directory. A containing [workspace](https://docs.uniac.ai/composition/yaml.md#workspaces-and-packages)
 owns its included packages. Without a workspace, the nearest ancestor
 `uniac.yaml` owns the standalone project. Starting from a member or its
 subdirectory selects the same project as starting from the root.
@@ -55,13 +57,13 @@ buildable, or Docker.
 ## Project selection
 
 Deployment addresses an existing
-[remote project](../overview.md#accounts-projects-and-applications).
+[remote project](https://docs.uniac.ai/index.md#accounts-projects-and-applications).
 `project create <name>` creates one on the authenticated account and prints
 its name and assigned slug. It does not prompt or write local files, and
 requires neither `uniac.yaml` nor Docker. The name must match
 `^[a-z][a-z0-9-]{0,62}$`. Project creation and linking use the
 platform selected by `UNIAC_PLATFORM_URL`, whose default and credential
-selection are described in [Authentication](authentication.md).
+selection are described in [Authentication](https://docs.uniac.ai/cli/authentication.md).
 
 `link` resolves the local project first. An exact project slug or a uniquely
 matching name selects the project without a prompt. No argument opens the
@@ -71,12 +73,12 @@ input causes failure.
 
 Linking writes or replaces `.uniac/deploy.json` at the owning project root:
 
-| Field | Meaning |
-|---|---|
-| `project_name` | The remote project's account-scoped name, used for platform reads. |
-| `project_slug` | The project's assigned identifier. |
-| `gateway_url` | The project gateway used for image uploads and deployment requests. |
-| `platform_url` | The platform API origin used for credentials and observations. |
+| Field          | Meaning                                                             |
+| -------------- | ------------------------------------------------------------------- |
+| `project_name` | The remote project's account-scoped name, used for platform reads.  |
+| `project_slug` | The project's assigned identifier.                                  |
+| `gateway_url`  | The project gateway used for image uploads and deployment requests. |
+| `platform_url` | The platform API origin used for credentials and observations.      |
 
 All workspace packages share this binding. A binding found in a member or
 along the inspected path below the root is an error, even when it matches
@@ -87,14 +89,14 @@ its target. Replacing a binding does not move or recreate remote services.
 
 `deploy` and `status` select their destination as follows:
 
-- A nonempty `UNIAC_PROJECT_URL` supplies a gateway URL or project slug,
+* A nonempty `UNIAC_PROJECT_URL` supplies a gateway URL or project slug,
   overriding the binding. It supplies no project name, and the platform origin
   comes from `UNIAC_PLATFORM_URL`.
-- Otherwise the binding supplies the project gateway and platform. A
+* Otherwise the binding supplies the project gateway and platform. A
   conflicting explicit `UNIAC_PLATFORM_URL` fails before a network call. A
   binding without `platform_url` uses the selected default platform; one
   without `gateway_url` derives the gateway from its slug.
-- Without a binding or override, `deploy` opens the project picker and saves
+* Without a binding or override, `deploy` opens the project picker and saves
   the selected binding. `status` does not open a picker.
 
 `status` requires a project name from the binding, so a target supplied only
@@ -109,12 +111,12 @@ project's root and included packages. They accept no deployment selector.
 Planning requires at least one declared deployment; unused service
 definitions do not become deployed instances.
 
-`plan` performs [description validation](../composition/yaml.md#validation) offline,
+`plan` performs [description validation](https://docs.uniac.ai/composition/yaml.md#validation) offline,
 without credentials or Docker. It composes the complete graph, including
 checking that its build paths exist. It does not run Docker builds or check
 remote project state. `--full` expands the
 text preview; `--json` returns the generated description, as specified in
-[Output](output.md#plan-output).
+[Output](https://docs.uniac.ai/cli/output.md#plan-output).
 
 `deploy` repeats this planning before authentication or remote activity.
 Single-service and multi-service projects use the same deployment path.
@@ -128,7 +130,7 @@ slug and requires the returned name, slug and gateway to match the binding.
 listing for this check. A saved binding is optional because deployment can
 select an existing project interactively.
 
-For [service sources](../resources/service.md#required-and-optional-configuration), deployment pulls
+For [service sources](https://docs.uniac.ai/resources/service.md#required-and-optional-configuration), deployment pulls
 prebuilt images using local Docker credentials or builds from the current
 working tree. Both target `linux/amd64`. The build context's `.dockerignore`
 filters input; `.gitignore` does not. Builds run on every deployment, use
@@ -141,9 +143,9 @@ different packages' `build: .` sources remain distinct.
 Missing build directories or Dockerfiles fail during local planning.
 Dockerfile syntax, missing build stages, failing build commands, image pulls
 and daemon availability are checked during image work. The platform applies
-the remote [service](../resources/service.md),
-[exposure](../resources/service.md#networking-and-endpoints) and
-[storage](../resources/volume.md) constraints when the deployment is submitted.
+the remote [service](https://docs.uniac.ai/resources/service.md),
+[exposure](https://docs.uniac.ai/resources/service.md#networking-and-endpoints) and
+[storage](https://docs.uniac.ai/resources/volume.md) constraints when the deployment is submitted.
 
 All service images are checked before the first push. The CLI registers all
 services before waiting for any deployment to settle, so one service's
@@ -164,5 +166,5 @@ of the previous one.
 After a release attempt, including a partial failure, the CLI writes a local
 record of image digests, submission outcomes and receipts under
 `~/.uniac/store`; `UNIAC_STORE_DIR` selects another directory.
-[Output](output.md#partial-observations-and-warnings) describes recording
+[Output](https://docs.uniac.ai/cli/output.md#partial-observations-and-warnings) describes recording
 failures.

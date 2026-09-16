@@ -1,5 +1,7 @@
 # How Uniac works
 
+> Uniac is a cloud platform for building and operating distributed applications. It brings together services, private communication, public endpoints, and persistent storage so an application can run as connected components.
+
 Uniac is a cloud platform for building and operating distributed applications.
 It brings together services, private communication, public endpoints, and
 persistent storage so an application can run as connected components.
@@ -73,7 +75,7 @@ deployment contributions; it does not grant access to another package's
 definitions or environment references. Concrete service names remain unique
 across the project.
 
-[Composition in YAML](composition/yaml.md) introduces the description file
+[Composition in YAML](https://docs.uniac.ai/composition/yaml.md) introduces the description file
 and combines these parts in an example. Detailed configuration and lifecycle
-information is available for [Service](resources/service.md) and
-[Volume](resources/volume.md).
+information is available for [Service](https://docs.uniac.ai/resources/service.md) and
+[Volume](https://docs.uniac.ai/resources/volume.md).
