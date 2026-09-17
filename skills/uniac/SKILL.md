@@ -79,8 +79,8 @@ Commands, destination selection, output and exit codes:
   every image locally, `image:` sources included, for `linux/amd64`, and
   pushes it; base images need an amd64 variant. `.dockerignore` shapes the
   build context.
-- **Each deploy starts every service at one replica.** Every declared service
-  gets a new version, and a new version starts with one replica: a service
+- **Each deploy starts every service at the default of one replica.** Every
+  declared service gets a new version, which runs one replica: a service
   scaled up, or paused at zero, in the dashboard runs one replica after
   `uniac deploy` until its count is set again.
 - **A singleton's replacement stops the old replica first.** Each deploy of a

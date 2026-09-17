@@ -14,10 +14,10 @@ What Uniac does with a deployed composition, compressed. Complete contracts:
   service keeps its type: a deploy that switches it between `service` and
   `singleton` is rejected.
 - **Stateless** services run interchangeable replicas; connections may land on
-  any of them. The dashboard sets the count, 0–4, and `uniac status` reports
-  requested, effective and observed counts. Each new deployment version
-  starts with one replica, so after a deploy a service that was scaled up, or
-  paused at zero, runs one replica until its count is set again.
+  any of them. A new deployment version runs the default of one replica; the
+  dashboard sets another count, 0–4, and `uniac status` reports requested,
+  effective and observed counts. After a deploy, a service that was scaled up,
+  or paused at zero, runs one replica until its count is set again.
 - **Singleton** services run at most one replica (0 or 1 in the dashboard).
   Replacement stops the old replica first, so each version change has a gap;
   a successor that fails to start leaves the service stopped.
@@ -35,7 +35,7 @@ Details: [Runtime and deployment versions](https://docs.uniac.ai/resources/servi
 |---|---|
 | Serving version `v<N>` | The deployment currently serving. |
 | Lifecycle | `preparing`, `active`, `retiring`, `retired`; only non-`active` phases are printed. |
-| Replicas | Requested count, effective count after platform policy, observed running count (when the platform reports it). |
+| Replicas | Requested count, effective count after platform policy, observed running count. |
 | Deploying | An in-flight task and its current step. |
 | Hold | A platform-side reason the service is not converging. |
 | Warning | A non-fatal platform condition, such as a reference left out. |

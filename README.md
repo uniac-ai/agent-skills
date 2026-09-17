@@ -44,33 +44,6 @@ plugin.json                    agent-plugins.org manifest (Cursor imports it)
 LICENSE                        MIT — required by the Cursor marketplace
 ```
 
-## Writing
-
-The skill is a compression, not a copy. `SKILL.md` is what an expert keeps in
-their head: the model, the working order, the decisions and their reasons,
-and the ways things go wrong. The references hold the compact facts an agent
-needs while writing a composition or reading the CLI, each pointing at the
-documentation page that owns the complete contract
-(`https://docs.uniac.ai/<page>.md`).
-
-- State judgment and procedure here; state contracts once, in the docs. A
-  number, field or limit repeated here is repeated only because an agent
-  needs it in hand while writing, and it names the owning page beside it.
-- State what the current release does. A limit appears only as a
-  specification value in the field table or command contract it constrains:
-  an accepted value, a range, a quota or a requirement. Explanations and
-  examples describe what works; negative wording is reserved for deliberate
-  design constraints, such as a singleton's single replica, a volume's single
-  holder, package-scoped references or schema validation. The skill names no
-  feature the platform lacks and says nothing about future releases.
-- Describe the current release of the CLI and the platform as they are;
-  when either changes, this skill changes in the same review cycle.
-- Keep `SKILL.md` under 500 lines and references one link away from it.
-  Assume a capable agent: no generic advice, no explanations of Docker, YAML
-  or containers.
-- Links to other pages use `https://docs.uniac.ai/<page>.md` (the Markdown
-  the site serves), never a repository URL.
-
 ## Checks
 
 `python3 tools/validate.py` checks every skill's frontmatter against the
