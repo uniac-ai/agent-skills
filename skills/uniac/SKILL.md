@@ -125,7 +125,7 @@ Commands, destination selection, output and exit codes:
 Contracts: [runtime and versions](https://docs.uniac.ai/resources/service.md#runtime-and-deployment-versions),
 [resolution](https://docs.uniac.ai/resources/service.md#resolution), [public endpoints](https://docs.uniac.ai/resources/service.md#public-endpoints),
 [dashboard and removal](https://docs.uniac.ai/resources/service.md#dashboard-and-removal),
-[volume](https://docs.uniac.ai/resources/volume.md).
+[volume lifecycle](https://docs.uniac.ai/resources/volume.md#lifecycle).
 
 ## Reading the CLI
 

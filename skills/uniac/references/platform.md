@@ -97,7 +97,8 @@ declare the same size. A singleton service attaches one volume. Whole-project
 `uniac status` lists volumes with size and state (`provisioning`,
 `attaching`, `detaching`, `deleting`, attached, unattached).
 
-Details: [Volume](https://docs.uniac.ai/resources/volume.md).
+Details: [Volume](https://docs.uniac.ai/resources/volume.md),
+[Lifecycle](https://docs.uniac.ai/resources/volume.md#lifecycle).
 
 ## Projects and the dashboard
 
