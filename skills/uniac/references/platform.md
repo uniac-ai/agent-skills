@@ -14,8 +14,10 @@ What Uniac does with a deployed composition, compressed. Complete contracts:
   Redeploying with a different type (`service` ↔ `singleton`) is rejected.
 - **Stateless** services run several interchangeable replicas; connections
   may land on any of them. The replica count is not part of the composition
-  (CLI 0.3.21); it is set on the platform, and `uniac status` reports
-  requested, effective and observed counts.
+  (CLI 0.3.21); it is set in the dashboard, and `uniac status` reports
+  requested, effective and observed counts. Each new deployment version
+  starts with one replica, so after a deploy a service that was scaled up, or
+  paused at zero, runs one replica.
 - **Singleton** services run at most one replica. Replacement stops the old
   replica first, so a version change has a gap; a successor that fails to
   start leaves the service down.
@@ -58,11 +60,16 @@ absent.
 - Values are plain strings, up to 64 variables per service, names ≤ 128 and
   values ≤ 4096 characters. Image defaults apply to anything not declared.
 - References (`${{other.VAR}}`, `${{other.host}}`, `${{self.VAR}}`) resolve
-  at deployment. An unresolvable reference to a service not yet serving is
-  omitted with a warning; after a successful deploy, the platform re-resolves
-  the project's other services and recreates those whose injected values
-  changed.
-- Changing `env` ships a new version and restarts the service's replicas.
+  once, when the referencing service's deployment version is created, from
+  the values the other services' serving versions run with. A reference to a
+  service with no serving version — every sibling, on a project's first
+  deploy — is omitted with a warning. Nothing re-resolves it later: a service
+  picks up another service's new or changed value only in its own next
+  deployment version.
+- Every `uniac deploy` creates a new version of each declared service, even
+  when its configuration is unchanged, so running it again after the
+  referenced services serve fills the omitted values. Changing `env` ships a
+  new version and restarts the service's replicas.
   Values are stored with the deployment and readable back; there is no
   separate secret store.
 
@@ -89,6 +96,7 @@ attached, unattached).
 - The dashboard at https://uniac.ai shows projects, services, endpoints,
   volumes and deployment activity, and is where a service or a project is
   deleted (project deletion is confirmed by typing its name) and where
-  replica counts are set.
+  replica counts are set. It has no application log view and cannot run
+  commands in a container.
 - Project names match `^[a-z][a-z0-9-]{0,62}$` and are unique per account;
   the platform assigns a slug used in URLs and bindings.

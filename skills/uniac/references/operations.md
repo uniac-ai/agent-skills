@@ -26,7 +26,9 @@ skill describes release 0.3.21.
 
 Flags may precede or follow the positional argument; a surplus argument is a
 usage error. `-h` on any command prints its usage. There is no removal,
-scaling, log or exec command; those are dashboard operations.
+scaling, log or exec command. Removal and replica counts are dashboard
+operations; neither the CLI nor the dashboard reads application logs or runs
+commands in a container.
 
 ## Which project a command targets
 

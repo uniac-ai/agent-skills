@@ -51,7 +51,9 @@ Platform behavior and limits: [platform.md](references/platform.md).
    binding, `deploy` opens a picker and saves the choice.
 5. **Deploy** with `uniac deploy`: every image is built or pulled by the local
    Docker daemon for `linux/amd64`, pushed, and every deployment declaration
-   submitted; each service is then polled for up to five minutes.
+   submitted as a new version of its service, which replaces the service's
+   replicas even when nothing changed; each service is then polled for up to
+   five minutes.
 6. **Read state** with `uniac status` (whole project, volumes included) or
    `uniac status <service>`.
 
@@ -78,19 +80,23 @@ Commands, destination selection, output and exit codes:
   image fails.
 - **`.gitignore` does not shape the build**; only `.dockerignore` does. No
   build arguments or build secrets are supplied.
-- **The composition sets no replica count** (CLI 0.3.21). Counts are set on
-  the platform; after each deploy, check the `replicas` row of `uniac status`
-  rather than assuming an earlier scale-up carried over.
+- **Every deploy resets the replica count to one.** The composition sets no
+  count (CLI 0.3.21), and each new deployment version starts with one
+  replica: a service scaled up in the dashboard, or paused at zero, runs one
+  replica after `uniac deploy`. Set the count again in the dashboard.
 - **A singleton replacement has downtime**: the old replica stops before the
   successor starts, and if the successor fails to start the service stays
   down until a working deploy.
 - **The platform watches process liveness only.** A hung process counts as
   running; an exited one is restarted. There are no HTTP health or readiness
   probes.
-- **References resolve at deploy time.** A reference to a service that is not
-  yet serving is omitted from the injected environment with a warning, not an
-  error; once that service serves, Uniac recreates the dependents. Nothing
-  orders start-up, so applications must retry their connections.
+- **References resolve once, when a service's version is created.** A
+  reference to a service that is not serving yet — every sibling, on a
+  project's first deploy — is left out with a warning, not an error, and is
+  never filled in afterwards. Run `uniac deploy` again once the referenced
+  services serve; a changed value likewise reaches a consumer only in its
+  next deployment. Nothing orders start-up, so applications must retry their
+  connections.
 - **Removing a service from `uniac.yaml` does not delete it** — delete it on
   the dashboard. Deleting a service keeps its volume; deleting the project
   destroys every volume, detached ones included.

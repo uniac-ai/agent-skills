@@ -49,9 +49,11 @@ resolve transitively. Every `${{` must be a valid reference — there is no
 escape. Instance names in references are local to the package: an instance
 from another package, or one that does not exist, fails `uniac plan`.
 
-Resolution happens at deployment. A referenced service that is not yet
-serving leaves the variable out, with a warning; it is injected on a later
-recreation once that service serves.
+Resolution happens once, when the referencing service's deployment version
+is created, against the values the other services' serving versions run
+with. A referenced service with no serving version — every sibling, on a
+project's first deploy — leaves the variable out, with a warning, and it
+stays out until the referencing service's next deployment.
 
 ## Workspaces
 
@@ -98,7 +100,9 @@ resources:
 ```
 
 `api` is public over HTTPS; `cache` is reachable only as `cache.internal`;
-its volume is `cache.data`. `uniac plan --json` shows the generated
+its volume is `cache.data`. On the project's first `uniac deploy`, `cache` is
+not yet serving when `api`'s version is created, so `CACHE_URL` is left out;
+a second `uniac deploy` sets it. `uniac plan --json` shows the generated
 description: a `deployable` with one entry per instance, `container.source`
 as `ref` or `build`, `kind: singleton` where applicable, and a digest that
 ignores formatting, ordering and default spellings but not an explicit
