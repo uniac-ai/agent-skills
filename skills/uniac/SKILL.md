@@ -1,6 +1,6 @@
 ---
 name: uniac
-description: "Build, deploy and operate web apps, websites, APIs, databases and background workers on Uniac, the cloud platform for AI agents: containers from Docker images or Dockerfiles, private networking, public HTTP and TCP endpoints, persistent volumes and the uniac CLI. Use when asked to deploy, host or run an application in the cloud, and for any task involving uniac.yaml, the uniac CLI or a project on uniac.ai — describing an application, deploying it, debugging a deployment, or reading a project's state."
+description: "Build, deploy and operate web apps, websites, APIs, databases and background workers on Uniac, the cloud platform for AI agents. Use when asked to deploy, host or run an application in the cloud, and for any task involving uniac.yaml, the uniac CLI or a project on uniac.ai — describing an application, deploying it, debugging a deployment, or reading a project's state."
 ---
 
 # Uniac
