@@ -24,7 +24,7 @@ Three types exist: `service`, `singleton` (both are definitions) and
 | `image` or `build` | Exactly one | `image: <OCI reference>`, or `build: <dir>` / `build: {root, context, dockerfile, target}`. Paths are relative to the directory holding this `uniac.yaml`; `root` defaults to `.`, `dockerfile` to `Dockerfile`, `target` to the last stage. `image: ""` counts as absent; `build: null` is invalid. |
 | `env` | No | Variable name → string value. Names match `^[A-Za-z_][A-Za-z0-9_]*$`; `host` is reserved. Values may hold references (below). |
 | `start_command` | No | Replaces the image's `ENTRYPOINT` and `CMD`; split with shell-style quoting and executed directly. |
-| `volumes` | No, singleton only | A list with one `{name, size_gb, mount_path}` entry. `name` matches `^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?$`; `size_gb` is 1–4096, set when the volume is created; `mount_path` is absolute, other than `/`, without `.` or `..` segments or repeated or trailing slashes, outside `/proc`, `/sys` and `/dev`, and other than `/etc/resolv.conf`. |
+| `volumes` | No, singleton only | A list of at most one `{name, size_gb, mount_path}` entry. `name` matches `^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?$`; `size_gb` is 1–4096, set when the volume is created; `mount_path` is absolute, other than `/`, without `.` or `..` segments or repeated or trailing slashes, outside `/proc`, `/sys` and `/dev`, and other than `/etc/resolv.conf`. |
 
 The definition's name is a local label within its package.
 
@@ -45,7 +45,7 @@ least one declaration.
 `${{<instance>.<VAR>}}` reads a variable the named service instance declares;
 `${{<instance>.host}}`, the one builtin, is that service's internal hostname;
 `${{self.X}}` reads the declaring service's own value. Chains resolve
-transitively. Every `${{` opener forms a valid reference. Instance names in
+transitively. Every `${{` opener must form a valid reference. Instance names in
 references are local to the package: `uniac plan` rejects an instance from
 another package or one that does not exist.
 
@@ -114,6 +114,7 @@ leave unchanged and an explicit build `target` changes.
 Ownership and included manifests, each file's schema and resource names,
 `from` lookups, unique instance names, build paths on disk, composed volume
 names, reference targets and variables, and reference cycles, all checked
-locally and offline. The platform checks ports, endpoint
-counts, env sizes, volume size and mount paths when the deployment is
-submitted.
+locally and offline. The platform checks ports, endpoint counts, env sizes,
+the `size_gb` range and mount paths when the deployment is submitted; a
+singleton deploy compares `size_gb` with the existing volume after its
+running replica has stopped.

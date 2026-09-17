@@ -11,8 +11,9 @@ working knowledge of it, compressed for an agent building on it.
 Every contract has one authoritative page at https://docs.uniac.ai; this file
 and its references summarize them and name the page for each detail. When an
 exact field, limit or behavior matters, read the page's Markdown:
-`curl -sL https://docs.uniac.ai/<page>.md`. Offline,
-`https://docs.uniac.ai/llms-full.txt` is every page in one file.
+`curl -sL https://docs.uniac.ai/<page>.md`.
+`https://docs.uniac.ai/llms-full.txt` holds every page in one file; the page
+Markdown is the current text.
 
 ## The model
 
@@ -27,7 +28,7 @@ exact field, limit or behavior matters, read the page's Markdown:
   under **service names**. The name is the service's identity in the project
   and its private hostname, `<name>.internal`.
 - **Replicas** are the containers behind that identity. A stateless service
-  runs several interchangeable ones; a singleton runs at most one, and a
+  runs up to four interchangeable ones; a singleton runs at most one, and a
   replacement stops the old replica before the new one starts.
 - A **volume** is durable storage with a project-scoped identity
   (`<service>.<name>`), held by one singleton service at a time. Its data
@@ -91,6 +92,8 @@ Commands, destination selection, output and exit codes:
 - **The platform restarts a container whose process exits**, and reports the
   service running while its process runs. After five consecutive restarts
   that each ran for less than a minute, the container stays stopped.
+  `running` describes the process, so request the service's endpoint after a
+  deploy to confirm the application answers.
 - **References resolve when a service's version is created**, against the
   services serving at that moment. On a project's first deploy, references to
   services deployed in the same run are left out with a warning, and a second
@@ -100,15 +103,19 @@ Commands, destination selection, output and exit codes:
 - **A service stays until it is deleted in the dashboard.** Removing it from
   `uniac.yaml` leaves it running. Deleting a service keeps its volume;
   deleting the project destroys every volume, detached ones included.
-- **`size_gb` (1–4096) is set when a volume is created**, and later
-  deployments declare the same size, so choose it with headroom. The same
-  volume name reattaches the same data, even at a new mount path.
+- **A volume keeps the `size_gb` (1–4096) it was created with**, so size it
+  for the data the service will hold and declare that size in every later
+  deploy. A singleton deploy that declares another size stops the running
+  replica, then fails (exit 8), and the service stays stopped until a deploy
+  declares the original size. The same volume name reattaches the same data,
+  even at a new mount path.
 - **`public_ports` on redeploy:** omitted keeps the existing exposure,
   including endpoints changed in the dashboard; `[]` removes it; a list
   replaces it. Each service has one `http` and one `tcp` endpoint at most.
 - **Each service's submission proceeds on its own.** Accepted work continues
   after a local failure or an interruption; to return to an earlier release,
-  deploy its image again. Exit 8 after the five-minute window means the work
+  deploy that release's sources or images again, which gives every declared
+  service a new version. Exit 8 after the five-minute window means the work
   is still in progress.
 - **Tokens expire.** `uniac auth status` shows when; `uniac auth login` stores
   a new one, one session per platform.
@@ -125,11 +132,12 @@ Contracts: [runtime and versions](https://docs.uniac.ai/resources/service.md#run
 `deploy` prints a stage record — `plan`, `link`, `build`, `push <service>`,
 `submit <service>`, `observe <service>` — followed by state rows; `status`
 prints state. A `service` row carrying `v<N>` means a serving version was
-read; a name-only row means the submission was accepted, and `uniac status`
-reads the service's state. `endpoint http https://… → :8080` is the public
-address and the container port. Exit codes: 2 usage, 3 auth, 4 not linked,
-5 manifest, 6 build, 7 push, 8 deployment failed or observation timed out,
-9 platform unreachable.
+read. A name-only row or a `state unread` warning means the submission was
+accepted and the service's state is unknown, even at exit 0;
+`uniac status <service>` reads it. `endpoint http https://… → :8080` is the
+public address and the container port. Exit codes: 2 usage, 3 auth, 4 not
+linked, 5 manifest, 6 build, 7 push, 8 deployment failed, observation timed
+out or a platform read was refused, 9 platform unreachable.
 
 ## A minimal composition
 

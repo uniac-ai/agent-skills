@@ -26,7 +26,7 @@ skill describes release 0.3.21.
 
 Flags may precede or follow the positional argument; a surplus argument is a
 usage error. `-h` on any command prints its usage. The dashboard deletes
-services and projects, sets replica counts and changes public endpoints
+services, volumes and projects, sets replica counts and changes public endpoints
 ([Dashboard and removal](https://docs.uniac.ai/resources/service.md#dashboard-and-removal)).
 
 ## Which project a command targets
@@ -36,8 +36,10 @@ services and projects, sets replica counts and changes public endpoints
   `uniac.yaml`. A binding found below the root is an error.
 - `.uniac/deploy.json` holds `project_name`, `project_slug`, `gateway_url`,
   `platform_url`; workspace packages share the root binding.
-- `UNIAC_PROJECT_URL` (a gateway URL or slug) overrides the binding for
-  `deploy`; `status` reads the project name from the binding.
+- `UNIAC_PROJECT_URL` (a gateway URL or slug) replaces the binding as the
+  destination of `deploy` and `status` and supplies the gateway only: `deploy`
+  then reports accepted submissions without observed state, and `status`
+  exits 3. Unset it to read state through the binding.
 - `UNIAC_PLATFORM_URL` selects the platform API origin (default
   `https://api.uniac.ai`) for `project create`, `link` and `auth`; a linked
   `deploy`/`status` uses the binding's origin and fails on a conflict.
@@ -54,8 +56,9 @@ services and projects, sets replica counts and changes public endpoints
   for the addressed platform. A stored token stops being used 60 seconds
   before its expiry; `uniac auth login` stores a new one.
 - `auth status` prints identities and expiry for every stored session (even
-  expired); `auth token` prints the selected credential; `logout` deletes the
-  locally stored sessions.
+  expired); `auth token` prints the selected credential; `logout` removes the
+  stored sessions from this machine, and tokens already issued, including one
+  set as `UNIAC_ACCESS_TOKEN`, stay valid at the platform until they expire.
 
 ## What `deploy` does, in order
 
@@ -79,7 +82,9 @@ is written under
   `warning`; whole-project `status` adds `volume` blocks with size and state.
 - Per-service `release` blocks record the submission outcome: `accepted`,
   `rejected`, `not attempted`, or `acceptance unconfirmed` (the server may
-  have accepted it). `state unread` is reported as a warning.
+  have accepted it). `state unread` is reported as a warning. Warnings leave
+  the exit code unchanged, and a name-only `service` row means the service's
+  state was not read.
 
 ## Exit codes
 
@@ -88,7 +93,7 @@ credential, HTTP 401, or `status` without a project name) · 4 `not_linked`
 (no or mismatched binding, no projects to pick) · 5 `manifest` (description
 or ownership failure, missing build directory or Dockerfile) · 6 `build`
 (Docker daemon, pull or build failure) · 7 `push` · 8 `deploy_failed`
-(request or task failure, HTTP 403, observation deadline passed while work
-continues) · 9 `unreachable` (transport errors and HTTP 502/503/504/521/522/
-523/530) · 70 `internal`. Other commands: 0, 1 on failure, 2 on invalid
+(request or task failure, HTTP 403 or another refused platform read,
+observation deadline passed while work continues) · 9 `unreachable`
+(transport errors and HTTP 502/503/504/521/522/523/530) · 70 `internal`. Other commands: 0, 1 on failure, 2 on invalid
 invocation; `plan` reports a description failure as 1.

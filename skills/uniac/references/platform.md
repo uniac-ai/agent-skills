@@ -24,10 +24,10 @@ What Uniac does with a deployed composition, compressed. Complete contracts:
 - The platform restarts a container whose process exits; after five
   consecutive restarts that each ran for less than a minute, the container
   stays stopped. Services start independently of one another.
-
-Details: [Runtime and deployment versions](https://docs.uniac.ai/resources/service.md#runtime-and-deployment-versions).
 - A `start_command` replaces the image's `ENTRYPOINT` and `CMD`; the image
   itself is unchanged.
+
+Details: [Runtime and deployment versions](https://docs.uniac.ai/resources/service.md#runtime-and-deployment-versions).
 
 ## Observed state (`uniac status`)
 
@@ -40,7 +40,9 @@ Details: [Runtime and deployment versions](https://docs.uniac.ai/resources/servi
 | Hold | A platform-side reason the service is not converging. |
 | Warning | A non-fatal platform condition, such as a reference left out. |
 
-A row missing from a report means that read failed or was unavailable.
+A missing row leaves that fact unknown: reports leave out rows they could
+not read, `lifecycle` when it is `active`, and `replicas` when the requested
+and effective counts match.
 
 ## Networking
 
@@ -85,6 +87,7 @@ Details: [Environment and references](https://docs.uniac.ai/resources/service.md
 | Declaring a new `name` on a singleton | Provisions a fresh volume (containing `lost+found`), named `<service>.<name>`, up to 127 characters. |
 | Declaring a name that exists unattached | Reattaches it with its data, even at a different `mount_path`. |
 | Declaring a name another service holds | Rejected: a volume has one holder. |
+| Declaring an existing volume with another `size_gb` | The singleton's running replica stops, then the deploy fails; the service stays stopped until a deploy declares the original size. |
 | Removing the declaration, or deleting the service | Detaches; the data stays in an unattached volume the project lists. |
 | Deleting the volume (dashboard, name confirmation) | Destroys the data; rejected while a service holds it. |
 | Deleting the project | Destroys every volume, attached or unattached. |
@@ -103,7 +106,8 @@ Details: [Volume](https://docs.uniac.ai/resources/volume.md).
 - The dashboard at https://uniac.ai shows projects, volumes and, per
   service, its state, public endpoints, deployment activity and resource
   usage. It sets replica counts, changes public endpoints, and deletes
-  services and projects (project deletion is confirmed by typing its name);
+  services, volumes and projects (volume and project deletions are confirmed
+  by typing the name);
   see [Dashboard and removal](https://docs.uniac.ai/resources/service.md#dashboard-and-removal).
 - Project names match `^[a-z][a-z0-9-]{0,62}$` and are unique per account;
   the platform assigns a slug used in URLs and bindings.
