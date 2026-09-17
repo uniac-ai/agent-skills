@@ -1,7 +1,7 @@
 {
   "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
   "name": "uniac",
-  "description": "Build and deploy web apps, websites, APIs, databases and background workers on Uniac, the cloud platform for AI agents.",
+  "description": "Build and run web apps, websites, APIs, databases and background workers on Uniac, the cloud platform for AI agents.",
   "author": {
     "name": "Uniac",
     "url": "https://uniac.ai"
