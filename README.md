@@ -56,6 +56,13 @@ documentation page that owns the complete contract
 - State judgment and procedure here; state contracts once, in the docs. A
   number, field or limit repeated here is repeated only because an agent
   needs it in hand while writing, and it names the owning page beside it.
+- State what the current release does. A limit appears only as a
+  specification value in the field table or command contract it constrains:
+  an accepted value, a range, a quota or a requirement. Explanations and
+  examples describe what works; negative wording is reserved for deliberate
+  design constraints, such as a singleton's single replica, a volume's single
+  holder, package-scoped references or schema validation. The skill names no
+  feature the platform lacks and says nothing about future releases.
 - Describe the current release of the CLI and the platform as they are;
   when either changes, this skill changes in the same review cycle.
 - Keep `SKILL.md` under 500 lines and references one link away from it.

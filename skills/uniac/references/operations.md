@@ -25,10 +25,8 @@ skill describes release 0.3.21.
 | `uniac auth login \| status \| token \| logout` | Browser sign-in; stored sessions and expiry; the selected credential; remove stored sessions. | — |
 
 Flags may precede or follow the positional argument; a surplus argument is a
-usage error. `-h` on any command prints its usage. There is no removal,
-scaling, log or exec command. Removal and replica counts are dashboard
-operations; neither the CLI nor the dashboard reads application logs or runs
-commands in a container.
+usage error. `-h` on any command prints its usage. Services and projects are
+deleted, and replica counts set, in the dashboard.
 
 ## Which project a command targets
 
@@ -38,7 +36,7 @@ commands in a container.
 - `.uniac/deploy.json` holds `project_name`, `project_slug`, `gateway_url`,
   `platform_url`; workspace packages share the root binding.
 - `UNIAC_PROJECT_URL` (a gateway URL or slug) overrides the binding for
-  `deploy`, but supplies no project name, so `status` cannot use it.
+  `deploy`; `status` reads the project name from the binding.
 - `UNIAC_PLATFORM_URL` selects the platform API origin (default
   `https://api.uniac.ai`) for `project create`, `link` and `auth`; a linked
   `deploy`/`status` uses the binding's origin and fails on a conflict.
@@ -53,10 +51,10 @@ commands in a container.
   five minutes for the browser redirect.
 - Selection order: a nonempty `UNIAC_ACCESS_TOKEN`, else the stored session
   for the addressed platform. A stored token stops being used 60 seconds
-  before its expiry; nothing refreshes it — sign in again.
+  before its expiry; `uniac auth login` stores a new one.
 - `auth status` prints identities and expiry for every stored session (even
   expired); `auth token` prints the selected credential; `logout` deletes the
-  stored sessions without revoking anything at the platform.
+  locally stored sessions.
 
 ## What `deploy` does, in order
 
@@ -64,22 +62,23 @@ commands in a container.
 instances sharing a source share the build) → `push <service>` →
 `submit <service>` (all services are registered before any is awaited) →
 `observe <service>` (poll every two seconds, five-minute deadline). Failure
-or interruption stops new local work; accepted remote work continues and
-there is no rollback. A local release record is written under
+or interruption stops new local work, and accepted remote work continues; to
+return to an earlier release, deploy its image again. A local release record
+is written under
 `~/.uniac/store` (`UNIAC_STORE_DIR`).
 
 ## Output
 
-- `deploy` and `status` print text to stdout; there is no JSON mode for
-  them. Progress goes to stderr (`UNIAC_PROGRESS=1` plain lines, `0` off).
-- Report rows: `project`, `platform` (only when not production), `root`,
+- `deploy` and `status` print text reports to stdout. Progress goes to
+  stderr (`UNIAC_PROGRESS=1` plain lines, `0` off).
+- Report rows: `project`, `platform` (shown for platforms other than production), `root`,
   `service <name> [v<N>]`, `status <state> (observed/effective)`, `kind`,
   `lifecycle`, `deploying`, `replicas <N> requested`, `endpoint <type>
   <address> → :<container port>`, `volume <name> at <path>`, `hold`,
   `warning`; whole-project `status` adds `volume` blocks with size and state.
 - Per-service `release` blocks record the submission outcome: `accepted`,
   `rejected`, `not attempted`, or `acceptance unconfirmed` (the server may
-  have accepted it). `state unread` is a warning, not a failure.
+  have accepted it). `state unread` is reported as a warning.
 
 ## Exit codes
 

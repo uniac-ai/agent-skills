@@ -23,10 +23,10 @@ Three types exist: `service`, `singleton` (both are definitions) and
 |---|---|---|
 | `image` or `build` | Exactly one | `image: <OCI reference>`, or `build: <dir>` / `build: {root, context, dockerfile, target}`. Paths are relative to the directory holding this `uniac.yaml`; `root` defaults to `.`, `dockerfile` to `Dockerfile`, `target` to the last stage. `image: ""` counts as absent; `build: null` is invalid. |
 | `env` | No | Variable name → string value. Names match `^[A-Za-z_][A-Za-z0-9_]*$`; `host` is reserved. Values may hold references (below). |
-| `start_command` | No | Replaces the image's `ENTRYPOINT` and `CMD`; split with shell-style quoting, no shell involved. |
-| `volumes` | No, singleton only | List of `{name, size_gb, mount_path}`; at most one. `name` matches `^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?$`; `size_gb` ≥ 1 (platform limit 4096); `mount_path` absolute, not `/`, no `.`/`..`/repeated or trailing slashes, not under `/proc`, `/sys`, `/dev`, not `/etc/resolv.conf`. |
+| `start_command` | No | Replaces the image's `ENTRYPOINT` and `CMD`; split with shell-style quoting and executed directly. |
+| `volumes` | No, singleton only | A list with one `{name, size_gb, mount_path}` entry. `name` matches `^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?$`; `size_gb` is 1–4096, set when the volume is created; `mount_path` is absolute, other than `/`, without `.` or `..` segments or repeated or trailing slashes, outside `/proc`, `/sys` and `/dev`, and other than `/etc/resolv.conf`. |
 
-The definition's name is a local label; nothing remote carries it.
+The definition's name is a local label within its package.
 
 ## Instantiation: `type: deployment`
 
@@ -34,34 +34,35 @@ The definition's name is a local label; nothing remote carries it.
 |---|---|---|
 | `services` | Yes, nonempty | Instance name → `{from, public_ports}`. The instance name is the remote service's identity: one DNS label, lowercase letters, digits and dashes, at most 63 characters. Names must be unique across the whole project. |
 | `services.<name>.from` | Yes | A definition in the same file. Several instances may share one definition. |
-| `services.<name>.public_ports` | No | List of `{port: 1–65535, type: http \| tcp}`; at most one of each type. Omitted or `null` keeps the service's current exposure on redeploy, `[]` removes it, a list replaces it. |
+| `services.<name>.public_ports` | No | List of `{port: 1–65535, type: http \| tcp}`, one of each type at most. Omitted or `null` keeps the service's current exposure on redeploy, `[]` removes it, a list replaces it. |
 
-Every deployment declaration in the project contributes its instances;
-definitions nobody instantiates run nothing. At least one declaration is
-required to deploy.
+Every deployment declaration in the project contributes its instances, and
+a definition runs once a declaration instantiates it. Deploying requires at
+least one declaration.
 
 ## References inside `env` values
 
 `${{<instance>.<VAR>}}` reads a variable the named service instance declares;
-`${{<instance>.host}}` is that service's internal hostname (`host` is the
-only builtin); `${{self.X}}` reads the declaring service's own value. Chains
-resolve transitively. Every `${{` must be a valid reference — there is no
-escape. Instance names in references are local to the package: an instance
-from another package, or one that does not exist, fails `uniac plan`.
+`${{<instance>.host}}`, the one builtin, is that service's internal hostname;
+`${{self.X}}` reads the declaring service's own value. Chains resolve
+transitively. Every `${{` opener forms a valid reference. Instance names in
+references are local to the package: `uniac plan` rejects an instance from
+another package or one that does not exist.
 
-Resolution happens once, when the referencing service's deployment version
-is created, against the values the other services' serving versions run
-with. A referenced service with no serving version — every sibling, on a
-project's first deploy — leaves the variable out, with a warning, and it
-stays out until the referencing service's next deployment.
+Resolution happens when the referencing service's deployment version is
+created, against the values the services already serving run with. On a
+project's first deploy the siblings are still starting, so their references
+are left out, with a warning, until the referencing service's next
+deployment.
 
 ## Workspaces
 
 A `workspace` document owns its directory tree; each listed `includes` entry
 is a **package** with its own `uniac.yaml`, resource names and references.
-Paths are literal directories below the root (no globs, no nesting, no
-recursion). Root-level `resources` may sit beside `workspace`. A manifest not
-listed is not part of the project. Build paths stay relative to the manifest
+Paths are literal relative directories below the root; `uniac plan` rejects
+globs and nested workspaces and loads exactly the listed manifests.
+Root-level `resources` may sit beside `workspace`. The project consists of
+the root and its listed packages. Build paths stay relative to the manifest
 that declares them, so `build: .` in two packages means two sources.
 
 ## A complete composition
@@ -101,17 +102,18 @@ resources:
 
 `api` is public over HTTPS; `cache` is reachable only as `cache.internal`;
 its volume is `cache.data`. On the project's first `uniac deploy`, `cache` is
-not yet serving when `api`'s version is created, so `CACHE_URL` is left out;
+still starting when `api`'s version is created, so `CACHE_URL` is left out;
 a second `uniac deploy` sets it. `uniac plan --json` shows the generated
 description: a `deployable` with one entry per instance, `container.source`
-as `ref` or `build`, `kind: singleton` where applicable, and a digest that
-ignores formatting, ordering and default spellings but not an explicit
-build `target`.
+as `ref` or `build`, `kind: singleton` where applicable, and a digest of the
+normalized description, which formatting, ordering and default spellings
+leave unchanged and an explicit build `target` changes.
 
 ## What `uniac plan` catches
 
 Ownership and included manifests, each file's schema and resource names,
 `from` lookups, unique instance names, build paths on disk, composed volume
-names, reference targets and variables, and reference cycles. It does not
-touch Docker or the platform; the platform applies its own limits at
-submission (ports, endpoint counts, env sizes, volume size, mount paths).
+names, reference targets and variables, and reference cycles, all checked
+locally and offline. The platform checks ports, endpoint
+counts, env sizes, volume size and mount paths when the deployment is
+submitted.

@@ -19,31 +19,32 @@ exact field, limit or behavior matters, read the page's Markdown:
   the account and it also has an assigned slug.
 - A **service definition** (`type: service` for stateless execution,
   `type: singleton`) holds an image or Dockerfile build, `env`,
-  `start_command` and `volumes`. Declaring it runs nothing.
+  `start_command` and `volumes`. A definition runs once a deployment
+  declaration instantiates it.
 - A **deployment declaration** (`type: deployment`) instantiates definitions
   under **service names**. The name is the service's identity in the project
   and its private hostname, `<name>.internal`.
 - **Replicas** are the containers behind that identity. A stateless service
-  may run several interchangeable ones; a singleton runs at most one, and a
+  runs several interchangeable ones; a singleton runs at most one, and a
   replacement stops the old replica before the new one starts.
 - A **volume** is durable storage with a project-scoped identity
-  (`<service>.<name>`), attachable only to a singleton, one per service. It
-  outlives replicas, detachment and service deletion; only explicit volume
-  deletion or project deletion destroys its data.
+  (`<service>.<name>`), held by one singleton service at a time. Its data
+  outlives replicas, detachment and service deletion; deleting the volume or
+  the project destroys it.
 - **Public endpoints** (`public_ports` on the instance) expose the
   application's listen port: `http` becomes an `https://` address on the
-  shared edge, `tcp` a public host with an allocated port. Everything else is
-  reachable only inside the project.
+  shared edge, `tcp` a public host with an allocated port. Services reach one
+  another privately inside the project.
 
-Platform behavior and limits: [platform.md](references/platform.md).
+Platform behavior: [platform.md](references/platform.md).
 
 ## The workflow
 
 1. **Describe** the application in `uniac.yaml` at its root
    ([composition.md](references/composition.md)). `uniac init` writes a
    starter for one prebuilt image.
-2. **Validate offline** with `uniac plan`: schema, references, build paths.
-   No credentials or Docker needed; `--json` prints the generated description.
+2. **Validate** with `uniac plan`: schema, references and build paths, checked
+   locally and offline; `--json` prints the generated description.
 3. **Sign in once** with `uniac auth login` (browser). In CI, set
    `UNIAC_ACCESS_TOKEN`.
 4. **Choose the destination**: `uniac project create <name>`, then
@@ -52,8 +53,7 @@ Platform behavior and limits: [platform.md](references/platform.md).
 5. **Deploy** with `uniac deploy`: every image is built or pulled by the local
    Docker daemon for `linux/amd64`, pushed, and every deployment declaration
    submitted as a new version of its service, which replaces the service's
-   replicas even when nothing changed; each service is then polled for up to
-   five minutes.
+   replicas; each service is then polled for up to five minutes.
 6. **Read state** with `uniac status` (whole project, volumes included) or
    `uniac status <service>`.
 
@@ -65,66 +65,63 @@ Commands, destination selection, output and exit codes:
 | Question | Answer |
 |---|---|
 | `service` or `singleton`? | `service` for anything that can run as interchangeable copies: APIs, workers, front ends. `singleton` for anything that must be alone or needs a volume: databases, persistent caches, schedulers. |
-| Where does state live? | On a singleton's volume, or outside Uniac. A replica's memory and container files are lost at replacement. |
-| Which port? | The application's own listen port, named in `public_ports`. Uniac injects no `PORT` and does not configure the application to match. |
-| `http` or `tcp`? | `http` for anything browsers or HTTPS clients call; TLS ends at the edge. `tcp` for raw protocols such as databases; the public port is allocated, not chosen. |
-| How do services find each other? | `<service>.internal`, or `${{service.host}}` inside an `env` value. Private traffic needs no port declaration. |
-| How does one service learn another's configuration? | `${{other.VAR}}` reads a variable the other service declares; both must be declared in the same package. |
+| Where does state live? | On a singleton's volume, or in an external store. A replica's memory and container files last as long as the replica. |
+| Which port? | The application's own listen port, named in `public_ports`. An application that reads `PORT` gets it from a declared `env` value. |
+| `http` or `tcp`? | `http` for anything browsers or HTTPS clients call; TLS ends at the edge, and a request has 60 seconds. `tcp` for raw protocols such as databases; Uniac allocates the public port. |
+| How do services find each other? | `<service>.internal`, or `${{service.host}}` inside an `env` value, on any port the application listens on. |
+| How does one service learn another's configuration? | `${{other.VAR}}` reads a variable the other service declares in the same package. |
 | `build` or `image`? | `build: <dir>` when the Dockerfile lives in the repository; `image: <ref>` for a published image. Exactly one of the two. |
-| One file or a workspace? | One `uniac.yaml` for one application. A `workspace` with `includes` when packages in subdirectories each own a `uniac.yaml`; they deploy to one project but cannot reference each other. |
+| One file or a workspace? | One `uniac.yaml` for one application. A `workspace` with `includes` when packages in subdirectories each own a `uniac.yaml`; they deploy to one project, and each package's references stay within it. |
 
-## What goes wrong
+## Behaviors to plan for
 
-- **`deploy` needs a running Docker daemon even for `image:`** — images are
-  pulled and pushed locally. Builds target `linux/amd64`; an arm64-only base
-  image fails.
-- **`.gitignore` does not shape the build**; only `.dockerignore` does. No
-  build arguments or build secrets are supplied.
-- **Every deploy resets the replica count to one.** The composition sets no
-  count (CLI 0.3.21), and each new deployment version starts with one
-  replica: a service scaled up in the dashboard, or paused at zero, runs one
-  replica after `uniac deploy`. Set the count again in the dashboard.
-- **A singleton replacement has downtime**: the old replica stops before the
-  successor starts, and if the successor fails to start the service stays
-  down until a working deploy.
-- **The platform watches process liveness only.** A hung process counts as
-  running; an exited one is restarted. There are no HTTP health or readiness
-  probes.
-- **References resolve once, when a service's version is created.** A
-  reference to a service that is not serving yet — every sibling, on a
-  project's first deploy — is left out with a warning, not an error, and is
-  never filled in afterwards. Run `uniac deploy` again once the referenced
-  services serve; a changed value likewise reaches a consumer only in its
-  next deployment. Nothing orders start-up, so applications must retry their
-  connections.
-- **Removing a service from `uniac.yaml` does not delete it** — delete it on
-  the dashboard. Deleting a service keeps its volume; deleting the project
-  destroys every volume, detached ones included.
-- **Volumes cannot be resized.** Choose `size_gb` (1–4096) with headroom. The
-  same volume name reattaches the same data, even at a new mount path.
-- **`public_ports` semantics on redeploy:** omitted keeps the existing
-  exposure, `[]` removes it, a list replaces it. At most one `http` and one
-  `tcp` endpoint per service.
-- **A deploy is not a transaction.** Accepted work continues after a failure
-  or an interruption, and there is no rollback command: revert by deploying
-  the previous image. Exit 8 after the five-minute window means the work is
-  still in progress, not that it failed.
-- **Tokens expire and are never refreshed.** `uniac auth status` shows the
-  expiry; sign in again. One stored session per platform.
-- **`env` values are plaintext**, stored with the deployment and readable
-  back; there is no secret store. Keep a file that holds secrets out of
-  version control.
+- **Deploys use the local Docker daemon.** `uniac deploy` builds or pulls
+  every image locally, `image:` sources included, for `linux/amd64`, and
+  pushes it; base images need an amd64 variant. `.dockerignore` shapes the
+  build context.
+- **Each deploy starts every service at one replica.** Every declared service
+  gets a new version, and a new version starts with one replica: a service
+  scaled up, or paused at zero, in the dashboard runs one replica after
+  `uniac deploy` until its count is set again.
+- **A singleton's replacement stops the old replica first.** Each deploy of a
+  singleton has a gap, and a successor that fails to start leaves the service
+  stopped until a working deploy.
+- **The platform restarts a container whose process exits**, and reports the
+  service running while its process runs.
+- **References resolve when a service's version is created**, against the
+  services serving at that moment. On a project's first deploy, references to
+  services deployed in the same run are left out with a warning, and a second
+  `uniac deploy` fills them in; a changed value reaches another service in
+  that service's next deployment. Services start independently, so
+  applications retry their connections to one another.
+- **A service stays until it is deleted in the dashboard.** Removing it from
+  `uniac.yaml` leaves it running. Deleting a service keeps its volume;
+  deleting the project destroys every volume, detached ones included.
+- **`size_gb` (1–4096) is set when a volume is created**, and later
+  deployments declare the same size, so choose it with headroom. The same
+  volume name reattaches the same data, even at a new mount path.
+- **`public_ports` on redeploy:** omitted keeps the existing exposure, `[]`
+  removes it, a list replaces it. Each service has one `http` and one `tcp`
+  endpoint at most.
+- **Each service's submission proceeds on its own.** Accepted work continues
+  after a local failure or an interruption; to return to an earlier release,
+  deploy its image again. Exit 8 after the five-minute window means the work
+  is still in progress.
+- **Tokens expire.** `uniac auth status` shows when; `uniac auth login` stores
+  a new one, one session per platform.
+- **`env` values are stored with the deployment** and shown in the dashboard;
+  keep a `uniac.yaml` that carries secret values out of version control.
 
 ## Reading the CLI
 
 `deploy` prints a stage record — `plan`, `link`, `build`, `push <service>`,
 `submit <service>`, `observe <service>` — followed by state rows; `status`
 prints state. A `service` row carrying `v<N>` means a serving version was
-read; a name-only row means the submission was accepted but state was not
-read, which does not establish a running service. `endpoint http https://… →
-:8080` is the public address and the container port. Exit codes: 2 usage,
-3 auth, 4 not linked, 5 manifest, 6 build, 7 push, 8 deployment failed or
-observation timed out, 9 platform unreachable.
+read; a name-only row means the submission was accepted, and `uniac status`
+reads the service's state. `endpoint http https://… → :8080` is the public
+address and the container port. Exit codes: 2 usage, 3 auth, 4 not linked,
+5 manifest, 6 build, 7 push, 8 deployment failed or observation timed out,
+9 platform unreachable.
 
 ## A minimal composition
 
