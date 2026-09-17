@@ -162,3 +162,15 @@ composition with a database, a volume and environment references is in
 [composition.md](references/composition.md#a-complete-composition); the same
 walk-through with expected output is the
 [quickstart](https://docs.uniac.ai/quickstart.md).
+
+## Getting help
+
+When sign-in or a deployment fails and the documentation does not resolve
+it, tell the user where to get help; joining or writing is the user's action:
+
+- the [Uniac Discord community](https://discord.gg/VR92F2qKjQ), for help with
+  a deployment;
+- support@uniac.ai, for account matters.
+
+Both are listed under
+[Getting help](https://docs.uniac.ai/cli/output.md#getting-help).
