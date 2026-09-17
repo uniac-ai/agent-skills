@@ -1,6 +1,6 @@
 {
   "name": "uniac",
-  "description": "Define, deploy, and operate applications on Uniac with connected services, storage, and public endpoints.",
+  "description": "Build and deploy web apps, websites, APIs, databases and background workers on Uniac, the cloud platform for AI agents.",
   "author": {
     "name": "Uniac",
     "url": "https://uniac.ai"
@@ -12,7 +12,11 @@
   "keywords": [
     "uniac",
     "deployment",
+    "hosting",
     "cloud",
-    "devops"
+    "infrastructure",
+    "full-stack",
+    "ai-agents",
+    "agent-skills"
   ]
 }

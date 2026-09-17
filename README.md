@@ -1,8 +1,9 @@
 # agent-skills
 
-The public agent knowledge for [Uniac](https://uniac.ai), a cloud deployment
-platform: one skill, `uniac`, that gives a coding agent an expert's working
-knowledge of building and operating applications on Uniac. The documentation
+The public agent knowledge for [Uniac](https://uniac.ai), the cloud platform
+for AI agents to build and deploy web apps, websites, APIs, databases and
+background workers: one skill, `uniac`, that gives a coding agent an
+expert's working knowledge of building and operating applications on Uniac. The documentation
 at [docs.uniac.ai](https://docs.uniac.ai) is the source of every contract;
 the skill compresses it and names the page for each detail.
 
