@@ -33,10 +33,10 @@ The plugin's version is the commit it was installed from, so
 ## Layout
 
 ```
-skills/uniac/SKILL.md          the model, the workflow, the decisions, what goes wrong
+skills/uniac/SKILL.md          the model, the workflow, the decisions, behaviors to plan for
 skills/uniac/references/
   composition.md               uniac.yaml: fields, names, references, a complete example
-  platform.md                  services, replicas, networking, environment, volumes, limits
+  platform.md                  services, versions, observed state, networking, environment, volumes, the dashboard
   operations.md                the CLI: commands, destinations, credentials, output, exit codes
 tools/validate.py              frontmatter, links and docs URLs
 .claude-plugin/                Claude Code marketplace + plugin manifest
@@ -44,26 +44,6 @@ tools/validate.py              frontmatter, links and docs URLs
 plugin.json                    agent-plugins.org manifest (Cursor imports it)
 LICENSE                        MIT — required by the Cursor marketplace
 ```
-
-## Writing
-
-The skill is a compression, not a copy. `SKILL.md` is what an expert keeps in
-their head: the model, the working order, the decisions and their reasons,
-and the ways things go wrong. The references hold the compact facts an agent
-needs while writing a composition or reading the CLI, each pointing at the
-documentation page that owns the complete contract
-(`https://docs.uniac.ai/<page>.md`).
-
-- State judgment and procedure here; state contracts once, in the docs. A
-  number, field or limit repeated here is repeated only because an agent
-  needs it in hand while writing, and it names the owning page beside it.
-- Describe the current release of the CLI and the platform as they are;
-  when either changes, this skill changes in the same review cycle.
-- Keep `SKILL.md` under 500 lines and references one link away from it.
-  Assume a capable agent: no generic advice, no explanations of Docker, YAML
-  or containers.
-- Links to other pages use `https://docs.uniac.ai/<page>.md` (the Markdown
-  the site serves), never a repository URL.
 
 ## Checks
 
