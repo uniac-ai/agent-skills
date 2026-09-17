@@ -21,8 +21,11 @@ What Uniac does with a deployed composition, compressed. Complete contracts:
 - **Singleton** services run at most one replica (0 or 1 in the dashboard).
   Replacement stops the old replica first, so each version change has a gap;
   a successor that fails to start leaves the service stopped.
-- The platform restarts a container whose process exits. Services start
-  independently of one another.
+- The platform restarts a container whose process exits; after five
+  consecutive restarts that each ran for less than a minute, the container
+  stays stopped. Services start independently of one another.
+
+Details: [Runtime and deployment versions](https://docs.uniac.ai/resources/service.md#runtime-and-deployment-versions).
 - A `start_command` replaces the image's `ENTRYPOINT` and `CMD`; the image
   itself is unchanged.
 
@@ -52,6 +55,8 @@ A row missing from a report means that read failed or was unavailable.
 - The application chooses its listen port and the endpoint names it; an
   application that reads `PORT` gets it from a declared `env` value.
 
+Details: [Networking and endpoints](https://docs.uniac.ai/resources/service.md#networking-and-endpoints).
+
 ## Environment
 
 - Values are strings: up to 64 variables per service, names up to 128 and
@@ -70,6 +75,9 @@ A row missing from a report means that read failed or was unavailable.
 - Values are stored with the deployment, and the dashboard shows the serving
   version's values.
 
+Details: [Environment and references](https://docs.uniac.ai/resources/service.md#environment-and-references),
+[Resolution](https://docs.uniac.ai/resources/service.md#resolution).
+
 ## Volumes
 
 | Event | Effect |
@@ -86,12 +94,16 @@ declare the same size. A singleton service attaches one volume. Whole-project
 `uniac status` lists volumes with size and state (`provisioning`,
 `attaching`, `detaching`, `deleting`, attached, unattached).
 
+Details: [Volume](https://docs.uniac.ai/resources/volume.md).
+
 ## Projects and the dashboard
 
 - A project keeps live state independently of the description: a service
   removed from `uniac.yaml` keeps running until it is deleted.
-- The dashboard at https://uniac.ai shows projects, services, endpoints,
-  volumes, metrics and deployment activity. It deletes services and projects
-  (project deletion is confirmed by typing its name) and sets replica counts.
+- The dashboard at https://uniac.ai shows projects, volumes and, per
+  service, its state, public endpoints, deployment activity and resource
+  usage. It sets replica counts, changes public endpoints, and deletes
+  services and projects (project deletion is confirmed by typing its name);
+  see [Dashboard and removal](https://docs.uniac.ai/resources/service.md#dashboard-and-removal).
 - Project names match `^[a-z][a-z0-9-]{0,62}$` and are unique per account;
   the platform assigns a slug used in URLs and bindings.

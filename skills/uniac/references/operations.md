@@ -25,8 +25,9 @@ skill describes release 0.3.21.
 | `uniac auth login \| status \| token \| logout` | Browser sign-in; stored sessions and expiry; the selected credential; remove stored sessions. | — |
 
 Flags may precede or follow the positional argument; a surplus argument is a
-usage error. `-h` on any command prints its usage. Services and projects are
-deleted, and replica counts set, in the dashboard.
+usage error. `-h` on any command prints its usage. The dashboard deletes
+services and projects, sets replica counts and changes public endpoints
+([Dashboard and removal](https://docs.uniac.ai/resources/service.md#dashboard-and-removal)).
 
 ## Which project a command targets
 

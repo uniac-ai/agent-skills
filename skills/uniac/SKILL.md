@@ -87,7 +87,8 @@ Commands, destination selection, output and exit codes:
   singleton has a gap, and a successor that fails to start leaves the service
   stopped until a working deploy.
 - **The platform restarts a container whose process exits**, and reports the
-  service running while its process runs.
+  service running while its process runs. After five consecutive restarts
+  that each ran for less than a minute, the container stays stopped.
 - **References resolve when a service's version is created**, against the
   services serving at that moment. On a project's first deploy, references to
   services deployed in the same run are left out with a warning, and a second
@@ -100,9 +101,9 @@ Commands, destination selection, output and exit codes:
 - **`size_gb` (1–4096) is set when a volume is created**, and later
   deployments declare the same size, so choose it with headroom. The same
   volume name reattaches the same data, even at a new mount path.
-- **`public_ports` on redeploy:** omitted keeps the existing exposure, `[]`
-  removes it, a list replaces it. Each service has one `http` and one `tcp`
-  endpoint at most.
+- **`public_ports` on redeploy:** omitted keeps the existing exposure,
+  including endpoints changed in the dashboard; `[]` removes it; a list
+  replaces it. Each service has one `http` and one `tcp` endpoint at most.
 - **Each service's submission proceeds on its own.** Accepted work continues
   after a local failure or an interruption; to return to an earlier release,
   deploy its image again. Exit 8 after the five-minute window means the work
@@ -111,6 +112,11 @@ Commands, destination selection, output and exit codes:
   a new one, one session per platform.
 - **`env` values are stored with the deployment** and shown in the dashboard;
   keep a `uniac.yaml` that carries secret values out of version control.
+
+Contracts: [runtime and versions](https://docs.uniac.ai/resources/service.md#runtime-and-deployment-versions),
+[resolution](https://docs.uniac.ai/resources/service.md#resolution), [public endpoints](https://docs.uniac.ai/resources/service.md#public-endpoints),
+[dashboard and removal](https://docs.uniac.ai/resources/service.md#dashboard-and-removal),
+[volume](https://docs.uniac.ai/resources/volume.md).
 
 ## Reading the CLI
 
