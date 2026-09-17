@@ -13,14 +13,10 @@
     "uniac",
     "deployment",
     "hosting",
-    "paas",
     "cloud",
-    "web-apps",
-    "docker",
+    "infrastructure",
+    "full-stack",
     "ai-agents",
-    "coding-agents",
-    "claude-code",
-    "cursor",
-    "codex"
+    "agent-skills"
   ]
 }
