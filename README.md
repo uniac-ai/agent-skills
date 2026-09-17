@@ -1,7 +1,7 @@
 # agent-skills
 
-Build and run web apps, websites, APIs, databases and background workers on
-[Uniac](https://uniac.ai), the cloud platform for AI agents. This repository
+Build and run web apps, websites, agents, databases and background workers
+on [Uniac](https://uniac.ai), the cloud platform for AI agents. This repository
 holds the public agent knowledge for it: one skill, `uniac`, that gives a
 coding agent an expert's working knowledge of building and operating
 applications on Uniac. The documentation at

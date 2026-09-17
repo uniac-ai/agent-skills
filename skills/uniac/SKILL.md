@@ -1,11 +1,11 @@
 ---
 name: uniac
-description: "Build, run and operate web apps, websites, APIs, databases and background workers on Uniac, the cloud platform for AI agents. Use when asked to deploy, host or run an application in the cloud, and for any task involving uniac.yaml, the uniac CLI or a project on uniac.ai — describing an application, deploying it, debugging a deployment, or reading a project's state."
+description: "Build, run and operate web apps, websites, agents, databases and background workers on Uniac, the cloud platform for AI agents. Use when asked to deploy, host or run an application, an API or an agent in the cloud, and for any task involving uniac.yaml, the uniac CLI or a project on uniac.ai — describing an application, deploying it, debugging a deployment, or reading a project's state."
 ---
 
 # Uniac
 
-Build and run web apps, websites, APIs, databases and background workers
+Build and run web apps, websites, agents, databases and background workers
 on Uniac, the cloud platform for AI agents. This skill is an expert's
 working knowledge of it, compressed for an agent building on it.
 Every contract has one authoritative page at https://docs.uniac.ai; this file

@@ -10,7 +10,7 @@
     {
       "name": "uniac",
       "source": "./",
-      "description": "Build and run web apps, websites, APIs, databases and background workers on Uniac, the cloud platform for AI agents.",
+      "description": "Build and run web apps, websites, agents, databases and background workers on Uniac, the cloud platform for AI agents.",
       "homepage": "https://uniac.ai",
       "repository": "https://github.com/uniac-ai/agent-skills",
       "license": "MIT",
