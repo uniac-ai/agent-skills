@@ -10,13 +10,13 @@ contracts: [Uniac CLI](https://docs.uniac.ai/cli/overview.md),
 
 `npm install -g @uniac/cli` (Node 18+), or `npx -y @uniac/cli …` without
 installing. `uniac version` prints version, commit and build time. This
-skill describes release 0.3.21.
+skill describes release 0.3.22.
 
 ## Commands
 
 | Command | What it does | Needs |
 |---|---|---|
-| `uniac init` | Writes a starter `uniac.yaml` (one prebuilt-image service, deployment `main`) after prompting for a name; refuses if one exists. | Nothing |
+| `uniac init` | Writes a starter `uniac.yaml` (a prebuilt-image definition `<name>-definition` and its deployment declaration `<name>`) after prompting for the service name; refuses if one exists. | Nothing |
 | `uniac plan [--json] [--full] [--dir <path>]` | Validates the description and previews every deployment; `--json` prints `{project, digest, deployable, declarations}`. | Nothing |
 | `uniac project create <name>` | Creates a project on the account; prints name and slug. | Credentials |
 | `uniac link [-C <path>] [name-or-slug]` | Binds the local project to a remote one in `.uniac/deploy.json`; an exact slug or unique name skips the picker. | Credentials |
@@ -63,13 +63,12 @@ services, volumes and projects, sets replica counts and changes public endpoints
 ## What `deploy` does, in order
 
 `plan` → `link` (credential and project check) → `build` (shared image work;
-instances sharing a source share the build) → `push <service>` →
+services sharing a source share the build) → `push <service>` →
 `submit <service>` (all services are registered before any is awaited) →
 `observe <service>` (poll every two seconds, five-minute deadline). Failure
 or interruption stops new local work, and accepted remote work continues; to
-return to an earlier release, deploy its image again. A local release record
-is written under
-`~/.uniac/store` (`UNIAC_STORE_DIR`).
+return to an earlier release, deploy that release's sources or images again.
+A local release record is written under `~/.uniac/store` (`UNIAC_STORE_DIR`).
 
 ## Output
 

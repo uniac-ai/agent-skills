@@ -7,9 +7,9 @@ What Uniac does with a deployed composition, compressed. Complete contracts:
 
 ## Services, replicas and versions
 
-- A service instance's identity (name, `<name>.internal`, endpoints, volume)
-  persists across replica replacements and deployment versions.
-- Each deploy of an instance creates a new **deployment version** of that
+- A service's identity (name, `<name>.internal`, endpoints, volume) persists
+  across replica replacements and deployment versions.
+- Each deploy of a declaration creates a new **deployment version** of its
   service; the newest successful version serves and older ones retire. A
   service keeps its type: a deploy that switches it between `service` and
   `singleton` is rejected.

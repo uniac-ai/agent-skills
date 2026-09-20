@@ -24,9 +24,10 @@ Markdown is the current text.
   `type: singleton`) holds an image or Dockerfile build, `env`,
   `start_command` and `volumes`. A definition runs once a deployment
   declaration instantiates it.
-- A **deployment declaration** (`type: deployment`) instantiates definitions
-  under **service names**. The name is the service's identity in the project
-  and its private hostname, `<name>.internal`.
+- A **deployment declaration** (`type: deployment`) instantiates one
+  definition as a **service**, and the declaration's name is the service's
+  name: its identity in the project and its private hostname,
+  `<name>.internal`. Several declarations can reuse one definition.
 - **Replicas** are the containers behind that identity. A stateless service
   runs up to four interchangeable ones; a singleton runs at most one, and a
   replacement stops the old replica before the new one starts.
@@ -34,7 +35,7 @@ Markdown is the current text.
   (`<service>.<name>`), held by one singleton service at a time. Its data
   outlives replicas, detachment and service deletion; deleting the volume or
   the project destroys it.
-- **Public endpoints** (`public_ports` on the instance) expose the
+- **Public endpoints** (`public_ports` on the declaration) expose the
   application's listen port: `http` becomes an `https://` address on the
   shared edge, `tcp` a public host with an allocated port. Services reach one
   another privately inside the project.
@@ -147,12 +148,10 @@ resources:
   api_definition:
     type: service
     build: .
-  main:
+  api:
     type: deployment
-    services:
-      api:
-        from: api_definition
-        public_ports: [{ port: 8080, type: http }]
+    from: api_definition
+    public_ports: [{ port: 8080, type: http }]
 ```
 
 `uniac plan`, `uniac project create my-app`, `uniac link my-app`,
