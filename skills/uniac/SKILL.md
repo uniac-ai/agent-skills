@@ -70,6 +70,7 @@ Commands, destination selection, output and exit codes:
 |---|---|
 | `service` or `singleton`? | `service` for anything that can run as interchangeable copies: APIs, workers, front ends. `singleton` for anything that must be alone or needs a volume: databases, persistent caches, schedulers. |
 | Where does state live? | On a singleton's volume, or in an external store. A replica's memory and container files last as long as the replica. |
+| How many replicas? | `replicas` on the deployment declaration: 0–4 for a `service`, 0 or 1 for a `singleton`. Leave it out to keep the service's current count, such as one set in the dashboard. |
 | Which port? | The application's own listen port, named in `public_ports`. An application that reads `PORT` gets it from a declared `env` value. |
 | `http` or `tcp`? | `http` for anything browsers or HTTPS clients call; TLS ends at the edge, and a request has 60 seconds. `tcp` for raw protocols such as databases; Uniac allocates the public port. |
 | How do services find each other? | `<service>.internal`, or `${{service.host}}` inside an `env` value, on any port the application listens on. |
@@ -83,10 +84,10 @@ Commands, destination selection, output and exit codes:
   every image locally, `image:` sources included, for `linux/amd64`, and
   pushes it; base images need an amd64 variant. `.dockerignore` shapes the
   build context.
-- **Each deploy starts every service at the default of one replica.** Every
-  declared service gets a new version, which runs one replica: a service
-  scaled up, or paused at zero, in the dashboard runs one replica after
-  `uniac deploy` until its count is set again.
+- **A declared `replicas` applies on every deploy.** Without it, a service's
+  new version keeps the count the service has, set in the dashboard or by an
+  earlier deploy, including zero for a paused service; a new service starts
+  with one replica.
 - **A singleton's replacement stops the old replica first.** Each deploy of a
   singleton has a gap, and a successor that fails to start leaves the service
   stopped until a working deploy.

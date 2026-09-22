@@ -37,6 +37,7 @@ and dashes, at most 63 characters), unique across the whole project.
 | Field | Required | Meaning |
 |---|---|---|
 | `from` | Yes | A `service` or `singleton` definition in the same file. Several declarations may share one definition. |
+| `replicas` | No | An integer, 0–4 for a `service` definition and 0–1 for a `singleton`. Omitted or `null` keeps the service's current count; a new service runs one. |
 | `public_ports` | No | List of `{port: 1–65535, type: http \| tcp}`, one of each type at most. Omitted or `null` keeps the service's current exposure on redeploy, `[]` removes it, a list replaces it. |
 
 Every deployment declaration in the project contributes its service, and a
@@ -94,6 +95,7 @@ resources:
   api:
     type: deployment
     from: api_definition
+    replicas: 2
     public_ports: [{port: 8080, type: http}]
   cache:
     type: deployment
@@ -101,18 +103,20 @@ resources:
     public_ports: []
 ```
 
-`api` is public over HTTPS; `cache` is reachable only as `cache.internal`; its volume is `cache.data`. On the project's first
+`api` runs two replicas and is public over HTTPS; `cache` is reachable only
+as `cache.internal`; its volume is `cache.data`. On the project's first
 `uniac deploy`, `cache` is still starting when `api`'s version is created, so
 `CACHE_URL` is left out; a second `uniac deploy` sets it. `uniac plan --json` shows the generated
 description: a `deployable` with one entry per service, `container.source`
-as `ref` or `build`, `kind: singleton` where applicable, and a digest of the
-normalized description, which formatting, ordering and default spellings
-leave unchanged and an explicit build `target` changes.
+as `ref` or `build`, `kind: singleton` and a declared `replicas` where they
+apply, and a digest of the normalized description, which formatting, ordering
+and default spellings leave unchanged and an explicit build `target` or a
+declared `replicas` changes.
 
 ## What `uniac plan` catches
 
 Ownership and included manifests, each file's schema and resource names,
-`from` lookups, unique service names, build paths on disk,
+`from` lookups, replica counts, unique service names, build paths on disk,
 composed volume names, reference targets and variables, and reference cycles,
 all checked locally and offline. The platform checks ports, endpoint counts,
 env sizes, the `size_gb` range and mount paths when the deployment is
