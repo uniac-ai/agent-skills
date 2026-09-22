@@ -7,18 +7,20 @@ What Uniac does with a deployed composition, compressed. Complete contracts:
 
 ## Services, replicas and versions
 
-- A service instance's identity (name, `<name>.internal`, endpoints, volume)
-  persists across replica replacements and deployment versions.
-- Each deploy of an instance creates a new **deployment version** of that
+- A service's identity (name, `<name>.internal`, endpoints, volume) persists
+  across replica replacements and deployment versions.
+- Each deploy of a declaration creates a new **deployment version** of its
   service; the newest successful version serves and older ones retire. A
   service keeps its type: a deploy that switches it between `service` and
   `singleton` is rejected.
 - **Stateless** services run interchangeable replicas; connections may land on
-  any of them. A new deployment version runs the default of one replica; the
-  dashboard sets another count, 0–4, and `uniac status` reports requested,
-  effective and observed counts. After a deploy, a service that was scaled up,
-  or paused at zero, runs one replica until its count is set again.
-- **Singleton** services run at most one replica (0 or 1 in the dashboard).
+  any of them. The declaration's `replicas` (0–4) sets the count on each
+  deploy; without it, a new version keeps the service's count, set in the
+  dashboard or by an earlier deploy, including zero, and a new service starts
+  with one replica. `uniac status` reports requested, effective and observed
+  counts.
+- **Singleton** services run at most one replica: `replicas` and the
+  dashboard accept 0 or 1.
   Replacement stops the old replica first, so each version change has a gap;
   a successor that fails to start leaves the service stopped.
 - The platform restarts a container whose process exits; after five

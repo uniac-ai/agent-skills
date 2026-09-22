@@ -9,7 +9,7 @@ The application description, compressed. Complete contracts:
 
 | Top-level field | Required | Meaning |
 |---|---|---|
-| `resources` | Unless `workspace` is present | Resource name → typed definition. Names match `^[a-z0-9]+(?:(?:__?|-+)[a-z0-9]+)*$` and are unique in the file. |
+| `resources` | Unless `workspace` is present | Resource name → typed resource. Names match `^[a-z0-9]+(?:(?:__?|-+)[a-z0-9]+)*$` and are unique in the file. |
 | `workspace` | No | `name`, `description`, `includes` (literal relative directories, each with its own `uniac.yaml`). |
 | `runtime` | No | `yaml`, the only value. |
 
@@ -30,23 +30,29 @@ The definition's name is a local label within its package.
 
 ## Instantiation: `type: deployment`
 
+A deployment declaration instantiates one definition as one service, and its
+resource name is the service's name: one DNS label (lowercase letters, digits
+and dashes, at most 63 characters), unique across the whole project.
+
 | Field | Required | Meaning |
 |---|---|---|
-| `services` | Yes, nonempty | Instance name → `{from, public_ports}`. The instance name is the remote service's identity: one DNS label, lowercase letters, digits and dashes, at most 63 characters. Names must be unique across the whole project. |
-| `services.<name>.from` | Yes | A definition in the same file. Several instances may share one definition. |
-| `services.<name>.public_ports` | No | List of `{port: 1–65535, type: http \| tcp}`, one of each type at most. Omitted or `null` keeps the service's current exposure on redeploy, `[]` removes it, a list replaces it. |
+| `from` | Yes | A `service` or `singleton` definition in the same file. Several declarations may share one definition. |
+| `replicas` | No | An integer, 0–4 for a `service` definition and 0–1 for a `singleton`. Omitted or `null` keeps the service's current count; a new service runs one. |
+| `public_ports` | No | List of `{port: 1–65535, type: http \| tcp}`, one of each type at most. Omitted or `null` keeps the service's current exposure on redeploy, `[]` removes it, a list replaces it. |
 
-Every deployment declaration in the project contributes its instances, and
-a definition runs once a declaration instantiates it. Deploying requires at
-least one declaration.
+Every deployment declaration in the project contributes its service, and a
+definition runs once a declaration instantiates it. Deploying requires at
+least one declaration. Renaming a declaration deploys a new service with its
+own hostname, references and volume names; the service under the old name
+and its volume stay in the project until they are deleted in the dashboard.
 
 ## References inside `env` values
 
-`${{<instance>.<VAR>}}` reads a variable the named service instance declares;
-`${{<instance>.host}}`, the one builtin, is that service's internal hostname;
+`${{<service>.<VAR>}}` reads a variable the named service declares;
+`${{<service>.host}}`, the one builtin, is that service's internal hostname;
 `${{self.X}}` reads the declaring service's own value. Chains resolve
-transitively. Every `${{` opener must form a valid reference. Instance names in
-references are local to the package: `uniac plan` rejects an instance from
+transitively. Every `${{` opener must form a valid reference. Service names in
+references are local to the package: `uniac plan` rejects a service from
 another package or one that does not exist.
 
 Resolution happens when the referencing service's deployment version is
@@ -86,35 +92,33 @@ resources:
       - name: data
         size_gb: 1
         mount_path: /data
-  api-deployment:
+  api:
     type: deployment
-    services:
-      api:
-        from: api_definition
-        public_ports: [{port: 8080, type: http}]
-  cache-deployment:
+    from: api_definition
+    replicas: 2
+    public_ports: [{port: 8080, type: http}]
+  cache:
     type: deployment
-    services:
-      cache:
-        from: cache_definition
-        public_ports: []
+    from: cache_definition
+    public_ports: []
 ```
 
-`api` is public over HTTPS; `cache` is reachable only as `cache.internal`;
-its volume is `cache.data`. On the project's first `uniac deploy`, `cache` is
-still starting when `api`'s version is created, so `CACHE_URL` is left out;
-a second `uniac deploy` sets it. `uniac plan --json` shows the generated
-description: a `deployable` with one entry per instance, `container.source`
-as `ref` or `build`, `kind: singleton` where applicable, and a digest of the
-normalized description, which formatting, ordering and default spellings
-leave unchanged and an explicit build `target` changes.
+`api` runs two replicas and is public over HTTPS; `cache` is reachable only
+as `cache.internal`; its volume is `cache.data`. On the project's first
+`uniac deploy`, `cache` is still starting when `api`'s version is created, so
+`CACHE_URL` is left out; a second `uniac deploy` sets it. `uniac plan --json` shows the generated
+description: a `deployable` with one entry per service, `container.source`
+as `ref` or `build`, `kind: singleton` and a declared `replicas` where they
+apply, and a digest of the normalized description, which formatting, ordering
+and default spellings leave unchanged and an explicit build `target` or a
+declared `replicas` changes.
 
 ## What `uniac plan` catches
 
 Ownership and included manifests, each file's schema and resource names,
-`from` lookups, unique instance names, build paths on disk, composed volume
-names, reference targets and variables, and reference cycles, all checked
-locally and offline. The platform checks ports, endpoint counts, env sizes,
-the `size_gb` range and mount paths when the deployment is submitted; a
-singleton deploy compares `size_gb` with the existing volume after its
-running replica has stopped.
+`from` lookups, replica counts, unique service names, build paths on disk,
+composed volume names, reference targets and variables, and reference cycles,
+all checked locally and offline. The platform checks ports, endpoint counts,
+env sizes, the `size_gb` range and mount paths when the deployment is
+submitted; a singleton deploy compares `size_gb` with the existing volume
+after its running replica has stopped.
