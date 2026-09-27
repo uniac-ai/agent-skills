@@ -116,9 +116,9 @@ declared `replicas` changes.
 ## What `uniac plan` catches
 
 Ownership and included manifests, each file's schema and resource names,
-`from` lookups, replica counts, unique service names, build paths on disk,
-composed volume names, reference targets and variables, and reference cycles,
-all checked locally and offline. The platform checks ports, endpoint counts,
-env sizes, the `size_gb` range and mount paths when the deployment is
-submitted; a singleton deploy compares `size_gb` with the existing volume
-after its running replica has stopped.
+`from` lookups, replica counts, endpoint ports and one endpoint per type, env
+counts and lengths, the `size_gb` range, mount paths, unique service names,
+build paths on disk, composed volume names, reference targets and variables,
+and reference cycles, all checked locally and offline. A singleton deploy
+compares `size_gb` with the existing volume after its running replica has
+stopped.

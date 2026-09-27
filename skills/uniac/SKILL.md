@@ -119,8 +119,9 @@ Commands, destination selection, output and exit codes:
   deploy that release's sources or images again, which gives every declared
   service a new version. Exit 8 after the five-minute window means the work
   is still in progress.
-- **Tokens expire.** `uniac auth status` shows when; `uniac auth login` stores
-  a new one, one session per platform.
+- **Tokens expire, and each platform accepts only its own.** `uniac auth
+  status` shows each session's expiry, issuer and whether its platform
+  accepts it; `uniac auth login` stores a new one, one session per platform.
 - **`env` values are stored with the deployment** and shown in the dashboard;
   keep a `uniac.yaml` that carries secret values out of version control.
 

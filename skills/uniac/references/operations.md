@@ -10,7 +10,7 @@ contracts: [Uniac CLI](https://docs.uniac.ai/cli/overview.md),
 
 `npm install -g @uniac/cli` (Node 18+), or `npx -y @uniac/cli …` without
 installing. `uniac version` prints version, commit and build time. This
-skill describes release 0.3.22.
+skill describes release 0.3.23.
 
 ## Commands
 
@@ -33,13 +33,14 @@ services, volumes and projects, sets replica counts and changes public endpoints
 
 - `plan`, `deploy`, `link` and `status` find the local project from the
   current directory: a containing `workspace` root, else the nearest
-  `uniac.yaml`. A binding found below the root is an error.
+  `uniac.yaml`. Above the project, only a `uniac.yaml` that declares
+  `workspace` counts. A binding found below the root is an error.
 - `.uniac/deploy.json` holds `project_name`, `project_slug`, `gateway_url`,
   `platform_url`; workspace packages share the root binding.
 - `UNIAC_PROJECT_URL` (a gateway URL or slug) replaces the binding as the
-  destination of `deploy` and `status` and supplies the gateway only: `deploy`
-  then reports accepted submissions without observed state, and `status`
-  exits 3. Unset it to read state through the binding.
+  destination of `deploy` and `status`: the CLI finds the project in the
+  account's project list, so `deploy` waits for its services and `status`
+  reads it. A value naming no project on the account exits 4.
 - `UNIAC_PLATFORM_URL` selects the platform API origin (default
   `https://api.uniac.ai`) for `project create`, `link` and `auth`; a linked
   `deploy`/`status` uses the binding's origin and fails on a conflict.
@@ -49,14 +50,18 @@ services, volumes and projects, sets replica counts and changes public endpoints
 ## Credentials
 
 - `uniac auth login [--no-browser] [--manual] [--host <host>]` obtains a token
-  through the website (account creation included) and stores it in
-  `~/.uniac/auth.json` (mode 0600), one session per platform. It waits up to
-  five minutes for the browser redirect.
+  through the website (account creation included), checks it with the
+  platform, and stores it in `~/.uniac/auth.json` (mode 0600), one session per
+  platform. A platform accepts only its own sign-in website's tokens; one it
+  rejects fails the login and keeps the stored session. It waits up to five
+  minutes for the browser redirect.
 - Selection order: a nonempty `UNIAC_ACCESS_TOKEN`, else the stored session
   for the addressed platform. A stored token stops being used 60 seconds
   before its expiry; `uniac auth login` stores a new one.
-- `auth status` prints identities and expiry for every stored session (even
-  expired); `auth token` prints the selected credential; `logout` removes the
+- `auth status` prints each stored session's platform, issuer, identity and
+  expiry, and whether that platform accepts it (expired sessions are not
+  checked); it exits 1 when a platform rejects its session. `auth token`
+  prints the selected credential; `logout` removes the
   stored sessions from this machine, and tokens already issued, including one
   set as `UNIAC_ACCESS_TOKEN`, stay valid at the platform until they expire.
 
@@ -88,8 +93,8 @@ A local release record is written under `~/.uniac/store` (`UNIAC_STORE_DIR`).
 ## Exit codes
 
 `deploy` and `status`: 0 success · 2 `usage` · 3 `auth` (no usable
-credential, HTTP 401, or `status` without a project name) · 4 `not_linked`
-(no or mismatched binding, no projects to pick) · 5 `manifest` (description
+credential or HTTP 401) · 4 `not_linked` (no or mismatched binding, a
+`UNIAC_PROJECT_URL` naming no project, no projects to pick) · 5 `manifest` (description
 or ownership failure, missing build directory or Dockerfile) · 6 `build`
 (Docker daemon, pull or build failure) · 7 `push` · 8 `deploy_failed`
 (request or task failure, HTTP 403 or another refused platform read,
