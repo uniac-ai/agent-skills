@@ -44,7 +44,8 @@ Every deployment declaration in the project contributes its service, and a
 definition runs once a declaration instantiates it. Deploying requires at
 least one declaration. Renaming a declaration deploys a new service with its
 own hostname, references and volume names; the service under the old name
-and its volume stay in the project until they are deleted in the dashboard.
+and its volume stay in the project until `uniac service delete` and
+`uniac volume delete` delete them.
 
 ## References inside `env` values
 

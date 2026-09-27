@@ -10,7 +10,7 @@ contracts: [Uniac CLI](https://docs.uniac.ai/cli/overview.md),
 
 `npm install -g @uniac/cli` (Node 18+), or `npx -y @uniac/cli …` without
 installing. `uniac version` prints version, commit and build time. This
-skill describes release 0.3.23.
+skill describes release 0.3.24.
 
 ## Commands
 
@@ -22,24 +22,26 @@ skill describes release 0.3.23.
 | `uniac link [-C <path>] [name-or-slug]` | Binds the local project to a remote one in `.uniac/deploy.json`; an exact slug or unique name skips the picker. | Credentials |
 | `uniac deploy [--dir <path>]` | Plans, builds or pulls images with local Docker (`linux/amd64`), pushes, submits every declaration, polls each service up to five minutes. | Credentials, Docker |
 | `uniac status [--dir <path>] [service]` | Reads the linked project's state; whole-project status also lists volumes. | Credentials, binding |
+| `uniac service delete <name> [--dir <path>] [--silent]` | Deletes a service and waits until the platform has removed it (five-minute deadline); its volume is detached and keeps its data. | Credentials, binding |
+| `uniac volume delete <name> [--dir <path>] [--silent]` | Deletes an unattached volume and its data; `<name>` is `<service>.<volume>` as `status` lists it. | Credentials, binding |
 | `uniac auth login \| status \| token \| logout` | Browser sign-in; stored sessions and expiry; the selected credential; remove stored sessions. | — |
 
 Flags may precede or follow the positional argument; a surplus argument is a
 usage error. `-h` on any command prints its usage. The dashboard deletes
-services, volumes and projects, sets replica counts and changes public endpoints
+projects, sets replica counts and changes public endpoints
 ([Dashboard and removal](https://docs.uniac.ai/resources/service.md#dashboard-and-removal)).
 
 ## Which project a command targets
 
-- `plan`, `deploy`, `link` and `status` find the local project from the
-  current directory: a containing `workspace` root, else the nearest
-  `uniac.yaml`. Above the project, only a `uniac.yaml` that declares
+- `plan`, `deploy`, `link`, `status` and the delete commands find the local
+  project from the current directory: a containing `workspace` root, else the
+  nearest `uniac.yaml`. Above the project, only a `uniac.yaml` that declares
   `workspace` counts. A binding found below the root is an error.
 - `.uniac/deploy.json` holds `project_name`, `project_slug`, `gateway_url`,
   `platform_url`; workspace packages share the root binding.
 - `UNIAC_PROJECT_URL` (a gateway URL or slug) replaces the binding as the
-  destination of `deploy` and `status`: the CLI finds the project in the
-  account's project list, so `deploy` waits for its services and `status`
+  destination of `deploy`, `status` and the delete commands: the CLI finds
+  the project in the account's project list, so `deploy` waits for its services and `status`
   reads it. A value naming no project on the account exits 4.
 - `UNIAC_PLATFORM_URL` selects the platform API origin (default
   `https://api.uniac.ai`) for `project create`, `link` and `auth`; a linked
@@ -69,11 +71,29 @@ services, volumes and projects, sets replica counts and changes public endpoints
 
 `plan` → `link` (credential and project check) → `build` (shared image work;
 services sharing a source share the build) → `push <service>` →
-`submit <service>` (all services are registered before any is awaited) →
-`observe <service>` (poll every two seconds, five-minute deadline). Failure
-or interruption stops new local work, and accepted remote work continues; to
-return to an earlier release, deploy that release's sources or images again.
+`submit <service>` → `observe <service>` (poll every two seconds,
+five-minute deadline), in reference order: a service is submitted after the
+declared services it references have settled, and services with no reference
+between them are submitted together before any is awaited. Failure or
+interruption stops new local work, so services submitted after a failed one
+are not attempted, and accepted remote work continues; to return to an
+earlier release, deploy that release's sources or images again.
 A local release record is written under `~/.uniac/store` (`UNIAC_STORE_DIR`).
+
+## Deleting
+
+- In a terminal, `service delete` and `volume delete` show what they delete
+  and ask for the typed name; another answer deletes nothing (exit 2).
+  `--silent` skips the question and changes nothing else. Without a terminal,
+  `--silent` is required, or the command exits 2 before any request.
+- `service delete` polls until the service is gone; after the deadline or an
+  interruption the platform continues the deletion, and `uniac status <name>`
+  shows it as `terminating`. The platform refuses to delete a volume a service
+  holds (exit 8).
+- Success prints `Deleted service <name> from project <project>.` (plus the
+  kept volume) or `Deleted volume <name> and its data from project <project>.`;
+  failure prints the `status` error block.
+  [Deleting services and volumes](https://docs.uniac.ai/cli/overview.md#deleting-services-and-volumes).
 
 ## Output
 
@@ -92,12 +112,15 @@ A local release record is written under `~/.uniac/store` (`UNIAC_STORE_DIR`).
 
 ## Exit codes
 
-`deploy` and `status`: 0 success · 2 `usage` · 3 `auth` (no usable
+`deploy`, `status`, `service delete` and `volume delete`: 0 success · 2
+`usage` (also a delete without `--silent` or a terminal, or a mismatched
+typed name) · 3 `auth` (no usable
 credential or HTTP 401) · 4 `not_linked` (no or mismatched binding, a
 `UNIAC_PROJECT_URL` naming no project, no projects to pick) · 5 `manifest` (description
 or ownership failure, missing build directory or Dockerfile) · 6 `build`
 (Docker daemon, pull or build failure) · 7 `push` · 8 `deploy_failed`
 (request or task failure, HTTP 403 or another refused platform read,
-observation deadline passed while work continues) · 9 `unreachable`
+observation deadline passed while work continues, a refused delete such as a
+missing service or a held volume) · 9 `unreachable`
 (transport errors and HTTP 502/503/504/521/522/523/530) · 70 `internal`. Other commands: 0, 1 on failure, 2 on invalid
 invocation; `plan` reports a description failure as 1.
