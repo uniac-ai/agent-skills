@@ -97,14 +97,20 @@ Commands, destination selection, output and exit codes:
   `running` describes the process, so request the service's endpoint after a
   deploy to confirm the application answers.
 - **References resolve when a service's version is created**, against the
-  services serving at that moment. On a project's first deploy, references to
-  services deployed in the same run are left out with a warning, and a second
-  `uniac deploy` fills them in; a changed value reaches another service in
-  that service's next deployment. Services start independently, so
-  applications retry their connections to one another.
-- **A service stays until it is deleted in the dashboard.** Removing it from
-  `uniac.yaml` leaves it running. Deleting a service keeps its volume;
-  deleting the project destroys every volume, detached ones included.
+  services serving at that moment. `uniac deploy` creates a service's version
+  after the services it references have settled, so references within one
+  deploy resolve on its first run; services that reference each other in a
+  cycle are created together, and on a first deploy their references to each
+  other are left out with a warning until the next deploy. A changed value
+  reaches another service in that service's next deployment. Services start
+  independently, so applications retry their connections to one another.
+- **A service stays until it is deleted.** Removing it from `uniac.yaml`
+  leaves it running; `uniac service delete <name>` deletes it. Deleting a
+  service keeps its volume, which `uniac volume delete <service>.<volume>`
+  destroys; deleting the project, in the dashboard, destroys every volume,
+  detached ones included. Both delete commands ask for the typed name in a
+  terminal; `--silent` answers that question on the user's behalf, so an
+  agent passes it once the user has asked for that deletion.
 - **A volume keeps the `size_gb` (1–4096) it was created with**, so size it
   for the data the service will hold and declare that size in every later
   deploy. A singleton deploy that declares another size stops the running

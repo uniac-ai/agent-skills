@@ -109,8 +109,9 @@ Details: [Volume](https://docs.uniac.ai/resources/volume.md),
 - The dashboard at https://uniac.ai shows projects, volumes and, per
   service, its state, public endpoints, deployment activity and resource
   usage. It sets replica counts, changes public endpoints, and deletes
-  services, volumes and projects (volume and project deletions are confirmed
-  by typing the name);
+  services, volumes and projects, each confirmed by typing its name; the CLI
+  deletes services and volumes too. Deleting a service reports `terminating`
+  until removal completes;
   see [Dashboard and removal](https://docs.uniac.ai/resources/service.md#dashboard-and-removal).
 - Project names match `^[a-z][a-z0-9-]{0,62}$` and are unique per account;
   the platform assigns a slug used in URLs and bindings.
