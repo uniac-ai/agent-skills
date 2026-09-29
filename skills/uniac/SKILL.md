@@ -145,9 +145,9 @@ Contracts: [runtime and versions](https://docs.uniac.ai/resources/service.md#run
 `deploy` prints a stage record — `plan`, `link`, `build`, `push <service>`,
 `submit <service>`, `observe <service>` — followed by state rows; `status`
 prints state. A `service` row carrying `v<N>` means a serving version was
-read, and each instance's status follows the service after a deploy and in
-`status`: a crash loop shows there as `unhealthy` or `failed`, not as a
-failed deploy. A name-only row or a `state unread` warning means the
+read. `instance <status>, started <time>` rows give each instance's status
+after a deploy and in `status`: a crash loop shows as `unhealthy` or `failed`
+rows even when the deploy exits 0. A name-only row or a `state unread` warning means the
 submission was accepted and the service's state is unknown, even at exit 0;
 `uniac status <service>` reads it. `endpoint http https://… → :8080` is the
 public address and the container port. Exit codes: 2 usage, 3 auth, 4 not

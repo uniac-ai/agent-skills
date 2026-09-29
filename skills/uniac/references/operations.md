@@ -103,11 +103,11 @@ A local release record is written under `~/.uniac/store` (`UNIAC_STORE_DIR`).
 - Report rows: `project`, `platform` (shown for platforms other than production), `root`,
   `service <name> [v<N>]`, `status <state> (observed/effective)` (the counts
   when the observed count is reported), `kind`,
-  `lifecycle`, `deploying`, `replicas <N> requested`, `endpoint <type>
+  `lifecycle`, `deploying`, `replicas <N> requested`, `instance <status>`
+  (one per instance, then `, started <RFC 3339 UTC>` once its container
+  started; none for a service without instances), `endpoint <type>
   <address> → :<container port>`, `volume <name> at <path>`, `hold`,
-  `warning`; after a deploy and in `status`, each service also lists its
-  instances with status and start time; whole-project `status` adds `volume`
-  blocks with size and state
+  `warning`; whole-project `status` adds `volume` blocks with size and state
   (`bound to <service>`, `available (no service is bound; data intact)`,
   `provisioning`, `releasing`, `deleting`).
 - Per-service `release` blocks record the submission outcome: `accepted`,

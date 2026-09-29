@@ -47,7 +47,7 @@ Details: [Runtime and deployment versions](https://docs.uniac.ai/resources/servi
 | Serving version `v<N>` | The deployment currently serving. |
 | Lifecycle | `preparing`, `active`, `retiring`, `retired`; only non-`active` phases are printed. |
 | Replicas | Requested count, effective count after platform policy, observed count of `healthy` or `unhealthy` instances (unreported while a replica cannot be observed). |
-| Instances | Each replica's status — `starting`, `healthy`, `unhealthy`, `failed`, `terminating`, `unknown` — and start time. |
+| Instances | Each instance's status — `starting`, `healthy`, `unhealthy`, `failed`, `terminating`, `unknown` — and start time, a previous version's included while it stops. |
 | Deploying | An in-flight task and its current step. |
 | Hold | A platform-side reason the service is not converging. |
 | Warning | A non-fatal platform condition, such as a reference left out. |
