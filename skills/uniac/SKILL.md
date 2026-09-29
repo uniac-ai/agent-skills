@@ -32,8 +32,8 @@ Markdown is the current text.
   runs up to four interchangeable ones; a singleton runs at most one, and a
   replacement stops the old replica before the new one starts.
 - A **volume** is durable storage with a project-scoped identity
-  (`<service>.<name>`), held by one singleton service at a time. Its data
-  outlives replicas, detachment and service deletion; deleting the volume or
+  (`<service>.<name>`), bound to one singleton service at a time. Its data
+  outlives replicas, unbinding and service deletion; deleting the volume or
   the project destroys it.
 - **Public endpoints** (`public_ports` on the declaration) expose the
   application's listen port: `http` becomes an `https://` address on the
@@ -91,11 +91,15 @@ Commands, destination selection, output and exit codes:
 - **A singleton's replacement stops the old replica first.** Each deploy of a
   singleton has a gap, and a successor that fails to start leaves the service
   stopped until a working deploy.
-- **The platform restarts a container whose process exits**, and reports the
-  service running while its process runs. After five consecutive restarts
-  that each ran for less than a minute, the container stays stopped.
-  `running` describes the process, so request the service's endpoint after a
-  deploy to confirm the application answers.
+- **A deploy succeeds once the platform has started the new containers and
+  removed the old ones**; it does not judge the application. A container
+  that exits after starting does not fail the deploy: its instance status
+  shows it. An instance is `healthy` while its process runs, and receives new
+  connections only then; the platform restarts an exited container, which is
+  `unhealthy` meanwhile, and after five consecutive restarts that each ran
+  for less than a minute it stays stopped as `failed`. `healthy` describes
+  the process, so request the service's endpoint after a deploy to confirm
+  the application answers.
 - **References resolve when a service's version is created**, against the
   services serving at that moment. `uniac deploy` creates a service's version
   after the services it references have settled, so references within one
@@ -108,15 +112,15 @@ Commands, destination selection, output and exit codes:
   leaves it running; `uniac service delete <name>` deletes it. Deleting a
   service keeps its volume, which `uniac volume delete <service>.<volume>`
   destroys; deleting the project, in the dashboard, destroys every volume,
-  detached ones included. Both delete commands ask for the typed name in a
+  unbound ones included. Both delete commands ask for the typed name in a
   terminal; `--silent` answers that question on the user's behalf, so an
   agent passes it once the user has asked for that deletion.
 - **A volume keeps the `size_gb` (1–4096) it was created with**, so size it
   for the data the service will hold and declare that size in every later
   deploy. A singleton deploy that declares another size stops the running
   replica, then fails (exit 8), and the service stays stopped until a deploy
-  declares the original size. The same volume name reattaches the same data,
-  even at a new mount path.
+  declares the original size. The same volume name binds the same data
+  again, even at a new mount path.
 - **`public_ports` on redeploy:** omitted keeps the existing exposure,
   including endpoints changed in the dashboard; `[]` removes it; a list
   replaces it. Each service has one `http` and one `tcp` endpoint at most.
@@ -131,7 +135,7 @@ Commands, destination selection, output and exit codes:
 - **`env` values are stored with the deployment** and shown in the dashboard;
   keep a `uniac.yaml` that carries secret values out of version control.
 
-Contracts: [runtime and versions](https://docs.uniac.ai/resources/service.md#runtime-and-deployment-versions),
+Contracts: [runtime and versions](https://docs.uniac.ai/resources/service.md#runtime-and-deployment-versions), [instances](https://docs.uniac.ai/resources/service.md#instances),
 [resolution](https://docs.uniac.ai/resources/service.md#resolution), [public endpoints](https://docs.uniac.ai/resources/service.md#public-endpoints),
 [dashboard and removal](https://docs.uniac.ai/resources/service.md#dashboard-and-removal),
 [volume lifecycle](https://docs.uniac.ai/resources/volume.md#lifecycle).
@@ -141,8 +145,10 @@ Contracts: [runtime and versions](https://docs.uniac.ai/resources/service.md#run
 `deploy` prints a stage record — `plan`, `link`, `build`, `push <service>`,
 `submit <service>`, `observe <service>` — followed by state rows; `status`
 prints state. A `service` row carrying `v<N>` means a serving version was
-read. A name-only row or a `state unread` warning means the submission was
-accepted and the service's state is unknown, even at exit 0;
+read. `instance <status>, started <time>` rows give each instance's status
+after a deploy and in `status`: a crash loop shows as `unhealthy` or `failed`
+rows even when the deploy exits 0. A name-only row or a `state unread` warning means the
+submission was accepted and the service's state is unknown, even at exit 0;
 `uniac status <service>` reads it. `endpoint http https://… → :8080` is the
 public address and the container port. Exit codes: 2 usage, 3 auth, 4 not
 linked, 5 manifest, 6 build, 7 push, 8 deployment failed, observation timed
