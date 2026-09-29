@@ -10,7 +10,7 @@ contracts: [Uniac CLI](https://docs.uniac.ai/cli/overview.md),
 
 `npm install -g @uniac/cli` (Node 18+), or `npx -y @uniac/cli …` without
 installing. `uniac version` prints version, commit and build time. This
-skill describes release 0.3.24.
+skill describes release 0.3.25.
 
 ## Commands
 
@@ -22,8 +22,8 @@ skill describes release 0.3.24.
 | `uniac link [-C <path>] [name-or-slug]` | Binds the local project to a remote one in `.uniac/deploy.json`; an exact slug or unique name skips the picker. | Credentials |
 | `uniac deploy [--dir <path>]` | Plans, builds or pulls images with local Docker (`linux/amd64`), pushes, submits every declaration, polls each service up to five minutes. | Credentials, Docker |
 | `uniac status [--dir <path>] [service]` | Reads the linked project's state; whole-project status also lists volumes. | Credentials, binding |
-| `uniac service delete <name> [--dir <path>] [--silent]` | Deletes a service and waits until the platform has removed it (five-minute deadline); its volume is detached and keeps its data. | Credentials, binding |
-| `uniac volume delete <name> [--dir <path>] [--silent]` | Deletes an unattached volume and its data; `<name>` is `<service>.<volume>` as `status` lists it. | Credentials, binding |
+| `uniac service delete <name> [--dir <path>] [--silent]` | Deletes a service and waits until the platform has removed it (five-minute deadline); its volume is unbound and keeps its data. | Credentials, binding |
+| `uniac volume delete <name> [--dir <path>] [--silent]` | Deletes a volume no service is bound to, and its data, and waits until the platform has removed it (five-minute deadline); `<name>` is `<service>.<volume>` as `status` lists it. | Credentials, binding |
 | `uniac auth login \| status \| token \| logout` | Browser sign-in; stored sessions and expiry; the selected credential; remove stored sessions. | — |
 
 Flags may precede or follow the positional argument; a surplus argument is a
@@ -86,10 +86,11 @@ A local release record is written under `~/.uniac/store` (`UNIAC_STORE_DIR`).
   and ask for the typed name; another answer deletes nothing (exit 2).
   `--silent` skips the question and changes nothing else. Without a terminal,
   `--silent` is required, or the command exits 2 before any request.
-- `service delete` polls until the service is gone; after the deadline or an
-  interruption the platform continues the deletion, and `uniac status <name>`
-  shows it as `terminating`. The platform refuses to delete a volume a service
-  holds (exit 8).
+- Both poll until what they delete is gone; after the deadline or an
+  interruption the platform continues the deletion, and `uniac status` shows
+  the service as `terminating` or the volume as `deleting`. A volume is gone
+  once its storage is released. The platform refuses to delete a volume a
+  service is bound to (exit 8).
 - Success prints `Deleted service <name> from project <project>.` (plus the
   kept volume) or `Deleted volume <name> and its data from project <project>.`;
   failure prints the `status` error block.
@@ -100,10 +101,13 @@ A local release record is written under `~/.uniac/store` (`UNIAC_STORE_DIR`).
 - `deploy` and `status` print text reports to stdout. Progress goes to
   stderr (`UNIAC_PROGRESS=1` plain lines, `0` off).
 - Report rows: `project`, `platform` (shown for platforms other than production), `root`,
-  `service <name> [v<N>]`, `status <state> (observed/effective)`, `kind`,
+  `service <name> [v<N>]`, `status <state> (observed/effective)` (the counts
+  when the observed count is reported), `kind`,
   `lifecycle`, `deploying`, `replicas <N> requested`, `endpoint <type>
   <address> → :<container port>`, `volume <name> at <path>`, `hold`,
-  `warning`; whole-project `status` adds `volume` blocks with size and state.
+  `warning`; whole-project `status` adds `volume` blocks with size and state
+  (`bound to <service>`, `available (no service is bound; data intact)`,
+  `provisioning`, `releasing`, `deleting`).
 - Per-service `release` blocks record the submission outcome: `accepted`,
   `rejected`, `not attempted`, or `acceptance unconfirmed` (the server may
   have accepted it). `state unread` is reported as a warning. Warnings leave
@@ -121,6 +125,6 @@ or ownership failure, missing build directory or Dockerfile) · 6 `build`
 (Docker daemon, pull or build failure) · 7 `push` · 8 `deploy_failed`
 (request or task failure, HTTP 403 or another refused platform read,
 observation deadline passed while work continues, a refused delete such as a
-missing service or a held volume) · 9 `unreachable`
+missing service or a volume a service is bound to) · 9 `unreachable`
 (transport errors and HTTP 502/503/504/521/522/523/530) · 70 `internal`. Other commands: 0, 1 on failure, 2 on invalid
 invocation; `plan` reports a description failure as 1.

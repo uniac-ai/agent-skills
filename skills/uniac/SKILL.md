@@ -32,8 +32,8 @@ Markdown is the current text.
   runs up to four interchangeable ones; a singleton runs at most one, and a
   replacement stops the old replica before the new one starts.
 - A **volume** is durable storage with a project-scoped identity
-  (`<service>.<name>`), held by one singleton service at a time. Its data
-  outlives replicas, detachment and service deletion; deleting the volume or
+  (`<service>.<name>`), bound to one singleton service at a time. Its data
+  outlives replicas, unbinding and service deletion; deleting the volume or
   the project destroys it.
 - **Public endpoints** (`public_ports` on the declaration) expose the
   application's listen port: `http` becomes an `https://` address on the
@@ -108,15 +108,15 @@ Commands, destination selection, output and exit codes:
   leaves it running; `uniac service delete <name>` deletes it. Deleting a
   service keeps its volume, which `uniac volume delete <service>.<volume>`
   destroys; deleting the project, in the dashboard, destroys every volume,
-  detached ones included. Both delete commands ask for the typed name in a
+  unbound ones included. Both delete commands ask for the typed name in a
   terminal; `--silent` answers that question on the user's behalf, so an
   agent passes it once the user has asked for that deletion.
 - **A volume keeps the `size_gb` (1–4096) it was created with**, so size it
   for the data the service will hold and declare that size in every later
   deploy. A singleton deploy that declares another size stops the running
   replica, then fails (exit 8), and the service stays stopped until a deploy
-  declares the original size. The same volume name reattaches the same data,
-  even at a new mount path.
+  declares the original size. The same volume name binds the same data
+  again, even at a new mount path.
 - **`public_ports` on redeploy:** omitted keeps the existing exposure,
   including endpoints changed in the dashboard; `[]` removes it; a list
   replaces it. Each service has one `http` and one `tcp` endpoint at most.
