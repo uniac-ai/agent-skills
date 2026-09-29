@@ -20,7 +20,7 @@ skill describes release 0.3.25.
 | `uniac plan [--json] [--full] [--dir <path>]` | Validates the description and previews every deployment; `--json` prints `{project, digest, deployable, declarations}`. | Nothing |
 | `uniac project create <name>` | Creates a project on the account; prints name and slug. | Credentials |
 | `uniac link [-C <path>] [name-or-slug]` | Binds the local project to a remote one in `.uniac/deploy.json`; an exact slug or unique name skips the picker. | Credentials |
-| `uniac deploy [--dir <path>]` | Plans, builds or pulls images with local Docker (`linux/amd64`), pushes, submits every declaration, polls each service up to five minutes. | Credentials, Docker |
+| `uniac deploy [--dir <path>]` | Plans, builds or pulls images with local Docker (`linux/amd64`), pushes, submits every declaration, polls each service's deployment until it succeeds or fails, up to five minutes. | Credentials, Docker |
 | `uniac status [--dir <path>] [service]` | Reads the linked project's state; whole-project status also lists volumes. | Credentials, binding |
 | `uniac service delete <name> [--dir <path>] [--silent]` | Deletes a service and waits until the platform has removed it (five-minute deadline); its volume is unbound and keeps its data. | Credentials, binding |
 | `uniac volume delete <name> [--dir <path>] [--silent]` | Deletes a volume no service is bound to, and its data, and waits until the platform has removed it (five-minute deadline); `<name>` is `<service>.<volume>` as `status` lists it. | Credentials, binding |
@@ -105,7 +105,9 @@ A local release record is written under `~/.uniac/store` (`UNIAC_STORE_DIR`).
   when the observed count is reported), `kind`,
   `lifecycle`, `deploying`, `replicas <N> requested`, `endpoint <type>
   <address> → :<container port>`, `volume <name> at <path>`, `hold`,
-  `warning`; whole-project `status` adds `volume` blocks with size and state
+  `warning`; after a deploy and in `status`, each service also lists its
+  instances with status and start time; whole-project `status` adds `volume`
+  blocks with size and state
   (`bound to <service>`, `available (no service is bound; data intact)`,
   `provisioning`, `releasing`, `deleting`).
 - Per-service `release` blocks record the submission outcome: `accepted`,

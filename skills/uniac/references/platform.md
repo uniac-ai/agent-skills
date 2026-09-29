@@ -11,6 +11,10 @@ What Uniac does with a deployed composition, compressed. Complete contracts:
   across replica replacements and deployment versions.
 - Each deploy of a declaration creates a new **deployment version** of its
   service; the newest successful version serves and older ones retire. A
+  deploy succeeds once the new version's containers are started and the
+  older versions' containers are removed, `replicas: 0` included; a container
+  that exits after starting does not fail it, and one that cannot start
+  does. A
   service keeps its type: a deploy that switches it between `service` and
   `singleton` is rejected.
 - **Stateless** services run interchangeable replicas; connections may land on
@@ -23,13 +27,18 @@ What Uniac does with a deployed composition, compressed. Complete contracts:
   dashboard accept 0 or 1.
   Replacement stops the old replica first, so each version change has a gap;
   a successor that fails to start leaves the service stopped.
-- The platform restarts a container whose process exits; after five
-  consecutive restarts that each ran for less than a minute, the container
-  stays stopped. Services start independently of one another.
+- Each replica runs as an **instance**, `healthy` while its container's
+  process runs; it receives new connections only while `healthy`, and
+  connections before the application listens are refused. The platform
+  restarts a container whose process exits (`unhealthy` meanwhile); after
+  five consecutive restarts that each ran for less than a minute, the
+  container stays stopped (`failed`). Services start independently of one
+  another.
 - A `start_command` replaces the image's `ENTRYPOINT` and `CMD`; the image
   itself is unchanged.
 
-Details: [Runtime and deployment versions](https://docs.uniac.ai/resources/service.md#runtime-and-deployment-versions).
+Details: [Runtime and deployment versions](https://docs.uniac.ai/resources/service.md#runtime-and-deployment-versions),
+[Instances](https://docs.uniac.ai/resources/service.md#instances).
 
 ## Observed state (`uniac status`)
 
@@ -37,7 +46,8 @@ Details: [Runtime and deployment versions](https://docs.uniac.ai/resources/servi
 |---|---|
 | Serving version `v<N>` | The deployment currently serving. |
 | Lifecycle | `preparing`, `active`, `retiring`, `retired`; only non-`active` phases are printed. |
-| Replicas | Requested count, effective count after platform policy, observed running count (unreported while a replica cannot be observed). |
+| Replicas | Requested count, effective count after platform policy, observed count of `healthy` or `unhealthy` instances (unreported while a replica cannot be observed). |
+| Instances | Each replica's status — `starting`, `healthy`, `unhealthy`, `failed`, `terminating`, `unknown` — and start time. |
 | Deploying | An in-flight task and its current step. |
 | Hold | A platform-side reason the service is not converging. |
 | Warning | A non-fatal platform condition, such as a reference left out. |
