@@ -11,6 +11,10 @@ What Uniac does with a deployed composition, compressed. Complete contracts:
   across replica replacements and deployment versions.
 - Each deploy of a declaration creates a new **deployment version** of its
   service; the newest successful version serves and older ones retire. A
+  deploy succeeds once the new version's containers are started and the
+  older versions' containers are removed, `replicas: 0` included; a container
+  that exits after starting does not fail it, and one that cannot start
+  does. A
   service keeps its type: a deploy that switches it between `service` and
   `singleton` is rejected.
 - **Stateless** services run interchangeable replicas; connections may land on
@@ -23,13 +27,18 @@ What Uniac does with a deployed composition, compressed. Complete contracts:
   dashboard accept 0 or 1.
   Replacement stops the old replica first, so each version change has a gap;
   a successor that fails to start leaves the service stopped.
-- The platform restarts a container whose process exits; after five
-  consecutive restarts that each ran for less than a minute, the container
-  stays stopped. Services start independently of one another.
+- Each replica runs as an **instance**, `healthy` while its container's
+  process runs; it receives new connections only while `healthy`, and
+  connections before the application listens are refused. The platform
+  restarts a container whose process exits (`unhealthy` meanwhile); after
+  five consecutive restarts that each ran for less than a minute, the
+  container stays stopped (`failed`). Services start independently of one
+  another.
 - A `start_command` replaces the image's `ENTRYPOINT` and `CMD`; the image
   itself is unchanged.
 
-Details: [Runtime and deployment versions](https://docs.uniac.ai/resources/service.md#runtime-and-deployment-versions).
+Details: [Runtime and deployment versions](https://docs.uniac.ai/resources/service.md#runtime-and-deployment-versions),
+[Instances](https://docs.uniac.ai/resources/service.md#instances).
 
 ## Observed state (`uniac status`)
 
@@ -37,7 +46,8 @@ Details: [Runtime and deployment versions](https://docs.uniac.ai/resources/servi
 |---|---|
 | Serving version `v<N>` | The deployment currently serving. |
 | Lifecycle | `preparing`, `active`, `retiring`, `retired`; only non-`active` phases are printed. |
-| Replicas | Requested count, effective count after platform policy, observed running count. |
+| Replicas | Requested count, effective count after platform policy, observed count of `healthy` or `unhealthy` instances (unreported while a replica cannot be observed). |
+| Instances | Each instance's status — `starting`, `healthy`, `unhealthy`, `failed`, `terminating`, `unknown` — and start time, a previous version's included while it stops. |
 | Deploying | An in-flight task and its current step. |
 | Hold | A platform-side reason the service is not converging. |
 | Warning | A non-fatal platform condition, such as a reference left out. |
@@ -87,20 +97,22 @@ Details: [Environment and references](https://docs.uniac.ai/resources/service.md
 | Event | Effect |
 |---|---|
 | Declaring a new `name` on a singleton | Provisions a fresh volume (containing `lost+found`), named `<service>.<name>`, up to 127 characters. |
-| Declaring a name that exists unattached | Reattaches it with its data, even at a different `mount_path`. |
-| Declaring a name another service holds | Rejected: a volume has one holder. |
+| Declaring a name no service is bound to | Binds it with its data, even at a different `mount_path`. |
+| Declaring a name another service is bound to | Rejected: a volume is bound to one service at a time. |
+| Declaring a volume being deleted | The deploy fails. |
 | Declaring an existing volume with another `size_gb` | The singleton's running replica stops, then the deploy fails; the service stays stopped until a deploy declares the original size. |
-| Removing the declaration, or deleting the service | Detaches; the data stays in an unattached volume the project lists. |
-| Deleting the volume (dashboard, name confirmation) | Destroys the data; rejected while a service holds it. |
-| Deleting the project | Destroys every volume, attached or unattached. |
+| Removing the declaration, or deleting the service | Unbinds it; the data stays in the volume, which the project lists as `available` once its storage is released. |
+| Deleting the volume (dashboard, name confirmation) | Destroys the data; the volume is gone once its storage is released. Rejected while a service is bound to it. |
+| Deleting the project | Destroys every volume, bound or not. |
 
 `size_gb` is 1–4096, set when the volume is created; later deployments
-declare the same size. A singleton service attaches one volume. Whole-project
-`uniac status` lists volumes with size and state (`provisioning`,
-`attaching`, `detaching`, `deleting`, attached, unattached).
+declare the same size. A singleton service is bound to at most one volume.
+Whole-project `uniac status` lists volumes with size and state (`bound`,
+`available`, `provisioning`, `releasing`, `deleting`).
 
 Details: [Volume](https://docs.uniac.ai/resources/volume.md),
-[Lifecycle](https://docs.uniac.ai/resources/volume.md#lifecycle).
+[Lifecycle](https://docs.uniac.ai/resources/volume.md#lifecycle),
+[States](https://docs.uniac.ai/resources/volume.md#states).
 
 ## Projects and the dashboard
 
