@@ -22,7 +22,7 @@ Markdown is the current text.
   the account and it also has an assigned slug.
 - A **service definition** (`type: service` for stateless execution,
   `type: singleton`) holds an image or Dockerfile build, `env`,
-  `start_command` and `volumes`. A definition runs once a deployment
+  `start_command`, a size and `volumes`. A definition runs once a deployment
   declaration instantiates it.
 - A **deployment declaration** (`type: deployment`) instantiates one
   definition as a **service**, and the declaration's name is the service's
@@ -70,7 +70,7 @@ Commands, destination selection, output and exit codes:
 |---|---|
 | `service` or `singleton`? | `service` for anything that can run as interchangeable copies: APIs, workers, front ends. `singleton` for anything that must be alone or needs a volume: databases, persistent caches, schedulers. |
 | Where does state live? | On a singleton's volume, or in an external store. A replica's memory and container files last as long as the replica. |
-| How much CPU and memory? | `vcpu` (1–2) and `memory_mib` (512–4096) on the definition; 1 vCPU and 512 MiB when omitted, on every deploy. Size memory for the peak: a process past it is OOM-killed. |
+| How much CPU and memory? | `vcpu` (1–2) and `memory_mib` (512–4096) on the definition; 1 vCPU and 512 MiB when omitted, on every deploy. Size memory for the peak: past it, a process is OOM-killed. |
 | How many replicas? | `replicas` on the deployment declaration: 0–4 for a `service`, 0 or 1 for a `singleton`. Leave it out to keep the service's current count, such as one set in the dashboard. |
 | Which port? | The application's own listen port, named in `public_ports`. An application that reads `PORT` gets it from a declared `env` value. |
 | `http` or `tcp`? | `http` for anything browsers or HTTPS clients call; TLS ends at the edge, and a request has 60 seconds. `tcp` for raw protocols such as databases; Uniac allocates the public port. |
@@ -116,11 +116,10 @@ Commands, destination selection, output and exit codes:
   unbound ones included. Both delete commands ask for the typed name in a
   terminal; `--silent` answers that question on the user's behalf, so an
   agent passes it once the user has asked for that deletion.
-- **Memory is a hard limit, reserved on a node.** A container whose main
-  process passes `memory_mib` exits 137. A replica no node has room for
-  stays `starting` and the deploy fails `convergence_timeout` (exit 8);
-  retrying the failed task in the dashboard completes it once there is room,
-  and a singleton can be left stopped meanwhile, even at the same size.
+- **Each replica's memory is reserved on a node.** A replica no node has
+  room for stays `starting` and its deployment task fails
+  `convergence_timeout`; retrying that task in the dashboard completes it
+  once there is room.
 - **A volume keeps the `size_gb` (1–4096) it was created with**, so size it
   for the data the service will hold and declare that size in every later
   deploy. A singleton deploy that declares another size stops the running

@@ -42,25 +42,16 @@ Details: [Runtime and deployment versions](https://docs.uniac.ai/resources/servi
 
 ## Size
 
-- `vcpu` is a ceiling on shared CPU, and sets the process limit at 4,096 per
-  vCPU. `memory_mib` is a hard limit for a container's processes together: a
-  process past it is OOM-killed, and a container whose main process is
-  killed exits 137.
-- Each replica's memory is reserved on its node, so a replica is placed only
-  where that much is free.
-- A size belongs to a version: omitted, it is 1 vCPU and 512 MiB on every
-  deploy, never the serving version's. A version deployed before sizing
-  runs with 1 vCPU and 256 MiB until its next deploy.
-- A replica no node has room for waits: its instance is `starting`, and the
-  deploy fails `convergence_timeout` (exit 8) after its 330-second settle
-  period. Once a node has room, retrying the failed task in the dashboard
-  completes it; deploying a size that fits is the other way out. A new
-  `uniac deploy` is a new version, not a retry.
-- A singleton's old replica stops before the new one is placed, so when no
-  node has spare room it can be left stopped until room appears, even at the
-  same size: a replica already waiting for room, or another deploy's, may
-  take the room first. A stateless deploy starts the new version before
-  stopping the old, so it needs room for both.
+- `memory_mib` is a hard limit for a container's processes together: past
+  it, a process is OOM-killed. `vcpu` is a ceiling on shared CPU.
+- A size belongs to a version: a deploy that omits a value gets its
+  default, whatever the serving version's size.
+- Each replica's memory is reserved on its node. A replica no node has room
+  for stays `starting`, and its deployment task fails `convergence_timeout`;
+  once a node has room, retrying that task in the dashboard completes it. A
+  stateless deploy needs room for the new version beside the old; a
+  singleton's old replica stops first, so it can stay stopped until room
+  appears, even at the same size.
 
 Details: [Size](https://docs.uniac.ai/resources/service.md#size).
 
@@ -145,9 +136,9 @@ Details: [Volume](https://docs.uniac.ai/resources/volume.md),
   removed from `uniac.yaml` keeps running until it is deleted.
 - The dashboard at https://uniac.ai shows projects, volumes and, per
   service, its state, public endpoints, deployment activity and resource
-  usage. It sets replica counts, changes public endpoints, and deletes
-  services, volumes and projects, each confirmed by typing its name; the CLI
-  deletes services and volumes too. Deleting a service reports `terminating`
+  usage. It sets replica counts, retries a failed deployment task, changes
+  public endpoints, and deletes services, volumes and projects, each
+  confirmed by typing its name; the CLI deletes services and volumes too. Deleting a service reports `terminating`
   until removal completes;
   see [Dashboard and removal](https://docs.uniac.ai/resources/service.md#dashboard-and-removal).
 - Project names match `^[a-z][a-z0-9-]{0,62}$` and are unique per account;
