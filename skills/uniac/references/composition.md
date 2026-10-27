@@ -26,7 +26,7 @@ Three types exist: `service`, `singleton` (both are definitions) and
 | `start_command` | No | Replaces the image's `ENTRYPOINT` and `CMD`; split with shell-style quoting and executed directly. |
 | `vcpu` | No | An integer, 1–2: whole vCPUs per container; 1 when omitted. [Size](platform.md#size). |
 | `memory_mib` | No | An integer, 512–4096: memory per container in MiB; 512 when omitted. [Size](platform.md#size). |
-| `volumes` | No, singleton only | A list of at most one `{name, size_gb, mount_path}` entry. `name` matches `^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?$`; `size_gb` is 1–4096, set when the volume is created; `mount_path` is absolute, other than `/`, without `.` or `..` segments or repeated or trailing slashes, outside `/proc`, `/sys` and `/dev`, and other than `/etc/resolv.conf`. |
+| `volumes` | No, singleton only | A list of at most one `{name, size_gb, mount_path}` entry. `name` matches `^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?$`; `size_gb` is 1–4096, and a larger value on a later deploy grows the volume; `mount_path` is absolute, other than `/`, without `.` or `..` segments or repeated or trailing slashes, outside `/proc`, `/sys` and `/dev`, and other than `/etc/resolv.conf`. |
 
 The definition's name is a local label within its package.
 
@@ -124,6 +124,6 @@ Ownership and included manifests, each file's schema and resource names,
 counts and lengths, the `size_gb` range, mount paths, unique service names,
 build paths on disk, composed volume names, reference targets and variables,
 reference cycles, and that `vcpu` and `memory_mib` are integers, all checked
-locally and offline; their ranges are checked at deploy. A singleton deploy
-compares `size_gb` with the existing volume after its running replica has
-stopped.
+locally and offline; their ranges are checked at deploy. The platform
+compares `size_gb` with the existing volume when the deploy is submitted,
+while the running replica still serves.

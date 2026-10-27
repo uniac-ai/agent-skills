@@ -118,14 +118,19 @@ Details: [Environment and references](https://docs.uniac.ai/resources/service.md
 | Declaring a new `name` on a singleton | Provisions a fresh volume (containing `lost+found`), named `<service>.<name>`, up to 127 characters. |
 | Declaring a name no service is bound to | Binds it with its data, even at a different `mount_path`. |
 | Declaring a name another service is bound to | Rejected: a volume is bound to one service at a time. |
-| Declaring a volume being deleted | The deploy fails. |
-| Declaring an existing volume with another `size_gb` | The singleton's running replica stops, then the deploy fails; the service stays stopped until a deploy declares the original size. |
+| Declaring a volume being deleted | Rejected when the deploy is submitted. |
+| Declaring an existing volume with a larger `size_gb` | Grows it: the deploy completes without waiting, and the running container sees the space within seconds, without a restart. |
+| Declaring an existing volume with a smaller `size_gb` | Rejected when the deploy is submitted; the running service is unaffected. |
 | Removing the declaration, or deleting the service | Unbinds it; the data stays in the volume, which the project lists as `available` once its storage is released. |
 | Deleting the volume (dashboard, name confirmation) | Destroys the data; the volume is gone once its storage is released. Rejected while a service is bound to it. |
 | Deleting the project | Destroys every volume, bound or not. |
 
-`size_gb` is 1–4096, set when the volume is created; later deployments
-declare the same size. A singleton service is bound to at most one volume.
+`size_gb` is 1–4096. A growth is pending until the storage has grown: the
+volume's requested size is above its size, and it is retried; a deploy that
+declares the current size withdraws it. A volume still being created takes
+the latest declared size. Storage is charged at the volume's size, the grown
+size from the minute the volume shows it. A singleton service is bound to at
+most one volume.
 Whole-project `uniac status` lists volumes with size and state (`bound`,
 `available`, `provisioning`, `releasing`, `deleting`).
 
