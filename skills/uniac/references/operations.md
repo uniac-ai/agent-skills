@@ -125,8 +125,9 @@ credential or HTTP 401) · 4 `not_linked` (no or mismatched binding, a
 `UNIAC_PROJECT_URL` naming no project, no projects to pick) · 5 `manifest` (description
 or ownership failure, missing build directory or Dockerfile) · 6 `build`
 (Docker daemon, pull or build failure) · 7 `push` · 8 `deploy_failed`
-(request or task failure, HTTP 403 or another refused platform read,
-observation deadline passed while work continues, a refused delete such as a
-missing service or a volume a service is bound to) · 9 `unreachable`
-(transport errors and HTTP 502/503/504/521/522/523/530) · 70 `internal`. Other commands: 0, 1 on failure, 2 on invalid
+(request or task failure, HTTP 403 or another refused platform read, a
+refused delete such as a missing service or a volume a service is bound to)
+· 9 `unreachable` (transport errors and HTTP 502/503/504/521/522/523/530) ·
+10 `pending` (`deploy` stopped observing work the platform is still doing,
+after five minutes; nothing failed) · 70 `internal`. Other commands: 0, 1 on failure, 2 on invalid
 invocation; `plan` reports a description failure as 1.

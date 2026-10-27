@@ -48,10 +48,12 @@ Details: [Runtime and deployment versions](https://docs.uniac.ai/resources/servi
   default, whatever the serving version's size.
 - Each replica's memory is reserved on its node. A replica no node has room
   for stays `starting`, and its deploy stays in progress until a node has
-  room, then completes; a new deploy or deleting the service replaces it. A
-  stateless deploy needs room for the new version beside the old; a
-  singleton's old replica stops first, so it can stay stopped until room
-  appears, even at the same size.
+  room. Deleting the service always ends the wait; a new singleton deploy
+  replaces it; a new stateless deploy replaces it only once running, so it
+  must fit beside the serving version and the waiting version's placed
+  replicas. A stateless deploy needs room for the new version beside the
+  old; a singleton's old replica stops first, so it can stay stopped until
+  room appears, even at the same size.
 
 Details: [Size](https://docs.uniac.ai/resources/service.md#size).
 
@@ -136,9 +138,9 @@ Details: [Volume](https://docs.uniac.ai/resources/volume.md),
   removed from `uniac.yaml` keeps running until it is deleted.
 - The dashboard at https://uniac.ai shows projects, volumes and, per
   service, its state, public endpoints, deployment activity and resource
-  usage. It sets replica counts, retries a failed deployment task, changes
-  public endpoints, and deletes services, volumes and projects, each
-  confirmed by typing its name; the CLI deletes services and volumes too. Deleting a service reports `terminating`
+  usage. It sets replica counts, changes public endpoints, and deletes
+  services, volumes and projects, each confirmed by typing its name; the CLI
+  deletes services and volumes too. Deleting a service reports `terminating`
   until removal completes;
   see [Dashboard and removal](https://docs.uniac.ai/resources/service.md#dashboard-and-removal).
 - Project names match `^[a-z][a-z0-9-]{0,62}$` and are unique per account;

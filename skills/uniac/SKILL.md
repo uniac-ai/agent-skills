@@ -118,8 +118,7 @@ Commands, destination selection, output and exit codes:
   agent passes it once the user has asked for that deletion.
 - **Each replica's memory is reserved on a node.** A replica no node has
   room for stays `starting`, and the deploy stays in progress until a node
-  has room, then completes; `uniac deploy` exits 8 at its five-minute limit
-  while it waits.
+  has room.
 - **A volume keeps the `size_gb` (1–4096) it was created with**, so size it
   for the data the service will hold and declare that size in every later
   deploy. A singleton deploy that declares another size stops the running
@@ -132,8 +131,8 @@ Commands, destination selection, output and exit codes:
 - **Each service's submission proceeds on its own.** Accepted work continues
   after a local failure or an interruption; to return to an earlier release,
   deploy that release's sources or images again, which gives every declared
-  service a new version. Exit 8 after the five-minute window means the work
-  is still in progress.
+  service a new version. Exit 10 (`pending`) after the five-minute window
+  means the work is still in progress.
 - **Tokens expire, and each platform accepts only its own.** `uniac auth
   status` shows each session's expiry, issuer and whether its platform
   accepts it; `uniac auth login` stores a new one, one session per platform.
@@ -156,8 +155,9 @@ rows even when the deploy exits 0. A name-only row or a `state unread` warning m
 submission was accepted and the service's state is unknown, even at exit 0;
 `uniac status <service>` reads it. `endpoint http https://… → :8080` is the
 public address and the container port. Exit codes: 2 usage, 3 auth, 4 not
-linked, 5 manifest, 6 build, 7 push, 8 deployment failed, observation timed
-out or a platform read was refused, 9 platform unreachable.
+linked, 5 manifest, 6 build, 7 push, 8 deployment failed or a platform read
+was refused, 9 platform unreachable, 10 still in progress after five
+minutes (pending).
 
 ## A minimal composition
 
