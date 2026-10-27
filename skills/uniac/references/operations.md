@@ -10,7 +10,7 @@ contracts: [Uniac CLI](https://docs.uniac.ai/cli/overview.md),
 
 `npm install -g @uniac/cli` (Node 18+), or `npx -y @uniac/cli …` without
 installing. `uniac version` prints version, commit and build time. This
-skill describes release 0.3.25.
+skill describes release 0.3.26.
 
 ## Commands
 
@@ -102,7 +102,7 @@ A local release record is written under `~/.uniac/store` (`UNIAC_STORE_DIR`).
   stderr (`UNIAC_PROGRESS=1` plain lines, `0` off).
 - Report rows: `project`, `platform` (shown for platforms other than production), `root`,
   `service <name> [v<N>]`, `status <state> (observed/effective)` (the counts
-  when the observed count is reported), `kind`,
+  when the observed count is reported), `kind`, `size <N> vCPU, <M> MiB`,
   `lifecycle`, `deploying`, `replicas <N> requested`, `instance <status>`
   (one per instance, then `, started <RFC 3339 UTC>` once its container
   started; none for a service without instances), `endpoint <type>

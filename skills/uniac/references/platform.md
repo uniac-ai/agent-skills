@@ -40,12 +40,37 @@ What Uniac does with a deployed composition, compressed. Complete contracts:
 Details: [Runtime and deployment versions](https://docs.uniac.ai/resources/service.md#runtime-and-deployment-versions),
 [Instances](https://docs.uniac.ai/resources/service.md#instances).
 
+## Size
+
+- `vcpu` is a ceiling on shared CPU, and sets the process limit at 4,096 per
+  vCPU. `memory_mib` is a hard limit for a container's processes together: a
+  process past it is OOM-killed, and a container whose main process is
+  killed exits 137.
+- Each replica's memory is reserved on its node, so a replica is placed only
+  where that much is free.
+- A size belongs to a version: omitted, it is 1 vCPU and 512 MiB on every
+  deploy, never the serving version's. A version deployed before sizing
+  runs with 1 vCPU and 256 MiB until its next deploy.
+- A replica no node has room for waits: its instance is `starting`, and the
+  deploy fails `convergence_timeout` (exit 8) after its 330-second settle
+  period. Once a node has room, retrying the failed task in the dashboard
+  completes it; deploying a size that fits is the other way out. A new
+  `uniac deploy` is a new version, not a retry.
+- A singleton's old replica stops before the new one is placed, so when no
+  node has spare room it can be left stopped until room appears, even at the
+  same size: a replica already waiting for room, or another deploy's, may
+  take the room first. A stateless deploy starts the new version before
+  stopping the old, so it needs room for both.
+
+Details: [Size](https://docs.uniac.ai/resources/service.md#size).
+
 ## Observed state (`uniac status`)
 
 | Fact | Meaning |
 |---|---|
 | Serving version `v<N>` | The deployment currently serving. |
 | Lifecycle | `preparing`, `active`, `retiring`, `retired`; only non-`active` phases are printed. |
+| Size | The serving version's vCPUs and memory in MiB. |
 | Replicas | Requested count, effective count after platform policy, observed count of `healthy` or `unhealthy` instances (unreported while a replica cannot be observed). |
 | Instances | Each instance's status — `starting`, `healthy`, `unhealthy`, `failed`, `terminating`, `unknown` — and start time, a previous version's included while it stops. |
 | Deploying | An in-flight task and its current step. |
