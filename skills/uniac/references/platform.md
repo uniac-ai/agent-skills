@@ -47,8 +47,8 @@ Details: [Runtime and deployment versions](https://docs.uniac.ai/resources/servi
 - A size belongs to a version: a deploy that omits a value gets its
   default, whatever the serving version's size.
 - Each replica's memory is reserved on its node. A replica no node has room
-  for stays `starting`, and its deployment task fails `convergence_timeout`;
-  once a node has room, retrying that task in the dashboard completes it. A
+  for stays `starting`, and its deploy stays in progress until a node has
+  room, then completes; a new deploy or deleting the service replaces it. A
   stateless deploy needs room for the new version beside the old; a
   singleton's old replica stops first, so it can stay stopped until room
   appears, even at the same size.

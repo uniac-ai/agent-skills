@@ -117,9 +117,9 @@ Commands, destination selection, output and exit codes:
   terminal; `--silent` answers that question on the user's behalf, so an
   agent passes it once the user has asked for that deletion.
 - **Each replica's memory is reserved on a node.** A replica no node has
-  room for stays `starting` and its deployment task fails
-  `convergence_timeout`; retrying that task in the dashboard completes it
-  once there is room.
+  room for stays `starting`, and the deploy stays in progress until a node
+  has room, then completes; `uniac deploy` exits 8 at its five-minute limit
+  while it waits.
 - **A volume keeps the `size_gb` (1–4096) it was created with**, so size it
   for the data the service will hold and declare that size in every later
   deploy. A singleton deploy that declares another size stops the running
