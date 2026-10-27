@@ -132,7 +132,9 @@ Commands, destination selection, output and exit codes:
   after a local failure or an interruption; to return to an earlier release,
   deploy that release's sources or images again, which gives every declared
   service a new version. Exit 10 (`pending`) after the five-minute window
-  means the work is still in progress.
+  means that service's work is still in progress; services later in
+  reference order were not submitted (`not attempted`), so deploy again once
+  it finishes.
 - **Tokens expire, and each platform accepts only its own.** `uniac auth
   status` shows each session's expiry, issuer and whether its platform
   accepts it; `uniac auth login` stores a new one, one session per platform.
