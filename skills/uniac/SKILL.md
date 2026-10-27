@@ -119,7 +119,7 @@ Commands, destination selection, output and exit codes:
 - **Each replica's memory is reserved on a node.** A replica no node has
   room for stays `starting`, and the deploy stays in progress until a node
   has room.
-- **A larger `size_gb` (1–4096) grows a volume in place.** The deploy
+- **A larger `size_gb` (1–4096 GiB) grows a volume in place.** The deploy
   completes without waiting, and the running container sees the added space
   within seconds, without a restart. Until the storage has grown, the growth
   is pending and retried; a deploy that declares the current size withdraws

@@ -125,7 +125,7 @@ Details: [Environment and references](https://docs.uniac.ai/resources/service.md
 | Deleting the volume (dashboard, name confirmation) | Destroys the data; the volume is gone once its storage is released. Rejected while a service is bound to it. |
 | Deleting the project | Destroys every volume, bound or not. |
 
-`size_gb` is 1–4096. A growth is pending until the storage has grown: the
+`size_gb` is 1–4096 GiB. A growth is pending until the storage has grown: the
 volume's requested size is above its size, and it is retried; a deploy that
 declares the current size withdraws it. A volume still being created takes
 the latest declared size. Storage is charged at the volume's size, the grown
