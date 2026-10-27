@@ -119,12 +119,14 @@ Commands, destination selection, output and exit codes:
 - **Each replica's memory is reserved on a node.** A replica no node has
   room for stays `starting`, and the deploy stays in progress until a node
   has room.
-- **A volume keeps the `size_gb` (1–4096) it was created with**, so size it
-  for the data the service will hold and declare that size in every later
-  deploy. A singleton deploy that declares another size stops the running
-  replica, then fails (exit 8), and the service stays stopped until a deploy
-  declares the original size. The same volume name binds the same data
-  again, even at a new mount path.
+- **A larger `size_gb` (1–4096) grows a volume in place.** The deploy
+  completes without waiting, and the running container sees the added space
+  within seconds, without a restart. Until the storage has grown, the growth
+  is pending and retried; a deploy that declares the current size withdraws
+  it. A volume never shrinks: a deploy that declares less than its size is
+  rejected at submission (exit 8), and the service keeps running. Storage is
+  charged at the grown size. The same volume name binds the same data again,
+  even at a new mount path.
 - **`public_ports` on redeploy:** omitted keeps the existing exposure,
   including endpoints changed in the dashboard; `[]` removes it; a list
   replaces it. Each service has one `http` and one `tcp` endpoint at most.
