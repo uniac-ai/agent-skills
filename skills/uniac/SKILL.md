@@ -22,7 +22,7 @@ Markdown is the current text.
   the account and it also has an assigned slug.
 - A **service definition** (`type: service` for stateless execution,
   `type: singleton`) holds an image or Dockerfile build, `env`,
-  `start_command` and `volumes`. A definition runs once a deployment
+  `start_command`, a size and `volumes`. A definition runs once a deployment
   declaration instantiates it.
 - A **deployment declaration** (`type: deployment`) instantiates one
   definition as a **service**, and the declaration's name is the service's
@@ -70,6 +70,7 @@ Commands, destination selection, output and exit codes:
 |---|---|
 | `service` or `singleton`? | `service` for anything that can run as interchangeable copies: APIs, workers, front ends. `singleton` for anything that must be alone or needs a volume: databases, persistent caches, schedulers. |
 | Where does state live? | On a singleton's volume, or in an external store. A replica's memory and container files last as long as the replica. |
+| How much CPU and memory? | `vcpu` (1–2) and `memory_mib` (512–4096) on the definition; 1 vCPU and 512 MiB when omitted, on every deploy. Size memory for the peak: past it, a process is OOM-killed. |
 | How many replicas? | `replicas` on the deployment declaration: 0–4 for a `service`, 0 or 1 for a `singleton`. Leave it out to keep the service's current count, such as one set in the dashboard. |
 | Which port? | The application's own listen port, named in `public_ports`. An application that reads `PORT` gets it from a declared `env` value. |
 | `http` or `tcp`? | `http` for anything browsers or HTTPS clients call; TLS ends at the edge, and a request has 60 seconds. `tcp` for raw protocols such as databases; Uniac allocates the public port. |
@@ -115,6 +116,9 @@ Commands, destination selection, output and exit codes:
   unbound ones included. Both delete commands ask for the typed name in a
   terminal; `--silent` answers that question on the user's behalf, so an
   agent passes it once the user has asked for that deletion.
+- **Each replica's memory is reserved on a node.** A replica no node has
+  room for stays `starting`, and the deploy stays in progress until a node
+  has room.
 - **A volume keeps the `size_gb` (1–4096) it was created with**, so size it
   for the data the service will hold and declare that size in every later
   deploy. A singleton deploy that declares another size stops the running
@@ -127,15 +131,17 @@ Commands, destination selection, output and exit codes:
 - **Each service's submission proceeds on its own.** Accepted work continues
   after a local failure or an interruption; to return to an earlier release,
   deploy that release's sources or images again, which gives every declared
-  service a new version. Exit 8 after the five-minute window means the work
-  is still in progress.
+  service a new version. Exit 10 (`pending`) after the five-minute window
+  means that service's work is still in progress; services later in
+  reference order were not submitted (`not attempted`), so deploy again once
+  it finishes.
 - **Tokens expire, and each platform accepts only its own.** `uniac auth
   status` shows each session's expiry, issuer and whether its platform
   accepts it; `uniac auth login` stores a new one, one session per platform.
 - **`env` values are stored with the deployment** and shown in the dashboard;
   keep a `uniac.yaml` that carries secret values out of version control.
 
-Contracts: [runtime and versions](https://docs.uniac.ai/resources/service.md#runtime-and-deployment-versions), [instances](https://docs.uniac.ai/resources/service.md#instances),
+Contracts: [runtime and versions](https://docs.uniac.ai/resources/service.md#runtime-and-deployment-versions), [instances](https://docs.uniac.ai/resources/service.md#instances), [size](https://docs.uniac.ai/resources/service.md#size),
 [resolution](https://docs.uniac.ai/resources/service.md#resolution), [public endpoints](https://docs.uniac.ai/resources/service.md#public-endpoints),
 [dashboard and removal](https://docs.uniac.ai/resources/service.md#dashboard-and-removal),
 [volume lifecycle](https://docs.uniac.ai/resources/volume.md#lifecycle).
@@ -151,8 +157,9 @@ rows even when the deploy exits 0. A name-only row or a `state unread` warning m
 submission was accepted and the service's state is unknown, even at exit 0;
 `uniac status <service>` reads it. `endpoint http https://… → :8080` is the
 public address and the container port. Exit codes: 2 usage, 3 auth, 4 not
-linked, 5 manifest, 6 build, 7 push, 8 deployment failed, observation timed
-out or a platform read was refused, 9 platform unreachable.
+linked, 5 manifest, 6 build, 7 push, 8 deployment failed or a platform read
+was refused, 9 platform unreachable, 10 still in progress after five
+minutes (pending).
 
 ## A minimal composition
 

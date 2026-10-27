@@ -40,12 +40,31 @@ What Uniac does with a deployed composition, compressed. Complete contracts:
 Details: [Runtime and deployment versions](https://docs.uniac.ai/resources/service.md#runtime-and-deployment-versions),
 [Instances](https://docs.uniac.ai/resources/service.md#instances).
 
+## Size
+
+- `memory_mib` is a hard limit for a container's processes together: past
+  it, a process is OOM-killed. `vcpu` is a ceiling on shared CPU.
+- A size belongs to a version: a deploy that omits a value gets its
+  default, whatever the serving version's size.
+- Each replica's memory is reserved on its node. A replica no node has room
+  for stays `starting`, and its deploy stays in progress until a node has
+  room. Deleting the service always ends the wait; a lower replica count set
+  in the dashboard replaces a waiting change to the serving version's count;
+  a new singleton deploy replaces it; a new stateless deploy replaces it
+  only once running, so it must fit beside the serving version and the
+  waiting version's placed replicas. A stateless deploy needs room for the
+  new version beside the old; a singleton's old replica stops first, so it
+  can stay stopped until room appears, even at the same size.
+
+Details: [Size](https://docs.uniac.ai/resources/service.md#size).
+
 ## Observed state (`uniac status`)
 
 | Fact | Meaning |
 |---|---|
 | Serving version `v<N>` | The deployment currently serving. |
 | Lifecycle | `preparing`, `active`, `retiring`, `retired`; only non-`active` phases are printed. |
+| Size | The serving version's vCPUs and memory in MiB. |
 | Replicas | Requested count, effective count after platform policy, observed count of `healthy` or `unhealthy` instances (unreported while a replica cannot be observed). |
 | Instances | Each instance's status — `starting`, `healthy`, `unhealthy`, `failed`, `terminating`, `unknown` — and start time, a previous version's included while it stops. |
 | Deploying | An in-flight task and its current step. |

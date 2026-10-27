@@ -24,6 +24,8 @@ Three types exist: `service`, `singleton` (both are definitions) and
 | `image` or `build` | Exactly one | `image: <OCI reference>`, or `build: <dir>` / `build: {root, context, dockerfile, target}`. Paths are relative to the directory holding this `uniac.yaml`; `root` defaults to `.`, `dockerfile` to `Dockerfile`, `target` to the last stage. `image: ""` counts as absent; `build: null` is invalid. |
 | `env` | No | Variable name → string value. Names match `^[A-Za-z_][A-Za-z0-9_]*$`; `host` is reserved. Values may hold references (below). |
 | `start_command` | No | Replaces the image's `ENTRYPOINT` and `CMD`; split with shell-style quoting and executed directly. |
+| `vcpu` | No | An integer, 1–2: whole vCPUs per container; 1 when omitted. [Size](platform.md#size). |
+| `memory_mib` | No | An integer, 512–4096: memory per container in MiB; 512 when omitted. [Size](platform.md#size). |
 | `volumes` | No, singleton only | A list of at most one `{name, size_gb, mount_path}` entry. `name` matches `^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?$`; `size_gb` is 1–4096, set when the volume is created; `mount_path` is absolute, other than `/`, without `.` or `..` segments or repeated or trailing slashes, outside `/proc`, `/sys` and `/dev`, and other than `/etc/resolv.conf`. |
 
 The definition's name is a local label within its package.
@@ -109,10 +111,11 @@ as `cache.internal`; its volume is `cache.data`. On the project's first
 `uniac deploy`, `cache` is still starting when `api`'s version is created, so
 `CACHE_URL` is left out; a second `uniac deploy` sets it. `uniac plan --json` shows the generated
 description: a `deployable` with one entry per service, `container.source`
-as `ref` or `build`, `kind: singleton` and a declared `replicas` where they
-apply, and a digest of the normalized description, which formatting, ordering
-and default spellings leave unchanged and an explicit build `target` or a
-declared `replicas` changes.
+as `ref` or `build`, `kind: singleton`, a declared `replicas` and a declared
+`vcpu` and `memory_mib` where they apply, and a digest of the normalized
+description, which formatting, ordering and default spellings leave
+unchanged and an explicit build `target`, a declared `replicas` or a
+declared size changes.
 
 ## What `uniac plan` catches
 
@@ -120,6 +123,7 @@ Ownership and included manifests, each file's schema and resource names,
 `from` lookups, replica counts, endpoint ports and one endpoint per type, env
 counts and lengths, the `size_gb` range, mount paths, unique service names,
 build paths on disk, composed volume names, reference targets and variables,
-and reference cycles, all checked locally and offline. A singleton deploy
+reference cycles, and that `vcpu` and `memory_mib` are integers, all checked
+locally and offline; their ranges are checked at deploy. A singleton deploy
 compares `size_gb` with the existing volume after its running replica has
 stopped.

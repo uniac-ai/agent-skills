@@ -10,7 +10,7 @@ contracts: [Uniac CLI](https://docs.uniac.ai/cli/overview.md),
 
 `npm install -g @uniac/cli` (Node 18+), or `npx -y @uniac/cli …` without
 installing. `uniac version` prints version, commit and build time. This
-skill describes release 0.3.25.
+skill describes release 0.3.26.
 
 ## Commands
 
@@ -74,9 +74,10 @@ services sharing a source share the build) → `push <service>` →
 `submit <service>` → `observe <service>` (poll every two seconds,
 five-minute deadline), in reference order: a service is submitted after the
 declared services it references have settled, and services with no reference
-between them are submitted together before any is awaited. Failure or
-interruption stops new local work, so services submitted after a failed one
-are not attempted, and accepted remote work continues; to return to an
+between them are submitted together before any is awaited. Failure,
+interruption or the five-minute deadline stops new local work, so services
+after it in reference order are not attempted, and accepted remote work
+continues; to return to an
 earlier release, deploy that release's sources or images again.
 A local release record is written under `~/.uniac/store` (`UNIAC_STORE_DIR`).
 
@@ -86,8 +87,8 @@ A local release record is written under `~/.uniac/store` (`UNIAC_STORE_DIR`).
   and ask for the typed name; another answer deletes nothing (exit 2).
   `--silent` skips the question and changes nothing else. Without a terminal,
   `--silent` is required, or the command exits 2 before any request.
-- Both poll until what they delete is gone; after the deadline or an
-  interruption the platform continues the deletion, and `uniac status` shows
+- Both poll until what they delete is gone; after the deadline (exit 10) or
+  an interruption the platform continues the deletion, and `uniac status` shows
   the service as `terminating` or the volume as `deleting`. A volume is gone
   once its storage is released. The platform refuses to delete a volume a
   service is bound to (exit 8).
@@ -102,7 +103,7 @@ A local release record is written under `~/.uniac/store` (`UNIAC_STORE_DIR`).
   stderr (`UNIAC_PROGRESS=1` plain lines, `0` off).
 - Report rows: `project`, `platform` (shown for platforms other than production), `root`,
   `service <name> [v<N>]`, `status <state> (observed/effective)` (the counts
-  when the observed count is reported), `kind`,
+  when the observed count is reported), `kind`, `size <N> vCPU, <M> MiB`,
   `lifecycle`, `deploying`, `replicas <N> requested`, `instance <status>`
   (one per instance, then `, started <RFC 3339 UTC>` once its container
   started; none for a service without instances), `endpoint <type>
@@ -125,8 +126,11 @@ credential or HTTP 401) · 4 `not_linked` (no or mismatched binding, a
 `UNIAC_PROJECT_URL` naming no project, no projects to pick) · 5 `manifest` (description
 or ownership failure, missing build directory or Dockerfile) · 6 `build`
 (Docker daemon, pull or build failure) · 7 `push` · 8 `deploy_failed`
-(request or task failure, HTTP 403 or another refused platform read,
-observation deadline passed while work continues, a refused delete such as a
-missing service or a volume a service is bound to) · 9 `unreachable`
-(transport errors and HTTP 502/503/504/521/522/523/530) · 70 `internal`. Other commands: 0, 1 on failure, 2 on invalid
+(request or task failure, HTTP 403 or another refused platform read, a
+refused delete such as a missing service or a volume a service is bound to)
+· 9 `unreachable` (transport errors and HTTP 502/503/504/521/522/523/530) ·
+10 `pending` (`deploy`, `service delete` or `volume delete` stopped observing
+work the platform is still doing, after five minutes; nothing had failed by
+then, and later services in reference order were not attempted) · 70
+`internal`. Other commands: 0, 1 on failure, 2 on invalid
 invocation; `plan` reports a description failure as 1.

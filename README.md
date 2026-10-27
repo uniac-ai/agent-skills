@@ -37,7 +37,7 @@ The plugin's version is the commit it was installed from, so
 skills/uniac/SKILL.md          the model, the workflow, the decisions, behaviors to plan for
 skills/uniac/references/
   composition.md               uniac.yaml: fields, names, references, a complete example
-  platform.md                  services, versions, observed state, networking, environment, volumes, the dashboard
+  platform.md                  services, versions, size, observed state, networking, environment, volumes, the dashboard
   operations.md                the CLI: commands, destinations, credentials, output, exit codes
 tools/validate.py              frontmatter, links and docs URLs
 .claude-plugin/                Claude Code marketplace + plugin manifest
