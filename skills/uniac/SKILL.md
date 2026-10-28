@@ -26,8 +26,8 @@ Markdown is the current text.
   declaration instantiates it.
 - A **deployment declaration** (`type: deployment`) instantiates one
   definition as a **service**, and the declaration's name is the service's
-  name: its identity in the project and its private hostname,
-  `<name>.internal`. Several declarations can reuse one definition.
+  name: its identity in the project and its private hostname. Several
+  declarations can reuse one definition.
 - **Replicas** are the containers behind that identity. A stateless service
   runs up to four interchangeable ones; a singleton runs at most one, and a
   replacement stops the old replica before the new one starts.
@@ -74,7 +74,7 @@ Commands, destination selection, output and exit codes:
 | How many replicas? | `replicas` on the deployment declaration: 0–4 for a `service`, 0 or 1 for a `singleton`. Leave it out to keep the service's current count, such as one set in the dashboard. |
 | Which port? | The application's own listen port, named in `public_ports`. An application that reads `PORT` gets it from a declared `env` value. |
 | `http` or `tcp`? | `http` for anything browsers or HTTPS clients call; TLS ends at the edge, and a request has 60 seconds. `tcp` for raw protocols such as databases; Uniac allocates the public port. |
-| How do services find each other? | `<service>.internal`, or `${{service.host}}` inside an `env` value, on any port the application listens on. |
+| How do services find each other? | By name: the service `db` is `db` inside its project, on any port the application listens on. `${{db.host}}` inside an `env` value gives that name. |
 | How does one service learn another's configuration? | `${{other.VAR}}` reads a variable the other service declares in the same package. |
 | `build` or `image`? | `build: <dir>` when the Dockerfile lives in the repository; `image: <ref>` for a published image. Exactly one of the two. |
 | One file or a workspace? | One `uniac.yaml` for one application. A `workspace` with `includes` when packages in subdirectories each own a `uniac.yaml`; they deploy to one project, and each package's references stay within it. |
