@@ -34,7 +34,8 @@ The definition's name is a local label within its package.
 
 A deployment declaration instantiates one definition as one service, and its
 resource name is the service's name: one DNS label (lowercase letters, digits
-and dashes, at most 63 characters), unique across the whole project.
+and dashes, at most 63 characters), unique across the whole project, other
+than `localhost`, `ip6-localhost` and `ip6-loopback`, which name loopback.
 
 | Field | Required | Meaning |
 |---|---|---|
@@ -52,8 +53,8 @@ and its volume stay in the project until `uniac service delete` and
 ## References inside `env` values
 
 `${{<service>.<VAR>}}` reads a variable the named service declares;
-`${{<service>.host}}`, the one builtin, is that service's internal hostname;
-`${{self.X}}` reads the declaring service's own value. Chains resolve
+`${{<service>.host}}`, the one builtin, is that service's name, its internal
+hostname; `${{self.X}}` reads the declaring service's own value. Chains resolve
 transitively. Every `${{` opener must form a valid reference. Service names in
 references are local to the package: `uniac plan` rejects a service from
 another package or one that does not exist.
@@ -107,7 +108,7 @@ resources:
 ```
 
 `api` runs two replicas and is public over HTTPS; `cache` is reachable only
-as `cache.internal`; its volume is `cache.data`. On the project's first
+inside the project, as `cache`; its volume is `cache.data`. On the project's first
 `uniac deploy`, `cache` is still starting when `api`'s version is created, so
 `CACHE_URL` is left out; a second `uniac deploy` sets it. `uniac plan --json` shows the generated
 description: a `deployable` with one entry per service, `container.source`

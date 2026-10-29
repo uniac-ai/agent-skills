@@ -7,7 +7,7 @@ What Uniac does with a deployed composition, compressed. Complete contracts:
 
 ## Services, replicas and versions
 
-- A service's identity (name, `<name>.internal`, endpoints, volume) persists
+- A service's identity (name, endpoints, volume) persists
   across replica replacements and deployment versions.
 - Each deploy of a declaration creates a new **deployment version** of its
   service; the newest successful version serves and older ones retire. A
@@ -77,8 +77,8 @@ and effective counts match.
 
 ## Networking
 
-- Private: every service is `<name>.internal` inside its project, on any port
-  the application listens on.
+- Private: inside its project, every service is reached at its name, on any
+  port the application listens on.
 - Public: `http` gives an `https://<hostname>` address that Uniac issues on the
   shared edge, and a request times out after 60 seconds. `tcp` gives a
   Uniac-issued public hostname and an allocated port, which stays allocated
