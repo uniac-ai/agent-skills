@@ -70,7 +70,7 @@ Commands, destination selection, output and exit codes:
 |---|---|
 | `service` or `singleton`? | `service` for anything that can run as interchangeable copies: APIs, workers, front ends. `singleton` for anything that must be alone or needs a volume: databases, persistent caches, schedulers. |
 | Where does state live? | On a singleton's volume, or in an external store. A replica's memory and container files last as long as the replica. |
-| How much CPU and memory? | `vcpu` (1–2) and `memory_mib` (512–4096) on the definition; 1 vCPU and 512 MiB when omitted, on every deploy. Size memory for the peak: past it, a process is OOM-killed. |
+| How much CPU and memory? | `vcpu` (1–2) and `memory_mib` (512–4096) on the definition. Leave them out to keep the service's current size; a new service gets 1 vCPU and 512 MiB. Size memory for the peak: past it, a process is OOM-killed. |
 | How many replicas? | `replicas` on the deployment declaration: 0–4 for a `service`, 0 or 1 for a `singleton`. Leave it out to keep the service's current count, such as one set in the dashboard. |
 | Which port? | The application's own listen port, named in `public_ports`. An application that reads `PORT` gets it from a declared `env` value. |
 | `http` or `tcp`? | `http` for anything browsers or HTTPS clients call; TLS ends at the edge, and a request has 60 seconds. `tcp` for raw protocols such as databases; Uniac allocates the public port. |
@@ -122,9 +122,9 @@ Commands, destination selection, output and exit codes:
 - **A larger `size_gb` (1–4096 GiB) grows a volume in place.** The deploy
   completes without waiting, and the running container sees the added space
   within seconds, without a restart. Until the storage has grown, the growth
-  is pending and retried; a deploy that declares the current size withdraws
-  it. A volume never shrinks: a deploy that declares less than its size is
-  rejected at submission (exit 8), and the service keeps running. Storage is
+  is pending and retried; a deploy that declares the current size or less
+  withdraws it. A volume never shrinks: a deploy that declares less than its
+  size is accepted and leaves the volume at its size. Storage is
   charged at the grown size. The same volume name binds the same data again,
   even at a new mount path.
 - **`public_ports` on redeploy:** omitted keeps the existing exposure,
