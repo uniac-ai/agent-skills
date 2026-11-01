@@ -45,7 +45,9 @@ Details: [Runtime and deployment versions](https://docs.uniac.ai/resources/servi
 - `memory_mib` is a hard limit for a container's processes together: past
   it, a process is OOM-killed. `vcpu` is a ceiling on shared CPU.
 - A size belongs to a version: a deploy that omits a value keeps the
-  serving version's, and a new service gets 1 vCPU and 512 MiB.
+  serving version's, and a new service gets 1 vCPU and 512 MiB. A version
+  from before sizing, at 256 MiB, moves to 512 MiB when a deploy omits
+  `memory_mib`.
 - Each replica's memory is reserved on its node. A replica no node has room
   for stays `starting`, and its deploy stays in progress until a node has
   room. Deleting the service always ends the wait; a lower replica count set
