@@ -10,7 +10,7 @@ contracts: [Uniac CLI](https://docs.uniac.ai/cli/overview.md),
 
 `npm install -g @uniac/cli` (Node 18+), or `npx -y @uniac/cli …` without
 installing. `uniac version` prints version, commit and build time. This
-skill describes release 0.3.26.
+skill describes release 0.3.31.
 
 ## Commands
 
@@ -118,9 +118,12 @@ A local release record is written under `~/.uniac/store` (`UNIAC_STORE_DIR`).
   (one per instance, then `, started <RFC 3339 UTC>` once its container
   started; none for a service without instances), `endpoint <type>
   <address> → :<container port>`, `volume <name> at <path>`, `hold`,
-  `warning`; whole-project `status` adds `volume` blocks with size and state
-  (`bound to <service>`, `available (no service is bound; data intact)`,
-  `provisioning`, `releasing`, `deleting`).
+  `warning`; `deploy` and whole-project `status` add the project's `volume`
+  blocks, unbound volumes included, with `size <N>GiB` (while a growth is
+  pending, `<N>GiB, growing to <M>GiB since <RFC 3339 UTC>`, the time when
+  the platform recorded it) and `state` (`bound to <service>`,
+  `available (no service is bound; data intact)`, `provisioning`,
+  `releasing`, `deleting`).
 - Per-service `release` blocks record the submission outcome: `accepted`,
   `rejected`, `not attempted`, or `acceptance unconfirmed` (the server may
   have accepted it). `state unread` is reported as a warning. Warnings leave
