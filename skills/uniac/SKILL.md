@@ -112,10 +112,13 @@ Commands, destination selection, output and exit codes:
 - **A service stays until it is deleted.** Removing it from `uniac.yaml`
   leaves it running; `uniac service delete <name>` deletes it. Deleting a
   service keeps its volume, which `uniac volume delete <service>.<volume>`
-  destroys; deleting the project, in the dashboard, destroys every volume,
-  unbound ones included. Both delete commands ask for the typed name in a
-  terminal; `--silent` answers that question on the user's behalf, so an
-  agent passes it once the user has asked for that deletion.
+  destroys. `uniac project delete <name>` deletes the project with its
+  services, endpoints and every volume, unbound ones included; the platform
+  finishes removing them after the command returns, and the name stays taken
+  until it has. The delete commands ask for the typed name in a terminal;
+  `--silent` answers that question on the user's behalf, so an agent passes
+  it once the user has asked for that deletion, and deletes a project only
+  when its user asks for it.
 - **Each replica's memory is reserved on a node.** A replica no node has
   room for stays `starting`, and the deploy stays in progress until a node
   has room.

@@ -10,7 +10,7 @@ contracts: [Uniac CLI](https://docs.uniac.ai/cli/overview.md),
 
 `npm install -g @uniac/cli` (Node 18+), or `npx -y @uniac/cli …` without
 installing. `uniac version` prints version, commit and build time. This
-skill describes release 0.3.26.
+skill describes release 0.3.31.
 
 ## Commands
 
@@ -24,28 +24,30 @@ skill describes release 0.3.26.
 | `uniac status [--dir <path>] [service]` | Reads the linked project's state; whole-project status also lists volumes. | Credentials, binding |
 | `uniac service delete <name> [--dir <path>] [--silent]` | Deletes a service and waits until the platform has removed it (five-minute deadline); its volume is unbound and keeps its data. | Credentials, binding |
 | `uniac volume delete <name> [--dir <path>] [--silent]` | Deletes a volume no service is bound to, and its data, and waits until the platform has removed it (five-minute deadline); `<name>` is `<service>.<volume>` as `status` lists it. | Credentials, binding |
+| `uniac project delete <name> [--silent]` | Deletes a project with its services, endpoints and every volume and its data, unbound ones included; returns once the platform accepts the deletion. | Credentials |
 | `uniac auth login \| status \| token \| logout` | Browser sign-in; stored sessions and expiry; the selected credential; remove stored sessions. | — |
 
 Flags may precede or follow the positional argument; a surplus argument is a
-usage error. `-h` on any command prints its usage. The dashboard deletes
-projects, sets replica counts and changes public endpoints
+usage error. `-h` on any command prints its usage. The dashboard sets replica
+counts and changes public endpoints
 ([Dashboard and removal](https://docs.uniac.ai/resources/service.md#dashboard-and-removal)).
 
 ## Which project a command targets
 
-- `plan`, `deploy`, `link`, `status` and the delete commands find the local
-  project from the current directory: a containing `workspace` root, else the
+- `plan`, `deploy`, `link`, `status` and the service and volume deletes find
+  the local project from the current directory: a containing `workspace` root, else the
   nearest `uniac.yaml`. Above the project, only a `uniac.yaml` that declares
   `workspace` counts. A binding found below the root is an error.
 - `.uniac/deploy.json` holds `project_name`, `project_slug`, `gateway_url`,
   `platform_url`; workspace packages share the root binding.
 - `UNIAC_PROJECT_URL` (a gateway URL or slug) replaces the binding as the
-  destination of `deploy`, `status` and the delete commands: the CLI finds
-  the project in the account's project list, so `deploy` waits for its services and `status`
+  destination of `deploy`, `status` and the service and volume deletes: the
+  CLI finds the project in the account's project list, so `deploy` waits for its services and `status`
   reads it. A value naming no project on the account exits 4.
 - `UNIAC_PLATFORM_URL` selects the platform API origin (default
-  `https://api.uniac.ai`) for `project create`, `link` and `auth`; a linked
-  `deploy`/`status` uses the binding's origin and fails on a conflict.
+  `https://api.uniac.ai`) for `project create`, `project delete`, `link` and
+  `auth`; a linked `deploy`/`status` uses the binding's origin and fails on a
+  conflict.
 - Before image work, `deploy` checks the credential and that the bound
   project still matches by name, slug and gateway.
 
@@ -83,19 +85,27 @@ A local release record is written under `~/.uniac/store` (`UNIAC_STORE_DIR`).
 
 ## Deleting
 
-- In a terminal, `service delete` and `volume delete` show what they delete
-  and ask for the typed name; another answer deletes nothing (exit 2).
-  `--silent` skips the question and changes nothing else. Without a terminal,
-  `--silent` is required, or the command exits 2 before any request.
-- Both poll until what they delete is gone; after the deadline (exit 10) or
-  an interruption the platform continues the deletion, and `uniac status` shows
-  the service as `terminating` or the volume as `deleting`. A volume is gone
-  once its storage is released. The platform refuses to delete a volume a
-  service is bound to (exit 8).
+- In a terminal, `service delete`, `volume delete` and `project delete` show
+  what they delete and ask for the typed name; another answer deletes nothing
+  (exit 2). `--silent` skips the question and changes nothing else. Without a
+  terminal, `--silent` is required, or the command exits 2 before any request.
+- `service delete` and `volume delete` poll until what they delete is gone;
+  after the deadline (exit 10) or an interruption the platform continues the
+  deletion, and `uniac status` shows the service as `terminating` or the
+  volume as `deleting`. A volume is gone once its storage is released. The
+  platform refuses to delete a volume a service is bound to (exit 8).
+- `project delete` returns once the platform accepts the deletion; the
+  platform then removes the services, endpoints and volumes, and
+  `project create` accepts the name again once it has. A repeated
+  `project delete` finds no project of that name (exit 8). A directory linked
+  to the deleted project keeps its binding, and `deploy` and `status` there
+  exit 4 until `uniac link` selects another project. An agent deletes a
+  project only when its user asks for it.
 - Success prints `Deleted service <name> from project <project>.` (plus the
-  kept volume) or `Deleted volume <name> and its data from project <project>.`;
-  failure prints the `status` error block.
-  [Deleting services and volumes](https://docs.uniac.ai/cli/overview.md#deleting-services-and-volumes).
+  kept volume), `Deleted volume <name> and its data from project <project>.`,
+  or `Deleted project <name>.` and that the platform finishes removing its
+  services, endpoints and volumes; failure prints the `status` error block.
+  [Deleting services, volumes and projects](https://docs.uniac.ai/cli/overview.md#deleting-services-volumes-and-projects).
 
 ## Output
 
@@ -108,9 +118,12 @@ A local release record is written under `~/.uniac/store` (`UNIAC_STORE_DIR`).
   (one per instance, then `, started <RFC 3339 UTC>` once its container
   started; none for a service without instances), `endpoint <type>
   <address> → :<container port>`, `volume <name> at <path>`, `hold`,
-  `warning`; whole-project `status` adds `volume` blocks with size and state
-  (`bound to <service>`, `available (no service is bound; data intact)`,
-  `provisioning`, `releasing`, `deleting`).
+  `warning`; `deploy` and whole-project `status` add the project's `volume`
+  blocks, unbound volumes included, with `size <N>GiB` (while a growth is
+  pending, `<N>GiB, growing to <M>GiB since <RFC 3339 UTC>`, the time when
+  the platform recorded it) and `state` (`bound to <service>`,
+  `available (no service is bound; data intact)`, `provisioning`,
+  `releasing`, `deleting`).
 - Per-service `release` blocks record the submission outcome: `accepted`,
   `rejected`, `not attempted`, or `acceptance unconfirmed` (the server may
   have accepted it). `state unread` is reported as a warning. Warnings leave
@@ -119,7 +132,8 @@ A local release record is written under `~/.uniac/store` (`UNIAC_STORE_DIR`).
 
 ## Exit codes
 
-`deploy`, `status`, `service delete` and `volume delete`: 0 success · 2
+`deploy`, `status`, `service delete`, `volume delete` and `project delete`:
+0 success · 2
 `usage` (also a delete without `--silent` or a terminal, or a mismatched
 typed name) · 3 `auth` (no usable
 credential or HTTP 401) · 4 `not_linked` (no or mismatched binding, a
@@ -127,7 +141,8 @@ credential or HTTP 401) · 4 `not_linked` (no or mismatched binding, a
 or ownership failure, missing build directory or Dockerfile) · 6 `build`
 (Docker daemon, pull or build failure) · 7 `push` · 8 `deploy_failed`
 (request or task failure, HTTP 403 or another refused platform read, a
-refused delete such as a missing service or a volume a service is bound to)
+refused delete such as a missing service or project or a volume a service is
+bound to)
 · 9 `unreachable` (transport errors and HTTP 502/503/504/521/522/523/530) ·
 10 `pending` (`deploy`, `service delete` or `volume delete` stopped observing
 work the platform is still doing, after five minutes; nothing had failed by
