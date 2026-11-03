@@ -10,7 +10,7 @@ contracts: [Uniac CLI](https://docs.uniac.ai/cli/overview.md),
 
 `npm install -g @uniac/cli` (Node 18+), or `npx -y @uniac/cli …` without
 installing. `uniac version` prints version, commit and build time. This
-skill describes release 0.3.31.
+skill describes release 0.3.32.
 
 ## Commands
 
@@ -22,6 +22,7 @@ skill describes release 0.3.31.
 | `uniac link [-C <path>] [name-or-slug]` | Binds the local project to a remote one in `.uniac/deploy.json`; an exact slug or unique name skips the picker. | Credentials |
 | `uniac deploy [--dir <path>]` | Plans, builds or pulls images with local Docker (`linux/amd64`), pushes, submits every declaration, polls each service's deployment until it succeeds or fails, up to five minutes. | Credentials, Docker |
 | `uniac status [--dir <path>] [service]` | Reads the linked project's state; whole-project status also lists volumes. | Credentials, binding |
+| `uniac logs <service> [--instance <id>] [-f] [--previous] [--tail <n>] [--since <time>] [--dir <path>]` | Prints what the service's instances write, each line prefixed with its instance; `-f` follows them until interrupted. | Credentials, binding |
 | `uniac service delete <name> [--dir <path>] [--silent]` | Deletes a service and waits until the platform has removed it (five-minute deadline); its volume is unbound and keeps its data. | Credentials, binding |
 | `uniac volume delete <name> [--dir <path>] [--silent]` | Deletes a volume no service is bound to, and its data, and waits until the platform has removed it (five-minute deadline); `<name>` is `<service>.<volume>` as `status` lists it. | Credentials, binding |
 | `uniac project delete <name> [--silent]` | Deletes a project with its services, endpoints and every volume and its data, unbound ones included; returns once the platform accepts the deletion. | Credentials |
@@ -34,20 +35,21 @@ counts and changes public endpoints
 
 ## Which project a command targets
 
-- `plan`, `deploy`, `link`, `status` and the service and volume deletes find
-  the local project from the current directory: a containing `workspace` root, else the
+- `plan`, `deploy`, `link`, `status`, `logs` and the service and volume
+  deletes find the local project from the current directory: a containing `workspace` root, else the
   nearest `uniac.yaml`. Above the project, only a `uniac.yaml` that declares
   `workspace` counts. A binding found below the root is an error.
 - `.uniac/deploy.json` holds `project_name`, `project_slug`, `gateway_url`,
   `platform_url`; workspace packages share the root binding.
 - `UNIAC_PROJECT_URL` (a gateway URL or slug) replaces the binding as the
-  destination of `deploy`, `status` and the service and volume deletes: the
+  destination of `deploy`, `status`, `logs` and the service and volume
+  deletes: the
   CLI finds the project in the account's project list, so `deploy` waits for its services and `status`
   reads it. A value naming no project on the account exits 4.
 - `UNIAC_PLATFORM_URL` selects the platform API origin (default
   `https://api.uniac.ai`) for `project create`, `project delete`, `link` and
-  `auth`; a linked `deploy`/`status` uses the binding's origin and fails on a
-  conflict.
+  `auth`; a linked `deploy`, `status` or `logs` uses the binding's origin and
+  fails on a conflict.
 - Before image work, `deploy` checks the credential and that the bound
   project still matches by name, slug and gateway.
 
@@ -107,6 +109,32 @@ A local release record is written under `~/.uniac/store` (`UNIAC_STORE_DIR`).
   services, endpoints and volumes; failure prints the `status` error block.
   [Deleting services, volumes and projects](https://docs.uniac.ai/cli/overview.md#deleting-services-volumes-and-projects).
 
+## Reading logs
+
+- stdout gets `[<instance>] <line>` for every line, stdout or stderr alike;
+  `<instance>` is the first 8 characters of the instance's key, more where
+  two of the service's instances share them. The pruned-output notice
+  (`earlier output was pruned before it could be read`), `Service <name> has
+  no instances.` (exit 0) and error blocks go to stderr.
+- Without `-f`: each instance's current run, one instance after another in
+  key order, then exit. `--previous` reads the run before it (not with `-f`;
+  an instance without one fails, exit 8). `--tail <n>` (0–100000) and
+  `--since <RFC 3339>` narrow each run. `--instance` takes a key or a start
+  of one that no other instance shares.
+- `-f` follows the instances the service has when it starts, at once, across
+  restarts. The platform ends a followed read every five minutes and the CLI
+  resumes it without losing or repeating a line, as after a dropped
+  connection; a moved instance continues on its new node, a removed one's
+  output ends, and an instance whose logs stay unavailable through five
+  minutes of retries exits 9. An expired credential ends it with exit 3.
+  Interrupting exits 0.
+- An account holds 10 open reads and an instance 4, one per instance being
+  read; beyond that the read fails (exit 8) naming the limit.
+- One instance's failure prints its error block and the others go on; the
+  exit code is the first failed instance's.
+  [Reading logs](https://docs.uniac.ai/cli/overview.md#reading-logs),
+  [Log output](https://docs.uniac.ai/cli/output.md#log-output).
+
 ## Output
 
 - `deploy` and `status` print text reports to stdout. Progress goes to
@@ -132,18 +160,20 @@ A local release record is written under `~/.uniac/store` (`UNIAC_STORE_DIR`).
 
 ## Exit codes
 
-`deploy`, `status`, `service delete`, `volume delete` and `project delete`:
-0 success · 2
-`usage` (also a delete without `--silent` or a terminal, or a mismatched
-typed name) · 3 `auth` (no usable
+`deploy`, `status`, `logs`, `service delete`, `volume delete` and
+`project delete`: 0 success · 2
+`usage` (also a delete without `--silent` or a terminal, a mismatched
+typed name, or `logs -f --previous`) · 3 `auth` (no usable
 credential or HTTP 401) · 4 `not_linked` (no or mismatched binding, a
 `UNIAC_PROJECT_URL` naming no project, no projects to pick) · 5 `manifest` (description
 or ownership failure, missing build directory or Dockerfile) · 6 `build`
 (Docker daemon, pull or build failure) · 7 `push` · 8 `deploy_failed`
 (request or task failure, HTTP 403 or another refused platform read, a
 refused delete such as a missing service or project or a volume a service is
-bound to)
-· 9 `unreachable` (transport errors and HTTP 502/503/504/521/522/523/530) ·
+bound to, a refused log read or an `--instance` matching no instance or
+several)
+· 9 `unreachable` (transport errors and HTTP 502/503/504/521/522/523/530, or
+an instance's logs unavailable through five minutes of retries) ·
 10 `pending` (`deploy`, `service delete` or `volume delete` stopped observing
 work the platform is still doing, after five minutes; nothing had failed by
 then, and later services in reference order were not attempted) · 70

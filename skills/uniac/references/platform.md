@@ -34,11 +34,21 @@ What Uniac does with a deployed composition, compressed. Complete contracts:
   five consecutive restarts that each ran for less than a minute, the
   container stays stopped (`failed`). Services start independently of one
   another.
+- An instance's **key** is a UUID it keeps for its life, across a move to
+  another node; a new version, a size change, a scale-up and the replacement
+  of a `failed` instance start instances with new keys.
+- **Logs** are kept per instance: what it writes to stdout and stderr, for
+  its current run and the run before it (a run is one container start), each
+  run's last 8 MiB, across restarts and while `failed`. They go with the
+  instance when a deploy replaces its version, a scale-down, pause or delete
+  removes it, or the platform replaces it after it failed; a move starts its
+  runs over. An instance whose container never started has none.
 - A `start_command` replaces the image's `ENTRYPOINT` and `CMD`; the image
   itself is unchanged.
 
 Details: [Runtime and deployment versions](https://docs.uniac.ai/resources/service.md#runtime-and-deployment-versions),
-[Instances](https://docs.uniac.ai/resources/service.md#instances).
+[Instances](https://docs.uniac.ai/resources/service.md#instances),
+[Logs](https://docs.uniac.ai/resources/service.md#logs).
 
 ## Size
 
