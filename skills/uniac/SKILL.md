@@ -59,7 +59,8 @@ Platform behavior: [platform.md](references/platform.md).
    submitted as a new version of its service, which replaces the service's
    replicas; each service is then polled for up to five minutes.
 6. **Read state** with `uniac status` (whole project, volumes included) or
-   `uniac status <service>`.
+   `uniac status <service>`, and what the application writes with
+   `uniac logs <service>` (`-f` to follow).
 
 Commands, destination selection, output and exit codes:
 [operations.md](references/operations.md).
@@ -100,7 +101,12 @@ Commands, destination selection, output and exit codes:
   `unhealthy` meanwhile, and after five consecutive restarts that each ran
   for less than a minute it stays stopped as `failed`. `healthy` describes
   the process, so request the service's endpoint after a deploy to confirm
-  the application answers.
+  the application answers. `uniac logs <service>` shows what the instances
+  wrote, and `--previous` the run before the last restart.
+- **Logs go with the instance.** Each instance keeps its current run and the
+  one before it, the last 8 MiB of each; a deploy that replaces the version,
+  a scale-down and a delete remove them. Read a failing version's logs before
+  deploying again.
 - **References resolve when a service's version is created**, against the
   services serving at that moment. `uniac deploy` creates a service's version
   after the services it references have settled, so references within one
@@ -146,7 +152,7 @@ Commands, destination selection, output and exit codes:
 - **`env` values are stored with the deployment** and shown in the dashboard;
   keep a `uniac.yaml` that carries secret values out of version control.
 
-Contracts: [runtime and versions](https://docs.uniac.ai/resources/service.md#runtime-and-deployment-versions), [instances](https://docs.uniac.ai/resources/service.md#instances), [size](https://docs.uniac.ai/resources/service.md#size),
+Contracts: [runtime and versions](https://docs.uniac.ai/resources/service.md#runtime-and-deployment-versions), [instances](https://docs.uniac.ai/resources/service.md#instances), [logs](https://docs.uniac.ai/resources/service.md#logs), [size](https://docs.uniac.ai/resources/service.md#size),
 [resolution](https://docs.uniac.ai/resources/service.md#resolution), [public endpoints](https://docs.uniac.ai/resources/service.md#public-endpoints),
 [dashboard and removal](https://docs.uniac.ai/resources/service.md#dashboard-and-removal),
 [volume lifecycle](https://docs.uniac.ai/resources/volume.md#lifecycle).
@@ -161,10 +167,11 @@ after a deploy and in `status`: a crash loop shows as `unhealthy` or `failed`
 rows even when the deploy exits 0. A name-only row or a `state unread` warning means the
 submission was accepted and the service's state is unknown, even at exit 0;
 `uniac status <service>` reads it. `endpoint http https://… → :8080` is the
-public address and the container port. Exit codes: 2 usage, 3 auth, 4 not
+public address and the container port. `uniac logs` prints
+`[<instance>] <line>` on stdout, the instance named by the start of its key. Exit codes: 2 usage, 3 auth, 4 not
 linked, 5 manifest, 6 build, 7 push, 8 deployment failed or a platform read
 was refused, 9 platform unreachable, 10 still in progress after five
-minutes (pending).
+minutes (pending); `uniac logs` uses the same codes.
 
 ## A minimal composition
 
