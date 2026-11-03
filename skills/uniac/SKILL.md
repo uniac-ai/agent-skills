@@ -103,9 +103,11 @@ Commands, destination selection, output and exit codes:
   the process, so request the service's endpoint after a deploy to confirm
   the application answers. `uniac logs <service>` shows what the instances
   wrote, and `--previous` the run before the last restart.
-- **Logs go with the instance.** Each instance keeps its current run and the
-  one before it, the last 8 MiB of each; a deploy that replaces the version,
-  a scale-down and a delete remove them. Read a failing version's logs before
+- **Logs belong to the instance's placement.** An instance keeps its current
+  run and the one before it, the last 8 MiB of each, on the node that runs
+  it. They go when a deploy replaces its version, a scale-down, pause or
+  delete removes it, or the platform replaces it after it failed; a move to
+  another node starts its runs over. Read a failing version's logs before
   deploying again.
 - **References resolve when a service's version is created**, against the
   services serving at that moment. `uniac deploy` creates a service's version
