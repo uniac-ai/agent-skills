@@ -10,7 +10,7 @@ contracts: [Uniac CLI](https://docs.uniac.ai/cli/overview.md),
 
 `npm install -g @uniac/cli` (Node 18+), or `npx -y @uniac/cli …` without
 installing. `uniac version` prints version, commit and build time. This
-skill describes release 0.3.32.
+skill describes release 0.3.33.
 
 ## Commands
 
@@ -22,7 +22,8 @@ skill describes release 0.3.32.
 | `uniac link [-C <path>] [name-or-slug]` | Binds the local project to a remote one in `.uniac/deploy.json`; an exact slug or unique name skips the picker. | Credentials |
 | `uniac deploy [--dir <path>]` | Plans, builds or pulls images with local Docker (`linux/amd64`), pushes, submits every declaration, polls each service's deployment until it succeeds or fails, up to five minutes. | Credentials, Docker |
 | `uniac status [--dir <path>] [service]` | Reads the linked project's state; whole-project status also lists volumes. | Credentials, binding |
-| `uniac logs <service> [--instance <id>] [-f] [--previous] [--tail <n>] [--since <time>] [--dir <path>]` | Prints what the service's instances write, each line prefixed with its instance; `-f` follows them until interrupted. | Credentials, binding |
+| `uniac logs <service> [--instance <id>] [-f] [--previous] [--tail <n>] [--since <time>] [--timestamps] [--dir <path>]` | Prints what the service's instances write, each line prefixed with its instance; `-f` follows them until interrupted. | Credentials, binding |
+| `uniac exec <service> [--instance <id>] [--timeout <seconds>] [-i] [--dir <path>] -- <command> [<arg>...]` | Runs one command in a running instance, prints its stdout and stderr, and exits with its exit code. | Credentials, binding |
 | `uniac service delete <name> [--dir <path>] [--silent]` | Deletes a service and waits until the platform has removed it (five-minute deadline); its volume is unbound and keeps its data. | Credentials, binding |
 | `uniac volume delete <name> [--dir <path>] [--silent]` | Deletes a volume no service is bound to, and its data, and waits until the platform has removed it (five-minute deadline); `<name>` is `<service>.<volume>` as `status` lists it. | Credentials, binding |
 | `uniac project delete <name> [--silent]` | Deletes a project with its services, endpoints and every volume and its data, unbound ones included; returns once the platform accepts the deletion. | Credentials |
@@ -35,21 +36,22 @@ counts and changes public endpoints
 
 ## Which project a command targets
 
-- `plan`, `deploy`, `link`, `status`, `logs` and the service and volume
-  deletes find the local project from the current directory: a containing `workspace` root, else the
+- `plan`, `deploy`, `link`, `status`, `logs`, `exec` and the service and
+  volume deletes find the local project from the current directory: a containing `workspace` root, else the
   nearest `uniac.yaml`. Above the project, only a `uniac.yaml` that declares
   `workspace` counts. A binding found below the root is an error.
 - `.uniac/deploy.json` holds `project_name`, `project_slug`, `gateway_url`,
   `platform_url`; workspace packages share the root binding.
 - `UNIAC_PROJECT_URL` (a gateway URL or slug) replaces the binding as the
-  destination of `deploy`, `status`, `logs` and the service and volume
-  deletes: the
+  destination of `deploy`, `status`, `logs`, `exec` and the service and
+  volume deletes: the
   CLI finds the project in the account's project list, so `deploy` waits for its services and `status`
-  reads it. A value naming no project on the account exits 4.
+  reads it. A value naming no project on the account fails with
+  `not_linked`: exit 4, or 125 from `exec`.
 - `UNIAC_PLATFORM_URL` selects the platform API origin (default
   `https://api.uniac.ai`) for `project create`, `project delete`, `link` and
-  `auth`; a linked `deploy`, `status` or `logs` uses the binding's origin and
-  fails on a conflict.
+  `auth`; a linked `deploy`, `status`, `logs` or `exec` uses the binding's
+  origin and fails on a conflict.
 - Before image work, `deploy` checks the credential and that the bound
   project still matches by name, slug and gateway.
 
@@ -120,7 +122,10 @@ A local release record is written under `~/.uniac/store` (`UNIAC_STORE_DIR`).
   key order, then exit. `--previous` reads the run before it (not with `-f`;
   an instance without one fails, exit 8). `--tail <n>` (0–100000) and
   `--since <RFC 3339>` narrow each run. `--instance` takes a key or a start
-  of one that no other instance shares.
+  of one that no other instance shares. `--timestamps` begins each line with
+  its received time, RFC 3339 UTC to the second
+  (`2026-11-03T14:02:07Z [5b1e0f8c] …`); a line kept in parts takes its first
+  part's time.
 - `-f` follows the instances the service has when it starts, at once, across
   restarts. The platform ends a followed read every five minutes and the CLI
   resumes it without losing or repeating a line, as after a dropped
@@ -135,6 +140,41 @@ A local release record is written under `~/.uniac/store` (`UNIAC_STORE_DIR`).
   [Reading logs](https://docs.uniac.ai/cli/overview.md#reading-logs),
   [Log output](https://docs.uniac.ai/cli/output.md#log-output).
 
+## Running a command
+
+- Everything after `--` is the argument list, run without a shell
+  (`-- sh -c '…'` for one) or a terminal; arguments must be valid UTF-8. The
+  command's stdout and stderr go to the CLI's, byte for byte.
+- One instance runs it there. Several need `--instance` (a key or a unique
+  start of one); without it nothing runs (exit 125) and the message lists
+  the instances' short forms. A service without instances exits 125 too.
+- `-i` sends the CLI's stdin, read to its end, at most 1 MiB (more exits 125
+  before any request). `--timeout <seconds>` is 1–300; without it the
+  platform's 60 applies. At the timeout or an interrupt the platform stops
+  the command's own process (SIGTERM, then SIGKILL 5 s later); the rest of a
+  shell's pipeline or script and its background processes keep running.
+- Exit: the command's own code; 125 for a CLI or platform failure (usage, no
+  linked project or no usable credential, a description error, no instance
+  chosen, a refusal, a cut stream, `the process could not be started`, an
+  unobserved exit status); 126 not executable; 127 not found (not on `PATH`,
+  no such file, or a missing `#!` interpreter); 130 on SIGINT or SIGTERM. A
+  command can exit with these codes too; each of the CLI's own except 130
+  also writes on stderr.
+- One stderr line each: `uniac exec: <start failure>`,
+  `… the platform stopped the command at its timeout`, `… the instance's
+  container stopped while the command ran` (the code is then the command's
+  status, such as 143 after SIGTERM; `; its exit status was not observed` and
+  125 when the platform did not observe it), and `… output truncated: the
+  command wrote <n> bytes to stdout and <m> to stderr, more than the platform
+  sends` (past 16 MiB; the code is unchanged).
+- Refusals print the `status` error block, never `retryable`: the instance is
+  not running (its state named), 4 open execs on the account or 2 on the
+  instance (the limit named), or the platform cannot run it now, which can
+  follow a command that started and was stopped. Each run executes the
+  command again.
+  [Running a command](https://docs.uniac.ai/cli/overview.md#running-a-command),
+  [Exec output](https://docs.uniac.ai/cli/output.md#exec-output).
+
 ## Output
 
 - `deploy` and `status` print text reports to stdout. Progress goes to
@@ -142,9 +182,10 @@ A local release record is written under `~/.uniac/store` (`UNIAC_STORE_DIR`).
 - Report rows: `project`, `platform` (shown for platforms other than production), `root`,
   `service <name> [v<N>]`, `status <state> (observed/effective)` (the counts
   when the observed count is reported), `kind`, `size <N> vCPU, <M> MiB`,
-  `lifecycle`, `deploying`, `replicas <N> requested`, `instance <status>`
-  (one per instance, then `, started <RFC 3339 UTC>` once its container
-  started; none for a service without instances), `endpoint <type>
+  `lifecycle`, `deploying`, `replicas <N> requested`, `instance <short>
+  <status>` (one per instance, `<short>` being the start of its key that
+  `uniac logs` prefixes lines with, then `, started <RFC 3339 UTC>` once its
+  container started; none for a service without instances), `endpoint <type>
   <address> → :<container port>`, `volume <name> at <path>`, `hold`,
   `warning`; `deploy` and whole-project `status` add the project's `volume`
   blocks, unbound volumes included, with `size <N>GiB` (while a growth is
@@ -177,5 +218,6 @@ an instance's logs unavailable through five minutes of retries) ·
 10 `pending` (`deploy`, `service delete` or `volume delete` stopped observing
 work the platform is still doing, after five minutes; nothing had failed by
 then, and later services in reference order were not attempted) · 70
-`internal`. Other commands: 0, 1 on failure, 2 on invalid
-invocation; `plan` reports a description failure as 1.
+`internal`. `exec` prints these codes in its error blocks and exits as
+[Running a command](#running-a-command) says. Other commands: 0, 1 on
+failure, 2 on invalid invocation; `plan` reports a description failure as 1.
