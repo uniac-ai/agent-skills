@@ -59,8 +59,9 @@ Platform behavior: [platform.md](references/platform.md).
    submitted as a new version of its service, which replaces the service's
    replicas; each service is then polled for up to five minutes.
 6. **Read state** with `uniac status` (whole project, volumes included) or
-   `uniac status <service>`, and what the application writes with
-   `uniac logs <service>` (`-f` to follow).
+   `uniac status <service>`, what the application writes with
+   `uniac logs <service>` (`-f` to follow), and what an instance holds with
+   `uniac exec <service> -- <command>`.
 
 Commands, destination selection, output and exit codes:
 [operations.md](references/operations.md).
@@ -109,6 +110,14 @@ Commands, destination selection, output and exit codes:
   delete removes it, or the platform replaces it after it failed; a move to
   another node starts its runs over. Read a failing version's logs before
   deploying again.
+- **`uniac exec` runs one command to completion in a running instance**, as
+  the container's own process, with no shell (`-- sh -c '…'` where the image
+  has one) and no terminal, and exits with the command's exit code. Its
+  memory counts against the instance's. The timeout (default 60 s, at most
+  300) or an interrupt stops it; anything it starts in the background keeps
+  running. Every run executes the command again, so a command that changes
+  data is run once on purpose, not retried blindly. A service with several
+  instances needs `--instance`.
 - **References resolve when a service's version is created**, against the
   services serving at that moment. `uniac deploy` creates a service's version
   after the services it references have settled, so references within one
@@ -154,7 +163,7 @@ Commands, destination selection, output and exit codes:
 - **`env` values are stored with the deployment** and shown in the dashboard;
   keep a `uniac.yaml` that carries secret values out of version control.
 
-Contracts: [runtime and versions](https://docs.uniac.ai/resources/service.md#runtime-and-deployment-versions), [instances](https://docs.uniac.ai/resources/service.md#instances), [logs](https://docs.uniac.ai/resources/service.md#logs), [size](https://docs.uniac.ai/resources/service.md#size),
+Contracts: [runtime and versions](https://docs.uniac.ai/resources/service.md#runtime-and-deployment-versions), [instances](https://docs.uniac.ai/resources/service.md#instances), [logs](https://docs.uniac.ai/resources/service.md#logs), [exec](https://docs.uniac.ai/resources/service.md#exec), [size](https://docs.uniac.ai/resources/service.md#size),
 [resolution](https://docs.uniac.ai/resources/service.md#resolution), [public endpoints](https://docs.uniac.ai/resources/service.md#public-endpoints),
 [dashboard and removal](https://docs.uniac.ai/resources/service.md#dashboard-and-removal),
 [volume lifecycle](https://docs.uniac.ai/resources/volume.md#lifecycle).
@@ -164,7 +173,7 @@ Contracts: [runtime and versions](https://docs.uniac.ai/resources/service.md#run
 `deploy` prints a stage record — `plan`, `link`, `build`, `push <service>`,
 `submit <service>`, `observe <service>` — followed by state rows; `status`
 prints state. A `service` row carrying `v<N>` means a serving version was
-read. `instance <status>, started <time>` rows give each instance's status
+read. `instance <short> <status>, started <time>` rows give each instance's status
 after a deploy and in `status`: a crash loop shows as `unhealthy` or `failed`
 rows even when the deploy exits 0. A name-only row or a `state unread` warning means the
 submission was accepted and the service's state is unknown, even at exit 0;
@@ -173,7 +182,11 @@ public address and the container port. `uniac logs` prints
 `[<instance>] <line>` on stdout, the instance named by the start of its key. Exit codes: 2 usage, 3 auth, 4 not
 linked, 5 manifest, 6 build, 7 push, 8 deployment failed or a platform read
 was refused, 9 platform unreachable, 10 still in progress after five
-minutes (pending); `uniac logs` uses the same codes.
+minutes (pending); `uniac logs` uses the same codes. `uniac exec` exits
+with its command's code, or with `docker exec`'s own: 125 when the CLI or the
+platform failed, 126 not executable, 127 not found, 130 interrupted; a
+timeout, a stopped container or truncated output adds one `uniac exec:` line
+on stderr.
 
 ## A minimal composition
 

@@ -44,12 +44,26 @@ What Uniac does with a deployed composition, compressed. Complete contracts:
   scale-down, pause or delete removes it, or the platform replaces it after
   it failed; a move starts its runs over. An instance whose container never
   started has none.
+- An **exec** runs one command to completion in a running instance's
+  container, as the container's own process: the image's user, the
+  instance's environment and working directory, its hardening and limits (a
+  command's memory counts against the instance's), with no shell added and
+  no terminal. A command is 1 to 256 strings (64 KiB together), stdin at
+  most 1 MiB, the timeout 1–300 s (default 60); output past 16 MiB across
+  both streams is counted, not sent. At the timeout or a disconnect the
+  command gets SIGTERM, then SIGKILL 5 s later; processes it leaves in the
+  background keep running. An account holds 4 open execs and an instance 2.
+  An instance that is not running refuses it with its state. Each exec runs
+  the command again, and a refusal that the platform cannot run it now can
+  follow a command that started and was stopped. Execs are recorded (who,
+  which command, how it ended), their output is not.
 - A `start_command` replaces the image's `ENTRYPOINT` and `CMD`; the image
   itself is unchanged.
 
 Details: [Runtime and deployment versions](https://docs.uniac.ai/resources/service.md#runtime-and-deployment-versions),
 [Instances](https://docs.uniac.ai/resources/service.md#instances),
-[Logs](https://docs.uniac.ai/resources/service.md#logs).
+[Logs](https://docs.uniac.ai/resources/service.md#logs),
+[Exec](https://docs.uniac.ai/resources/service.md#exec).
 
 ## Size
 
