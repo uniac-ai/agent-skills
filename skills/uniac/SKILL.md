@@ -112,9 +112,10 @@ Commands, destination selection, output and exit codes:
   deploying again.
 - **`uniac exec` runs one command to completion in a running instance**, as
   the container's own process, with no shell (`-- sh -c '…'` where the image
-  has one) and no terminal, and exits with the command's exit code. Its
-  memory counts against the instance's. The timeout (default 60 s, at most
-  300) or an interrupt stops it; anything it starts in the background keeps
+  has one) and no terminal, and exits with the command's exit code. Its CPU
+  and memory count against the instance's. The timeout (default 60 s, at
+  most 300) or an interrupt stops the command's own process only: the rest
+  of a shell's pipeline or script and anything in the background keep
   running. Every run executes the command again, so a command that changes
   data is run once on purpose, not retried blindly. A service with several
   instances needs `--instance`.
@@ -184,9 +185,10 @@ linked, 5 manifest, 6 build, 7 push, 8 deployment failed or a platform read
 was refused, 9 platform unreachable, 10 still in progress after five
 minutes (pending); `uniac logs` uses the same codes. `uniac exec` exits
 with its command's code, or with `docker exec`'s own: 125 when the CLI or the
-platform failed, 126 not executable, 127 not found, 130 interrupted; a
-timeout, a stopped container or truncated output adds one `uniac exec:` line
-on stderr.
+platform failed, 126 not executable, 127 not found, 130 interrupted. A
+command can exit with 125–130 too; each of the CLI's own except 130 also
+writes an error block or a `uniac exec:` line on stderr, and so do a timeout,
+a stopped container and truncated output.
 
 ## A minimal composition
 

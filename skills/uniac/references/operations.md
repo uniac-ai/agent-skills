@@ -46,7 +46,8 @@ counts and changes public endpoints
   destination of `deploy`, `status`, `logs`, `exec` and the service and
   volume deletes: the
   CLI finds the project in the account's project list, so `deploy` waits for its services and `status`
-  reads it. A value naming no project on the account exits 4.
+  reads it. A value naming no project on the account fails with
+  `not_linked`: exit 4, or 125 from `exec`.
 - `UNIAC_PLATFORM_URL` selects the platform API origin (default
   `https://api.uniac.ai`) for `project create`, `project delete`, `link` and
   `auth`; a linked `deploy`, `status`, `logs` or `exec` uses the binding's
@@ -150,10 +151,15 @@ A local release record is written under `~/.uniac/store` (`UNIAC_STORE_DIR`).
 - `-i` sends the CLI's stdin, read to its end, at most 1 MiB (more exits 125
   before any request). `--timeout <seconds>` is 1–300; without it the
   platform's 60 applies. At the timeout or an interrupt the platform stops
-  the command (SIGTERM, then SIGKILL 5 s later).
-- Exit: the command's own code; 125 for a CLI or platform failure (usage, a
-  refusal, a cut stream, `the process could not be started`, an unobserved
-  exit status); 126 not executable; 127 not on `PATH`; 130 interrupted.
+  the command's own process (SIGTERM, then SIGKILL 5 s later); the rest of a
+  shell's pipeline or script and its background processes keep running.
+- Exit: the command's own code; 125 for a CLI or platform failure (usage, no
+  linked project or no usable credential, a description error, no instance
+  chosen, a refusal, a cut stream, `the process could not be started`, an
+  unobserved exit status); 126 not executable; 127 not found (not on `PATH`,
+  no such file, or a missing `#!` interpreter); 130 on SIGINT or SIGTERM. A
+  command can exit with these codes too; each of the CLI's own except 130
+  also writes on stderr.
 - One stderr line each: `uniac exec: <start failure>`,
   `… the platform stopped the command at its timeout`, `… the instance's
   container stopped while the command ran` (the code is then the command's
@@ -163,8 +169,9 @@ A local release record is written under `~/.uniac/store` (`UNIAC_STORE_DIR`).
   sends` (past 16 MiB; the code is unchanged).
 - Refusals print the `status` error block, never `retryable`: the instance is
   not running (its state named), 4 open execs on the account or 2 on the
-  instance (the limit named), or the platform cannot run it now. Each run
-  executes the command again.
+  instance (the limit named), or the platform cannot run it now, which can
+  follow a command that started and was stopped. Each run executes the
+  command again.
   [Running a command](https://docs.uniac.ai/cli/overview.md#running-a-command),
   [Exec output](https://docs.uniac.ai/cli/output.md#exec-output).
 
