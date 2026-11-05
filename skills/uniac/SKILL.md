@@ -61,7 +61,8 @@ Platform behavior: [platform.md](references/platform.md).
 6. **Read state** with `uniac status` (whole project, volumes included) or
    `uniac status <service>`, what the application writes with
    `uniac logs <service>` (`-f` to follow), and what an instance holds with
-   `uniac exec <service> -- <command>`.
+   `uniac exec <service> -- <command>`, or interactively with
+   `uniac exec -it <service> -- sh`.
 
 Commands, destination selection, output and exit codes:
 [operations.md](references/operations.md).
@@ -113,12 +114,19 @@ Commands, destination selection, output and exit codes:
 - **`uniac exec` runs one command to completion in a running instance**, as
   the container's own process, with no shell (`-- sh -c '…'` where the image
   has one) and no terminal, and exits with the command's exit code. Its CPU
-  and memory count against the instance's. The timeout (default 60 s, at
-  most 300) or an interrupt stops the command's own process only: the rest
+  and memory count against the instance's. The platform's fixed 120 s
+  timeout or an interrupt stops the command's own process only: the rest
   of a shell's pipeline or script and anything in the background keep
   running. Every run executes the command again, so a command that changes
   data is run once on purpose, not retried blindly. A service with several
   instances needs `--instance`.
+- **`uniac exec -it` opens a terminal in a running instance**, connected to
+  the CLI's own, which must be a terminal; every key reaches the program,
+  Ctrl-C included. The command holds at most 512 bytes. A terminal ends when
+  its program exits, after 15 minutes without input, at 1 hour, or when its
+  connection drops, and then its program gets SIGHUP; background processes
+  keep running and nothing resumes it, so `tmux` inside keeps a session. An
+  account holds 4 open terminals and an instance 2, apart from execs.
 - **References resolve when a service's version is created**, against the
   services serving at that moment. `uniac deploy` creates a service's version
   after the services it references have settled, so references within one
@@ -188,7 +196,9 @@ with its command's code, or with `docker exec`'s own: 125 when the CLI or the
 platform failed, 126 not executable, 127 not found, 130 interrupted. A
 command can exit with 125–130 too; each of the CLI's own except 130 also
 writes an error block or a `uniac exec:` line on stderr, and so do a timeout,
-a stopped container and truncated output.
+a stopped container and truncated output. `uniac exec -it` exits the same way,
+with a `uniac exec:` line for an idle or 1-hour end, a stopped container and
+a connection that closed first.
 
 ## A minimal composition
 

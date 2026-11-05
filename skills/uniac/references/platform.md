@@ -49,7 +49,7 @@ What Uniac does with a deployed composition, compressed. Complete contracts:
   instance's environment and working directory, its hardening and limits (a
   command's CPU, memory and processes count against the instance's size),
   with no shell added and no terminal. A command is 1 to 256 strings (64 KiB
-  together), stdin at most 1 MiB, the timeout 1–300 s (default 60); output
+  together), stdin at most 1 MiB, the timeout a fixed 120 s; output
   past 16 MiB across both streams is counted, not sent. At the timeout or a
   disconnect the command's own process gets SIGTERM, then SIGKILL 5 s later;
   processes it started (the rest of a pipeline or script, background ones)
@@ -60,13 +60,26 @@ What Uniac does with a deployed composition, compressed. Complete contracts:
   cannot run it now can follow a command that started and was stopped. The
   platform records every exec for its operators (who, which command, how it
   ended); stdin and output are not recorded.
+- A **terminal** runs a program interactively in a running instance's
+  container, as an exec's command runs, with `TERM=xterm` and a
+  pseudo-terminal of the requested size (80 by 24 by default). Its command is
+  1 to 256 strings, at most 512 bytes together. It ends with `exited`,
+  `idle` (15 minutes without input), `deadline` (1 hour),
+  `container_stopped` or `start_failed`, or when its connection closes or is
+  lost (including platform updates and 45 s without a message from the
+  client); its program then gets SIGHUP, then SIGKILL 5 s later, and
+  background processes keep running. Nothing resumes a terminal; `tmux` or
+  `screen` inside keeps a session. An account holds 4 open terminals and an
+  instance 2, counted apart from execs. The platform records who opened which
+  program, its size and how it ended, not what was typed or printed.
 - A `start_command` replaces the image's `ENTRYPOINT` and `CMD`; the image
   itself is unchanged.
 
 Details: [Runtime and deployment versions](https://docs.uniac.ai/resources/service.md#runtime-and-deployment-versions),
 [Instances](https://docs.uniac.ai/resources/service.md#instances),
 [Logs](https://docs.uniac.ai/resources/service.md#logs),
-[Exec](https://docs.uniac.ai/resources/service.md#exec).
+[Exec](https://docs.uniac.ai/resources/service.md#exec),
+[Terminal](https://docs.uniac.ai/resources/service.md#terminal).
 
 ## Size
 
