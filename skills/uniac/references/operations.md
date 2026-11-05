@@ -23,7 +23,8 @@ skill describes release 0.3.33.
 | `uniac deploy [--dir <path>]` | Plans, builds or pulls images with local Docker (`linux/amd64`), pushes, submits every declaration, polls each service's deployment until it succeeds or fails, up to five minutes. | Credentials, Docker |
 | `uniac status [--dir <path>] [service]` | Reads the linked project's state; whole-project status also lists volumes. | Credentials, binding |
 | `uniac logs <service> [--instance <id>] [-f] [--previous] [--tail <n>] [--since <time>] [--timestamps] [--dir <path>]` | Prints what the service's instances write, each line prefixed with its instance; `-f` follows them until interrupted. | Credentials, binding |
-| `uniac exec <service> [--instance <id>] [--timeout <seconds>] [-i] [--dir <path>] -- <command> [<arg>...]` | Runs one command in a running instance, prints its stdout and stderr, and exits with its exit code. | Credentials, binding |
+| `uniac exec <service> [--instance <id>] [-i] [--dir <path>] -- <command> [<arg>...]` | Runs one command in a running instance, prints its stdout and stderr, and exits with its exit code. | Credentials, binding |
+| `uniac exec -it <service> [--instance <id>] [--dir <path>] -- <command> [<arg>...]` | Runs the command in a terminal in a running instance, connected to the CLI's own, and exits with its exit code. | Credentials, binding, a terminal |
 | `uniac service delete <name> [--dir <path>] [--silent]` | Deletes a service and waits until the platform has removed it (five-minute deadline); its volume is unbound and keeps its data. | Credentials, binding |
 | `uniac volume delete <name> [--dir <path>] [--silent]` | Deletes a volume no service is bound to, and its data, and waits until the platform has removed it (five-minute deadline); `<name>` is `<service>.<volume>` as `status` lists it. | Credentials, binding |
 | `uniac project delete <name> [--silent]` | Deletes a project with its services, endpoints and every volume and its data, unbound ones included; returns once the platform accepts the deletion. | Credentials |
@@ -149,10 +150,10 @@ A local release record is written under `~/.uniac/store` (`UNIAC_STORE_DIR`).
   start of one); without it nothing runs (exit 125) and the message lists
   the instances' short forms. A service without instances exits 125 too.
 - `-i` sends the CLI's stdin, read to its end, at most 1 MiB (more exits 125
-  before any request). `--timeout <seconds>` is 1–300; without it the
-  platform's 60 applies. At the timeout or an interrupt the platform stops
-  the command's own process (SIGTERM, then SIGKILL 5 s later); the rest of a
-  shell's pipeline or script and its background processes keep running.
+  before any request). The platform stops the command 120 s after it starts.
+  At that timeout or an interrupt the platform stops the command's own
+  process (SIGTERM, then SIGKILL 5 s later); the rest of a shell's pipeline
+  or script and its background processes keep running.
 - Exit: the command's own code; 125 for a CLI or platform failure (usage, no
   linked project or no usable credential, a description error, no instance
   chosen, a refusal, a cut stream, `the process could not be started`, an
@@ -174,6 +175,23 @@ A local release record is written under `~/.uniac/store` (`UNIAC_STORE_DIR`).
   command again.
   [Running a command](https://docs.uniac.ai/cli/overview.md#running-a-command),
   [Exec output](https://docs.uniac.ai/cli/output.md#exec-output).
+- `-it` (`-t` requires `-i`) runs the command in a terminal connected to the
+  CLI's own: the CLI's stdin must be a terminal, and the command holds at
+  most 512 bytes (each checked before any request, exit 125 with
+  `uniac exec: -t requires -i`, `… -t requires a terminal on standard input`
+  or `… the command is over 512 bytes, the most a terminal takes`). The
+  CLI's terminal is raw once the connection is open, so Ctrl-C goes to the
+  program, and its window size follows. The terminal ends when the program
+  exits (its code is the CLI's), after 15 minutes without input, at 1 hour,
+  or with the instance's container; each of the last three writes
+  `uniac exec: the terminal ended after 15 minutes without input`, `… the
+  terminal ended at its 1-hour limit` or `… the terminal ended because the
+  instance's container stopped`. A connection that closes first writes
+  `uniac exec: the connection closed before the terminal ended, and the
+  platform stopped its program` and exits 125. 130 is SIGINT or SIGTERM sent
+  to the CLI itself. Refusals print the error block, as an exec's do, with
+  caps of 4 open terminals per account and 2 per instance.
+  [In a terminal](https://docs.uniac.ai/cli/overview.md#in-a-terminal).
 
 ## Output
 
