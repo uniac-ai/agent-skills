@@ -135,6 +135,12 @@ Commands, destination selection, output and exit codes:
   other are left out with a warning until the next deploy. A changed value
   reaches another service in that service's next deployment. Services start
   independently, so applications retry their connections to one another.
+- **`uniac env` changes a service's variables outside `uniac.yaml`.**
+  `uniac env <service>` prints them as declared; `uniac env set <service>
+  NAME=value` and `uniac env unset <service> NAME` start a new version of the
+  service with the change and everything else kept, which restarts its
+  instances. The next `uniac deploy` sets the variables `uniac.yaml` declares,
+  replacing changes made this way, so a lasting change goes into the file.
 - **A service stays until it is deleted.** Removing it from `uniac.yaml`
   leaves it running; `uniac service delete <name>` deletes it. Deleting a
   service keeps its volume, which `uniac volume delete <service>.<volume>`

@@ -25,6 +25,9 @@ skill describes release 0.3.33.
 | `uniac logs <service> [--instance <id>] [-f] [--previous] [--tail <n>] [--since <time>] [--timestamps] [--dir <path>]` | Prints what the service's instances write, each line prefixed with its instance; `-f` follows them until interrupted. | Credentials, binding |
 | `uniac exec <service> [--instance <id>] [-i] [--dir <path>] -- <command> [<arg>...]` | Runs one command in a running instance, prints its stdout and stderr, and exits with its exit code. | Credentials, binding |
 | `uniac exec -it <service> [--instance <id>] [--dir <path>] -- <command> [<arg>...]` | Runs the command in a terminal in a running instance, connected to the CLI's own, and exits with its exit code. | Credentials, binding, a terminal |
+| `uniac env <service> [--dir <path>]` | Prints the variables of the service's newest version that is neither retiring nor retired, `NAME=value` in name order, references as declared. | Credentials, binding |
+| `uniac env set <service> NAME=value [NAME=value...] [--dir <path>]` | Adds or replaces variables in a new version made from that one, and polls its deployment up to five minutes. | Credentials, binding |
+| `uniac env unset <service> NAME [NAME...] [--dir <path>]` | Removes variables in a new version made from that one, and polls its deployment up to five minutes. | Credentials, binding |
 | `uniac service delete <name> [--dir <path>] [--silent]` | Deletes a service and waits until the platform has removed it (five-minute deadline); its volume is unbound and keeps its data. | Credentials, binding |
 | `uniac volume delete <name> [--dir <path>] [--silent]` | Deletes a volume no service is bound to, and its data, and waits until the platform has removed it (five-minute deadline); `<name>` is `<service>.<volume>` as `status` lists it. | Credentials, binding |
 | `uniac project delete <name> [--silent]` | Deletes a project with its services, endpoints and every volume and its data, unbound ones included; returns once the platform accepts the deletion. | Credentials |
@@ -37,8 +40,8 @@ counts and changes public endpoints
 
 ## Which project a command targets
 
-- `plan`, `deploy`, `link`, `status`, `logs`, `exec` and the service and
-  volume deletes find the local project from the current directory: a containing `workspace` root, else the
+- `plan`, `deploy`, `link`, `status`, `logs`, `exec`, `env` and the service
+  and volume deletes find the local project from the current directory: a containing `workspace` root, else the
   nearest `uniac.yaml`. Above the project, only a `uniac.yaml` that declares
   `workspace` counts. A binding found below the root is an error.
 - `.uniac/deploy.json` holds `project_name`, `project_slug`, `gateway_url`,
@@ -87,6 +90,23 @@ after it in reference order are not attempted, and accepted remote work
 continues; to return to an
 earlier release, deploy that release's sources or images again.
 A local release record is written under `~/.uniac/store` (`UNIAC_STORE_DIR`).
+
+## Changing variables
+
+- `env set` and `env unset` keep everything else of the version they start
+  from: image, start command, size, replicas, ports and volume. A change that
+  leaves the variables as they are starts nothing. Names match
+  `^[A-Za-z_][A-Za-z0-9_]*$`; a value is everything after the first `=`;
+  anything else exits 2 before any request.
+- Success prints `Deployed version <n> of <service>, made from version <m>.`,
+  then "Changing a variable starts a new version of the service, which
+  restarts its instances." and "The next `uniac deploy` sets the variables
+  `uniac.yaml` declares, replacing changes made here." So a change meant to
+  last also goes into `uniac.yaml`.
+- A service that gained a newer version first, such as a deploy in progress,
+  prints "The service changed since you read it; run the command again." and
+  exits 8 without retrying; reading again and repeating the change is safe.
+  [Runtime env](https://docs.uniac.ai/cli/overview.md#runtime-env).
 
 ## Deleting
 
@@ -219,10 +239,11 @@ A local release record is written under `~/.uniac/store` (`UNIAC_STORE_DIR`).
 
 ## Exit codes
 
-`deploy`, `status`, `logs`, `service delete`, `volume delete` and
+`deploy`, `status`, `logs`, `env`, `service delete`, `volume delete` and
 `project delete`: 0 success · 2
 `usage` (also a delete without `--silent` or a terminal, a mismatched
-typed name, or `logs -f --previous`) · 3 `auth` (no usable
+typed name, `logs -f --previous`, or an `env` argument that is not
+`NAME=value` or a valid name) · 3 `auth` (no usable
 credential or HTTP 401) · 4 `not_linked` (no or mismatched binding, a
 `UNIAC_PROJECT_URL` naming no project, no projects to pick) · 5 `manifest` (description
 or ownership failure, missing build directory or Dockerfile) · 6 `build`
@@ -230,10 +251,12 @@ or ownership failure, missing build directory or Dockerfile) · 6 `build`
 (request or task failure, HTTP 403 or another refused platform read, a
 refused delete such as a missing service or project or a volume a service is
 bound to, a refused log read or an `--instance` matching no instance or
-several)
+several, a service with no live version, or an `env` change from a version
+that is no longer the newest)
 · 9 `unreachable` (transport errors and HTTP 502/503/504/521/522/523/530, or
 an instance's logs unavailable through five minutes of retries) ·
-10 `pending` (`deploy`, `service delete` or `volume delete` stopped observing
+10 `pending` (`deploy`, `env set`, `env unset`, `service delete` or
+`volume delete` stopped observing
 work the platform is still doing, after five minutes; nothing had failed by
 then, and later services in reference order were not attempted) · 70
 `internal`. `exec` prints these codes in its error blocks and exits as
