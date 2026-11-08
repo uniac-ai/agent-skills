@@ -10,7 +10,7 @@ contracts: [Uniac CLI](https://docs.uniac.ai/cli/overview.md),
 
 `npm install -g @uniac/cli` (Node 18+), or `npx -y @uniac/cli …` without
 installing. `uniac version` prints version, commit and build time. This
-skill describes release 0.3.33.
+skill describes release 0.3.35.
 
 ## Commands
 
