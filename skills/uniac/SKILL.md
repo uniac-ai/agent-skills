@@ -93,8 +93,15 @@ Commands, destination selection, output and exit codes:
   earlier deploy, including zero for a paused service; a new service starts
   with one replica.
 - **A singleton's replacement stops the old replica first.** Each deploy of a
-  singleton has a gap, and a successor that fails to start leaves the service
-  stopped until a working deploy.
+  singleton has a gap, which includes the old replica's shutdown, and a
+  successor that fails to start leaves the service stopped until a working
+  deploy.
+- **A stop sends the image's stop signal, then SIGKILL 30 s later.** The
+  signal is the Dockerfile's `STOPSIGNAL`, or `SIGTERM`. An application that
+  needs a clean shutdown, such as flushing state or closing a database,
+  handles `SIGTERM` or declares the `STOPSIGNAL` it handles, and finishes
+  within the 30 s. A main process running as PID 1 receives only the signals
+  it handles, so a shell script with no handler is killed at the 30 s.
 - **A deploy succeeds once the platform has started the new containers and
   removed the old ones**; it does not judge the application. A container
   that exits after starting does not fail the deploy: its instance status
