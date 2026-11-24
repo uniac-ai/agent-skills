@@ -62,7 +62,9 @@ Platform behavior: [platform.md](references/platform.md).
    `uniac status <service>`, what the application writes with
    `uniac logs <service>` (`-f` to follow), and what an instance holds with
    `uniac exec <service> -- <command>`, or interactively with
-   `uniac exec -it <service> -- sh`.
+   `uniac exec -it <service> -- sh`. `uniac usage` prints what the account's
+   usage cost this month by category and project, and
+   `uniac usage --project <name>` that project's cost by service.
 
 Commands, destination selection, output and exit codes:
 [operations.md](references/operations.md).
