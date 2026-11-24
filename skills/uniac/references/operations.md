@@ -10,7 +10,7 @@ contracts: [Uniac CLI](https://docs.uniac.ai/cli/overview.md),
 
 `npm install -g @uniac/cli` (Node 18+), or `npx -y @uniac/cli …` without
 installing. `uniac version` prints version, commit and build time. This
-skill describes release 0.3.33.
+skill describes release 0.3.36.
 
 ## Commands
 
@@ -28,6 +28,7 @@ skill describes release 0.3.33.
 | `uniac service delete <name> [--dir <path>] [--silent]` | Deletes a service and waits until the platform has removed it (five-minute deadline); its volume is unbound and keeps its data. | Credentials, binding |
 | `uniac volume delete <name> [--dir <path>] [--silent]` | Deletes a volume no service is bound to, and its data, and waits until the platform has removed it (five-minute deadline); `<name>` is `<service>.<volume>` as `status` lists it. | Credentials, binding |
 | `uniac project delete <name> [--silent]` | Deletes a project with its services, endpoints and every volume and its data, unbound ones included; returns once the platform accepts the deletion. | Credentials |
+| `uniac usage [--month <YYYY-MM>] [--project <name>]` | Prints what the account's usage cost in the current month, or `--month` one of its 24 most recent: total, categories (CPU, Memory, Network, Volume) and projects; `--project` prints that project's categories and a row per service. Changes nothing. | Credentials |
 | `uniac auth login \| status \| token \| logout` | Browser sign-in; stored sessions and expiry; the selected credential; remove stored sessions. | — |
 
 Flags may precede or follow the positional argument; a surplus argument is a
@@ -50,8 +51,8 @@ counts and changes public endpoints
   reads it. A value naming no project on the account fails with
   `not_linked`: exit 4, or 125 from `exec`.
 - `UNIAC_PLATFORM_URL` selects the platform API origin (default
-  `https://api.uniac.ai`) for `project create`, `project delete`, `link` and
-  `auth`; a linked `deploy`, `status`, `logs` or `exec` uses the binding's
+  `https://api.uniac.ai`) for `project create`, `project delete`, `usage`,
+  `link` and `auth`; a linked `deploy`, `status`, `logs` or `exec` uses the binding's
   origin and fails on a conflict.
 - Before image work, `deploy` checks the credential and that the bound
   project still matches by name, slug and gateway.
@@ -211,6 +212,16 @@ A local release record is written under `~/.uniac/store` (`UNIAC_STORE_DIR`).
   the platform recorded it) and `state` (`bound to <service>`,
   `available (no service is bound; data intact)`, `provisioning`,
   `releasing`, `deleting`).
+- `usage` prints `month <YYYY-MM>` (`(current)` for this month), `priced
+  through <RFC 3339 UTC>` and `total`, then a `Category` table (quantity:
+  CPU in vCPU·h, Memory and Volume in GiB·h, Network in GiB, MiB or KiB;
+  cost in US dollars, four decimals under a cent) and a `Project` table,
+  largest first, a project whose cost prints as $0.00 left out. `--project` adds a
+  `project` row and a `Service` table in the project's order, two lines per
+  service: each category's quantity, then its cost beneath, and the total;
+  an unused category is 0 at $0.00. Deleted projects sum into one
+  `Deleted projects (<n>)` line, and deleted services with usage tied to no
+  service into one `Deleted services` row, each last.
 - Per-service `release` blocks record the submission outcome: `accepted`,
   `rejected`, `not attempted`, or `acceptance unconfirmed` (the server may
   have accepted it). `state unread` is reported as a warning. Warnings leave
@@ -219,10 +230,10 @@ A local release record is written under `~/.uniac/store` (`UNIAC_STORE_DIR`).
 
 ## Exit codes
 
-`deploy`, `status`, `logs`, `service delete`, `volume delete` and
-`project delete`: 0 success · 2
+`deploy`, `status`, `logs`, `service delete`, `volume delete`,
+`project delete` and `usage`: 0 success · 2
 `usage` (also a delete without `--silent` or a terminal, a mismatched
-typed name, or `logs -f --previous`) · 3 `auth` (no usable
+typed name, `logs -f --previous`, or a `--month` not written `YYYY-MM`) · 3 `auth` (no usable
 credential or HTTP 401) · 4 `not_linked` (no or mismatched binding, a
 `UNIAC_PROJECT_URL` naming no project, no projects to pick) · 5 `manifest` (description
 or ownership failure, missing build directory or Dockerfile) · 6 `build`
@@ -230,7 +241,7 @@ or ownership failure, missing build directory or Dockerfile) · 6 `build`
 (request or task failure, HTTP 403 or another refused platform read, a
 refused delete such as a missing service or project or a volume a service is
 bound to, a refused log read or an `--instance` matching no instance or
-several)
+several, a month or project `usage` does not find)
 · 9 `unreachable` (transport errors and HTTP 502/503/504/521/522/523/530, or
 an instance's logs unavailable through five minutes of retries) ·
 10 `pending` (`deploy`, `service delete` or `volume delete` stopped observing
